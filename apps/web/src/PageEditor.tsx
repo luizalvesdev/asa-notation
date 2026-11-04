@@ -4,7 +4,9 @@ import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { api, ApiError } from "./api.js";
+import { SlashCommand } from "./slash-command.js";
 
 type SaveState = "saved" | "saving" | "error";
 
@@ -21,7 +23,8 @@ const extensions = [
   StarterKit,
   TaskList,
   TaskItem.configure({ nested: true }),
-  Placeholder.configure({ placeholder: "Escreva algo…" }),
+  Placeholder.configure({ placeholder: "Escreva algo ou digite / para escolher um bloco…" }),
+  SlashCommand,
 ];
 
 function Toolbar({ editor }: { editor: Editor }) {
@@ -227,6 +230,13 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
         }}
       />
       {editor && <Toolbar editor={editor} />}
+      {editor && (
+        <DragHandle editor={editor} nested>
+          <span className="grip" title="Arrastar para mover" aria-label="Arrastar bloco">
+            ⋮⋮
+          </span>
+        </DragHandle>
+      )}
       <EditorContent editor={editor} />
     </article>
   );
