@@ -51,7 +51,13 @@ npm run smoke:db    # confere o Neon em modo somente leitura
 | `/asa/prod/auth/session-secret` | segredo que assina as sessões |
 | `/asa/prod/auth/bootstrap-token` | token do primeiro cadastro de passkey |
 
-## Antes do deploy
+## Deploy
 
-- O app web ainda não tem build de produção publicado (S3 + CloudFront).
-- A passkey fica amarrada ao RP ID (`RpId` no `template.yaml`, hoje `localhost`). Em produção será o endereço do CloudFront, e o app e a API devem sair do mesmo CloudFront (`/api/*`).
+App e API saem do mesmo CloudFront (`/api/*` vai para o API Gateway), então o cookie de sessão é first-party e o endereço do CloudFront é o RP ID da passkey. Produção: https://duduc2056whpm.cloudfront.net
+
+```bash
+npm run build && sam deploy   # API (RpId e AllowedOrigins ficam em samconfig.toml)
+./scripts/deploy-web.sh       # build do app, upload no S3 e invalidação do index.html
+```
+
+Trocar o RP ID (por exemplo, ao recriar a distribuição ou usar um domínio próprio) invalida as passkeys cadastradas: depois do deploy, cadastre de novo com o token de bootstrap.

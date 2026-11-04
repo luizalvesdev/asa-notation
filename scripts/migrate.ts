@@ -16,7 +16,7 @@ function databaseUrl(): string {
 }
 
 function directUrl(url: string): string {
-  return url.replace("-pooler.", ".");
+  return url.replace("-pooler.", ".").replace("sslmode=require", "sslmode=verify-full");
 }
 
 async function main() {
