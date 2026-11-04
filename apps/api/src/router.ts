@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { extractText } from "@asa/core";
 import {
   CHALLENGE_COOKIE,
   CHALLENGE_TTL_SECONDS,
@@ -16,7 +17,7 @@ import {
 } from "./auth/tokens.js";
 import type { WebAuthnAdapter } from "./auth/webauthn.js";
 import type { ApiRequest, ApiResponse } from "./http.js";
-import type { PageStore } from "./store.js";
+import type { PagePatch, PageStore } from "./store.js";
 
 export type { ApiRequest, ApiResponse } from "./http.js";
 
@@ -30,7 +31,7 @@ export interface RouterDeps {
 
 type Principal = { kind: "session" } | { kind: "device"; scope: DeviceScope; id: string };
 
-type Access = "public" | "registration" | "session" | "sync";
+type Access = "public" | "registration" | "session" | "sync" | "full";
 
 interface Ctx {
   req: ApiRequest;
@@ -60,6 +61,12 @@ interface ChallengePayload {
 
 const DEFAULT_LIMIT = 200;
 const MAX_LIMIT = 500;
+const MAX_TITLE_LENGTH = 500;
+const MAX_JSON_BYTES = 500_000;
+const SEARCH_LIMIT = 20;
+const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+const UUID_PATTERN = new RegExp(`^${UUID}$`);
+const PAGE_KINDS: readonly string[] = ["page", "database"];
 const OWNER_USER_ID = createHash("sha256").update("asa-notation-owner").digest().subarray(0, 16);
 const DEVICE_SCOPES: readonly string[] = ["full", "bot", "sync"];
 
@@ -79,6 +86,31 @@ function parseInteger(raw: string | undefined, fallback: number, min: number, ma
   const value = Number(raw);
   if (!Number.isSafeInteger(value) || value < min || value > max) return null;
   return value;
+}
+
+function jsonSize(value: unknown): number {
+  return JSON.stringify(value).length;
+}
+
+function validTitle(value: unknown): string | null {
+  return typeof value === "string" && value.length <= MAX_TITLE_LENGTH ? value : null;
+}
+
+function validDoc(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && value.type === "doc" && jsonSize(value) <= MAX_JSON_BYTES;
+}
+
+function validProps(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && jsonSize(value) <= MAX_JSON_BYTES;
+}
+
+function mergeProps(current: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
+  const merged = { ...current };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null) delete merged[key];
+    else merged[key] = value;
+  }
+  return merged;
 }
 
 function cleanName(value: unknown, fallback: string | null): string | null {
@@ -136,7 +168,8 @@ export function createRouter(deps: RouterDeps) {
       return principal ? forbidden() : unauthorized();
     }
     if (principal?.kind === "session") return null;
-    if (principal?.kind === "device" && (principal.scope === "full" || principal.scope === "sync")) return null;
+    const allowedScopes: DeviceScope[] = access === "sync" ? ["full", "sync"] : ["full"];
+    if (principal?.kind === "device" && allowedScopes.includes(principal.scope)) return null;
     return principal ? forbidden() : unauthorized();
   }
 
@@ -164,6 +197,130 @@ export function createRouter(deps: RouterDeps) {
         if (limit === null) return json(400, { error: "invalid_limit" });
         return json(200, await store.changes(since, limit));
       },
+    },
+    {
+      method: "GET",
+      pattern: /^\/tree$/,
+      access: "full",
+      handle: async () => json(200, { pages: await store.tree() }),
+    },
+    {
+      method: "GET",
+      pattern: /^\/search$/,
+      access: "full",
+      handle: async ({ req }) => {
+        const query = (req.query.q ?? "").trim();
+        if (query.length === 0 || query.length > 200) return json(400, { error: "invalid_query" });
+        return json(200, { hits: await store.search(query, SEARCH_LIMIT) });
+      },
+    },
+    {
+      method: "POST",
+      pattern: /^\/pages$/,
+      access: "full",
+      handle: async ({ req }) => {
+        const body = isRecord(req.body) ? req.body : null;
+        if (!body) return json(400, { error: "invalid_body" });
+
+        const title = body.title === undefined ? "" : validTitle(body.title);
+        if (title === null) return json(400, { error: "invalid_title" });
+        const kind = body.kind === undefined ? "page" : body.kind;
+        if (typeof kind !== "string" || !PAGE_KINDS.includes(kind)) return json(400, { error: "invalid_kind" });
+        const pageBody = body.body === undefined || body.body === null ? null : body.body;
+        if (pageBody !== null && !validDoc(pageBody)) return json(400, { error: "invalid_page_body" });
+        const props = body.props === undefined ? {} : body.props;
+        if (!validProps(props)) return json(400, { error: "invalid_props" });
+
+        let parentId: string | null = null;
+        if (body.parentId !== undefined && body.parentId !== null) {
+          if (typeof body.parentId !== "string" || !UUID_PATTERN.test(body.parentId)) {
+            return json(400, { error: "invalid_parent" });
+          }
+          if (!(await store.get(body.parentId))) return json(400, { error: "parent_not_found" });
+          parentId = body.parentId;
+        }
+
+        const page = await store.create({
+          parentId,
+          kind: kind as "page" | "database",
+          title,
+          body: pageBody,
+          bodyText: pageBody === null ? "" : extractText(pageBody),
+          props,
+        });
+        return json(201, page);
+      },
+    },
+    {
+      method: "GET",
+      pattern: new RegExp(`^/pages/(${UUID})$`),
+      access: "full",
+      handle: async ({ match }) => {
+        const page = await store.get(match[1]!);
+        return page ? json(200, page) : json(404, { error: "not_found" });
+      },
+    },
+    {
+      method: "PATCH",
+      pattern: new RegExp(`^/pages/(${UUID})$`),
+      access: "full",
+      handle: async ({ req, match }) => {
+        const id = match[1]!;
+        const body = isRecord(req.body) ? req.body : null;
+        if (!body) return json(400, { error: "invalid_body" });
+        const baseRev = body.baseRev;
+        if (typeof baseRev !== "number" || !Number.isSafeInteger(baseRev) || baseRev < 0) {
+          return json(400, { error: "invalid_base_rev" });
+        }
+
+        const patch: PagePatch = {};
+        if (body.title !== undefined) {
+          const title = validTitle(body.title);
+          if (title === null) return json(400, { error: "invalid_title" });
+          patch.title = title;
+        }
+        if (body.body !== undefined) {
+          if (body.body !== null && !validDoc(body.body)) return json(400, { error: "invalid_page_body" });
+          patch.body = body.body;
+          patch.bodyText = body.body === null ? "" : extractText(body.body);
+        }
+        if (body.parentId !== undefined) {
+          if (body.parentId !== null && (typeof body.parentId !== "string" || !UUID_PATTERN.test(body.parentId))) {
+            return json(400, { error: "invalid_parent" });
+          }
+          patch.parentId = body.parentId;
+        }
+        let propsPatch: Record<string, unknown> | undefined;
+        if (body.props !== undefined) {
+          if (!validProps(body.props)) return json(400, { error: "invalid_props" });
+          propsPatch = body.props;
+        }
+        if (Object.keys(patch).length === 0 && propsPatch === undefined) return json(400, { error: "empty_patch" });
+
+        const current = await store.get(id);
+        if (!current) return json(404, { error: "not_found" });
+        if (current.rev !== baseRev) return json(409, { error: "conflict", page: current });
+
+        if (typeof patch.parentId === "string") {
+          if (patch.parentId === id || (await store.isDescendant(id, patch.parentId))) {
+            return json(400, { error: "invalid_parent" });
+          }
+          if (!(await store.get(patch.parentId))) return json(400, { error: "parent_not_found" });
+        }
+        if (propsPatch !== undefined) patch.props = mergeProps(current.props, propsPatch);
+
+        const result = await store.update(id, patch, baseRev);
+        if (result.status === "ok") return json(200, result.page);
+        if (result.status === "conflict") return json(409, { error: "conflict", page: result.page });
+        return json(404, { error: "not_found" });
+      },
+    },
+    {
+      method: "DELETE",
+      pattern: new RegExp(`^/pages/(${UUID})$`),
+      access: "full",
+      handle: async ({ match }) =>
+        (await store.softDelete(match[1]!)) ? json(200, { ok: true }) : json(404, { error: "not_found" }),
     },
     {
       method: "GET",
@@ -315,7 +472,8 @@ export function createRouter(deps: RouterDeps) {
     },
   ];
 
-  return async function handle(req: ApiRequest): Promise<ApiResponse> {
+  return async function handle(incoming: ApiRequest): Promise<ApiResponse> {
+    const req = { ...incoming, path: incoming.path.replace(/^\/api(?=\/|$)/, "") || "/" };
     const matching = routes
       .map((route) => ({ route, match: route.pattern.exec(req.path) }))
       .filter((entry): entry is { route: Route; match: RegExpExecArray } => entry.match !== null);

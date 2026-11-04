@@ -22,3 +22,19 @@ export interface ChangeFeed {
   next: number;
   hasMore: boolean;
 }
+
+export interface TreeNode {
+  id: string;
+  parentId: string | null;
+  kind: PageKind;
+  title: string;
+  rev: number;
+  updatedAt: string;
+}
+
+export interface SearchHit {
+  id: string;
+  kind: PageKind;
+  title: string;
+  snippet: string;
+}

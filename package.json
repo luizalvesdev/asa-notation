@@ -11,10 +11,11 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/web",
     "test": "vitest run",
     "build": "PATH=$PWD/node_modules/.bin:$PATH sam build",
     "migrate": "node scripts/migrate.ts",
+    "dev:api": "esbuild apps/api/src/dev-server.ts --bundle --platform=node --format=esm --target=es2022 --external:@electric-sql/pglite --outfile=.dev/dev-server.mjs --log-level=warning --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && node .dev/dev-server.mjs",
     "smoke:db": "esbuild scripts/smoke-db.ts --bundle --platform=node --format=esm --target=es2022 --outfile=.smoke/smoke-db.mjs --log-level=warning --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && node .smoke/smoke-db.mjs"
   },
   "devDependencies": {
