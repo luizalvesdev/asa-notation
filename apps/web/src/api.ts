@@ -42,6 +42,7 @@ async function request<T>(
 export interface Me {
   authenticated: boolean;
   hasPasskeys: boolean;
+  hasPassword: boolean;
 }
 
 export interface PageDraft {
@@ -63,6 +64,14 @@ export const api = {
     request<{ ok: true }>("POST", "/auth/passkey/register/verify", { name, response }),
   loginOptions: () => request<unknown>("POST", "/auth/passkey/login/options"),
   loginVerify: (response: unknown) => request<{ ok: true }>("POST", "/auth/passkey/login/verify", { response }),
+  passwordLogin: (password: string) => request<{ ok: true }>("POST", "/auth/password/login", { password }),
+  setPassword: (password: string, options: { currentPassword?: string; bootstrapToken?: string } = {}) =>
+    request<{ ok: true }>(
+      "POST",
+      "/auth/password/set",
+      options.currentPassword === undefined ? { password } : { password, currentPassword: options.currentPassword },
+      options.bootstrapToken === undefined ? {} : { "x-bootstrap-token": options.bootstrapToken },
+    ),
 
   head: () => request<{ seq: number }>("GET", "/sync/head"),
   tree: () => request<{ pages: TreeNode[] }>("GET", "/tree"),

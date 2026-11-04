@@ -80,4 +80,35 @@ describe("PgAuthStore", () => {
       await expect(store.createDeviceToken({ name: "d", scope: "root" as never, tokenHash: "h" })).rejects.toThrow();
     });
   });
+
+  describe("owner password", () => {
+    beforeEach(async () => {
+      await db.exec("delete from owner_password");
+    });
+
+    it("starts empty, then stores and replaces the hash", async () => {
+      expect(await store.getPassword()).toBeNull();
+      await store.setPassword("hash-1");
+      expect(await store.getPassword()).toEqual({ hash: "hash-1", failedCount: 0, lockedUntil: null });
+      await store.recordPasswordFailure();
+      await store.setPassword("hash-2");
+      expect(await store.getPassword()).toEqual({ hash: "hash-2", failedCount: 0, lockedUntil: null });
+    });
+
+    it("counts failures, locks and resets", async () => {
+      await store.setPassword("h");
+      expect(await store.recordPasswordFailure()).toBe(1);
+      expect(await store.recordPasswordFailure()).toBe(2);
+      await store.lockPassword("2026-11-04T12:15:00.000Z");
+      expect(await store.getPassword()).toMatchObject({ failedCount: 2, lockedUntil: "2026-11-04T12:15:00.000Z" });
+      await store.resetPasswordFailures();
+      expect(await store.getPassword()).toMatchObject({ failedCount: 0, lockedUntil: null });
+    });
+
+    it("keeps a single row", async () => {
+      await store.setPassword("a");
+      await store.setPassword("b");
+      expect((await db.query("select count(*)::int as n from owner_password")).rows).toEqual([{ n: 1 }]);
+    });
+  });
 });

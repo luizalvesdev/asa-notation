@@ -11,7 +11,7 @@ describe("auth flow", () => {
   describe("anonymous access", () => {
     it("reports no session and no passkeys", async () => {
       const res = await app.call("GET", "/auth/me");
-      expect(res).toEqual({ status: 200, body: { authenticated: false, hasPasskeys: false } });
+      expect(res).toEqual({ status: 200, body: { authenticated: false, hasPasskeys: false, hasPassword: false } });
     });
 
     it.each(["/sync/head", "/changes", "/devices"])("%s requires authentication", async (path) => {
@@ -45,7 +45,7 @@ describe("auth flow", () => {
       expect(verify.status).toBe(200);
       expect(session).toBeDefined();
       const me = await app.call("GET", "/auth/me", { cookies: { asa_session: session } });
-      expect(me.body).toEqual({ authenticated: true, hasPasskeys: true });
+      expect(me.body).toEqual({ authenticated: true, hasPasskeys: true, hasPassword: false });
       expect((await app.auth.listPasskeys()).map((p) => p.name)).toEqual(["laptop"]);
     });
 

@@ -4,6 +4,7 @@ import { api, ApiError } from "./api.js";
 import { DatabaseView } from "./DatabaseView.js";
 import { asDatabaseProps } from "./db-model.js";
 import { PageEditor } from "./PageEditor.js";
+import { PasswordDialog } from "./PasswordDialog.js";
 import { Sidebar } from "./Sidebar.js";
 import { ancestorsOf } from "./tree.js";
 
@@ -71,7 +72,13 @@ function RowPage({ page, seq, onSaved, onOpen }: { page: Page; seq: number | nul
   );
 }
 
-export function Workspace({ onLogout }: { onLogout: () => void }) {
+interface WorkspaceProps {
+  hasPassword: boolean;
+  onLogout: () => void;
+  onAccountChanged: () => void;
+}
+
+export function Workspace({ hasPassword, onLogout, onAccountChanged }: WorkspaceProps) {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(readHash);
@@ -79,6 +86,7 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
   const [pageState, setPageState] = useState<PageState>({ status: "idle" });
   const [error, setError] = useState<string | null>(null);
   const [seq, setSeq] = useState<number | null>(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const refreshTree = useCallback(async () => {
     try {
@@ -221,7 +229,12 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
         onCreateDatabase={() => void create(null, "database")}
         onDelete={(id) => void remove(id)}
         onLogout={onLogout}
+        passwordLabel={hasPassword ? "Trocar senha" : "Definir senha"}
+        onPassword={() => setPasswordOpen(true)}
       />
+      {passwordOpen && (
+        <PasswordDialog hasPassword={hasPassword} onClose={() => setPasswordOpen(false)} onSaved={onAccountChanged} />
+      )}
       <main className="content">
         {error && (
           <div className="banner" role="alert">

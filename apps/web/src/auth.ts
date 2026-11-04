@@ -1,5 +1,7 @@
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from "@simplewebauthn/browser";
-import { api } from "./api.js";
+import { api, ApiError } from "./api.js";
+
+export const PASSWORD_MIN_LENGTH = 12;
 
 export const passkeysSupported = () => browserSupportsWebAuthn();
 
@@ -15,13 +17,32 @@ export async function loginWithPasskey(): Promise<void> {
   await api.loginVerify(response);
 }
 
-export function describeAuthError(err: unknown): string {
+export type AuthContext = "bootstrap" | "login" | "change";
+
+function minutes(err: ApiError): number {
+  const seconds = (err.body as { retryAfterSeconds?: number } | null)?.retryAfterSeconds ?? 900;
+  return Math.max(1, Math.ceil(seconds / 60));
+}
+
+export function describeAuthError(err: unknown, context: AuthContext): string {
   const name = (err as { name?: string } | null)?.name;
   if (name === "NotAllowedError") return "A operação foi cancelada ou expirou.";
   if (name === "InvalidStateError") return "Esta passkey já está cadastrada.";
-  const code = (err as { code?: string } | null)?.code;
-  if (code === "unauthorized") return "Token de bootstrap inválido.";
-  if (code === "bootstrap_closed") return "O cadastro inicial já foi feito. Entre com a passkey.";
-  if (code === "verification_failed") return "Não foi possível verificar a passkey.";
-  return "Algo deu errado. Tente de novo.";
+  if (!(err instanceof ApiError)) return "Algo deu errado. Tente de novo.";
+  switch (err.code) {
+    case "locked":
+      return `Muitas tentativas erradas. Tente de novo em ${minutes(err)} min.`;
+    case "invalid_password":
+      return `A senha precisa ter pelo menos ${PASSWORD_MIN_LENGTH} caracteres.`;
+    case "wrong_password":
+      return "Senha atual incorreta.";
+    case "bootstrap_closed":
+      return "O primeiro acesso já foi feito. Entre com a sua senha ou passkey.";
+    case "verification_failed":
+      return "Não foi possível verificar a passkey.";
+    case "unauthorized":
+      return context === "bootstrap" ? "Token de bootstrap inválido." : "Senha incorreta.";
+    default:
+      return "Algo deu errado. Tente de novo.";
+  }
 }

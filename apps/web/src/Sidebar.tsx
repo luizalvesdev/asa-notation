@@ -14,9 +14,11 @@ interface Props {
   onCreateDatabase: () => void;
   onDelete: (id: string) => void;
   onLogout: () => void;
+  passwordLabel: string;
+  onPassword: () => void;
 }
 
-export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCreate, onCreateDatabase, onDelete, onLogout }: Props) {
+export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCreate, onCreateDatabase, onDelete, onLogout, passwordLabel, onPassword }: Props) {
   const tree = useMemo(() => buildTree(nodes), [nodes]);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
@@ -111,6 +113,9 @@ export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCre
         </button>
         <button className="ghost" onClick={onCreateDatabase}>
           + Novo database
+        </button>
+        <button className="ghost" onClick={onPassword}>
+          {passwordLabel}
         </button>
         <button className="ghost" onClick={onLogout}>
           Sair

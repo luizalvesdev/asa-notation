@@ -4,6 +4,7 @@ import type {
   DeviceScope,
   DeviceTokenInfo,
   NewPasskey,
+  PasswordState,
   StoredPasskey,
 } from "./store.js";
 
@@ -106,5 +107,39 @@ export class PgAuthStore implements AuthStore {
       [id],
     );
     return rows.length > 0;
+  }
+
+  async getPassword(): Promise<PasswordState | null> {
+    const rows = await this.sql.query("select hash, failed_count, locked_until from owner_password where id = 1");
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      hash: row.hash as string,
+      failedCount: Number(row.failed_count),
+      lockedUntil: row.locked_until == null ? null : iso(row.locked_until),
+    };
+  }
+
+  async setPassword(hash: string): Promise<void> {
+    await this.sql.query(
+      `insert into owner_password (id, hash) values (1, $1)
+       on conflict (id) do update set hash = excluded.hash, failed_count = 0, locked_until = null, updated_at = now()`,
+      [hash],
+    );
+  }
+
+  async recordPasswordFailure(): Promise<number> {
+    const rows = await this.sql.query(
+      "update owner_password set failed_count = failed_count + 1 where id = 1 returning failed_count",
+    );
+    return Number(rows[0]?.failed_count ?? 0);
+  }
+
+  async lockPassword(until: string): Promise<void> {
+    await this.sql.query("update owner_password set locked_until = $1 where id = 1", [until]);
+  }
+
+  async resetPasswordFailures(): Promise<void> {
+    await this.sql.query("update owner_password set failed_count = 0, locked_until = null where id = 1");
   }
 }

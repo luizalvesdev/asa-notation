@@ -4,6 +4,7 @@ import type {
   DeviceScope,
   DeviceTokenInfo,
   NewPasskey,
+  PasswordState,
   StoredPasskey,
 } from "./store.js";
 
@@ -14,6 +15,7 @@ interface TokenRecord extends DeviceTokenInfo {
 export class InMemoryAuthStore implements AuthStore {
   private passkeys: StoredPasskey[] = [];
   private tokens: TokenRecord[] = [];
+  private password: PasswordState | null = null;
 
   constructor(private readonly now: () => Date = () => new Date()) {}
 
@@ -69,6 +71,28 @@ export class InMemoryAuthStore implements AuthStore {
     if (!found) return false;
     found.revokedAt = this.now().toISOString();
     return true;
+  }
+
+  async getPassword(): Promise<PasswordState | null> {
+    return this.password ? { ...this.password } : null;
+  }
+
+  async setPassword(hash: string): Promise<void> {
+    this.password = { hash, failedCount: 0, lockedUntil: null };
+  }
+
+  async recordPasswordFailure(): Promise<number> {
+    if (!this.password) return 0;
+    this.password.failedCount += 1;
+    return this.password.failedCount;
+  }
+
+  async lockPassword(until: string): Promise<void> {
+    if (this.password) this.password.lockedUntil = until;
+  }
+
+  async resetPasswordFailures(): Promise<void> {
+    if (this.password) this.password = { ...this.password, failedCount: 0, lockedUntil: null };
   }
 }
 

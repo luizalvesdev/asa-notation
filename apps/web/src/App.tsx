@@ -43,7 +43,13 @@ export function App() {
     );
   }
   if (!state.me.authenticated) {
-    return <AuthGate hasPasskeys={state.me.hasPasskeys} onAuthenticated={() => void refresh()} />;
+    return <AuthGate me={state.me} onAuthenticated={() => void refresh()} />;
   }
-  return <Workspace onLogout={() => void logout()} />;
+  return (
+    <Workspace
+      hasPassword={state.me.hasPassword}
+      onLogout={() => void logout()}
+      onAccountChanged={() => void refresh()}
+    />
+  );
 }

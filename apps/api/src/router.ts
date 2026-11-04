@@ -13,7 +13,15 @@ import {
   SESSION_COOKIE,
   type AuthConfig,
 } from "./auth/config.js";
-import type { AuthStore, DeviceScope } from "./auth/store.js";
+import {
+  hashPassword,
+  LOCK_SECONDS,
+  MAX_FAILURES_BEFORE_LOCK,
+  PASSWORD_MAX_LENGTH,
+  validPassword,
+  verifyPassword,
+} from "./auth/password.js";
+import type { AuthStore, DeviceScope, PasswordState } from "./auth/store.js";
 import {
   hashDeviceToken,
   newDeviceToken,
@@ -135,6 +143,19 @@ export function createRouter(deps: RouterDeps) {
   const { store, auth, webauthn, config } = deps;
   const nowMs = deps.now ?? Date.now;
   const nowSeconds = () => Math.floor(nowMs() / 1000);
+
+  const isLocked = (state: PasswordState) => state.lockedUntil !== null && Date.parse(state.lockedUntil) > nowMs();
+
+  const lockedResponse = (until: string) =>
+    json(429, { error: "locked", retryAfterSeconds: Math.max(1, Math.ceil((Date.parse(until) - nowMs()) / 1000)) });
+
+  async function registerFailure(): Promise<string | null> {
+    const failures = await auth.recordPasswordFailure();
+    if (failures === 0 || failures % MAX_FAILURES_BEFORE_LOCK !== 0) return null;
+    const until = new Date(nowMs() + LOCK_SECONDS * 1000).toISOString();
+    await auth.lockPassword(until);
+    return until;
+  }
 
   async function databaseSchema(id: string): Promise<DatabaseSchema | null> {
     const database = await store.get(id);
@@ -400,7 +421,8 @@ export function createRouter(deps: RouterDeps) {
       handle: async ({ req }) => {
         const principal = await authenticate(req);
         const hasPasskeys = (await auth.listPasskeys()).length > 0;
-        return json(200, { authenticated: principal?.kind === "session", hasPasskeys });
+        const hasPassword = (await auth.getPassword()) !== null;
+        return json(200, { authenticated: principal?.kind === "session", hasPasskeys, hasPassword });
       },
     },
     {
@@ -415,7 +437,9 @@ export function createRouter(deps: RouterDeps) {
         } else {
           const supplied = req.headers?.["x-bootstrap-token"];
           if (supplied === undefined || !safeEqual(supplied, config.bootstrapToken)) return unauthorized();
-          if (passkeys.length > 0) return json(403, { error: "bootstrap_closed" });
+          if (passkeys.length > 0 || (await auth.getPassword()) !== null) {
+            return json(403, { error: "bootstrap_closed" });
+          }
           mode = "bootstrap";
         }
         const { options, challenge } = await webauthn.registrationOptions({
@@ -436,7 +460,7 @@ export function createRouter(deps: RouterDeps) {
         const challenge = readChallenge(req, "register");
         if (!challenge) return json(400, { error: "invalid_challenge" });
         if (challenge.mode === "session" && principal?.kind !== "session") return unauthorized();
-        if (challenge.mode === "bootstrap" && (await auth.listPasskeys()).length > 0) {
+        if (challenge.mode === "bootstrap" && ((await auth.listPasskeys()).length > 0 || (await auth.getPassword()) !== null)) {
           return json(403, { error: "bootstrap_closed" });
         }
         const body = isRecord(req.body) ? req.body : null;
@@ -503,6 +527,58 @@ export function createRouter(deps: RouterDeps) {
 
         await auth.updatePasskeyCounter(passkey.credentialId, result.newCounter);
         return json(200, { ok: true }, [clearCookie(CHALLENGE_COOKIE), sessionCookie()]);
+      },
+    },
+    {
+      method: "POST",
+      pattern: /^\/auth\/password\/set$/,
+      access: "registration",
+      handle: async ({ req, principal }) => {
+        const body = isRecord(req.body) ? req.body : null;
+        const password = body?.password;
+        if (!validPassword(password)) return json(400, { error: "invalid_password" });
+        const existing = await auth.getPassword();
+
+        let bootstrap = false;
+        if (principal?.kind === "session") {
+          if (existing) {
+            if (isLocked(existing)) return lockedResponse(existing.lockedUntil!);
+            const current = body?.currentPassword;
+            if (typeof current !== "string" || current.length > PASSWORD_MAX_LENGTH || !(await verifyPassword(current, existing.hash))) {
+              const lockedUntil = await registerFailure();
+              return lockedUntil ? lockedResponse(lockedUntil) : json(403, { error: "wrong_password" });
+            }
+          }
+        } else {
+          const supplied = req.headers?.["x-bootstrap-token"];
+          if (supplied === undefined || !safeEqual(supplied, config.bootstrapToken)) return unauthorized();
+          if (existing || (await auth.listPasskeys()).length > 0) return json(403, { error: "bootstrap_closed" });
+          bootstrap = true;
+        }
+
+        await auth.setPassword(await hashPassword(password));
+        return json(200, { ok: true }, bootstrap ? [sessionCookie()] : undefined);
+      },
+    },
+    {
+      method: "POST",
+      pattern: /^\/auth\/password\/login$/,
+      access: "public",
+      handle: async ({ req }) => {
+        const body = isRecord(req.body) ? req.body : null;
+        const password = body?.password;
+        if (typeof password !== "string" || password.length === 0 || password.length > PASSWORD_MAX_LENGTH) {
+          return json(400, { error: "invalid_password" });
+        }
+        const existing = await auth.getPassword();
+        if (!existing) return unauthorized();
+        if (isLocked(existing)) return lockedResponse(existing.lockedUntil!);
+        if (!(await verifyPassword(password, existing.hash))) {
+          const lockedUntil = await registerFailure();
+          return lockedUntil ? lockedResponse(lockedUntil) : unauthorized();
+        }
+        await auth.resetPasswordFailures();
+        return json(200, { ok: true }, [sessionCookie()]);
       },
     },
     {

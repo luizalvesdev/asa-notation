@@ -27,6 +27,12 @@ export interface DeviceTokenInfo {
   revokedAt: string | null;
 }
 
+export interface PasswordState {
+  hash: string;
+  failedCount: number;
+  lockedUntil: string | null;
+}
+
 export interface AuthStore {
   listPasskeys(): Promise<StoredPasskey[]>;
   addPasskey(passkey: NewPasskey): Promise<StoredPasskey>;
@@ -35,4 +41,9 @@ export interface AuthStore {
   findActiveDeviceToken(tokenHash: string): Promise<DeviceTokenInfo | null>;
   listDeviceTokens(): Promise<DeviceTokenInfo[]>;
   revokeDeviceToken(id: string): Promise<boolean>;
+  getPassword(): Promise<PasswordState | null>;
+  setPassword(hash: string): Promise<void>;
+  recordPasswordFailure(): Promise<number>;
+  lockPassword(until: string): Promise<void>;
+  resetPasswordFailures(): Promise<void>;
 }
