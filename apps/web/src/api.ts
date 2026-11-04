@@ -1,4 +1,4 @@
-import type { Page, SearchHit, TreeNode } from "@asa/core";
+import type { DatabaseRow, Page, SearchHit, TreeNode } from "@asa/core";
 
 export class ApiError extends Error {
   constructor(
@@ -46,9 +46,12 @@ export interface Me {
 
 export interface PageDraft {
   title?: string;
+  kind?: "page" | "database";
   parentId?: string | null;
+  databaseId?: string;
   body?: unknown;
   props?: Record<string, unknown>;
+  sortKey?: string | null;
 }
 
 export const api = {
@@ -65,6 +68,7 @@ export const api = {
   tree: () => request<{ pages: TreeNode[] }>("GET", "/tree"),
   search: (q: string) => request<{ hits: SearchHit[] }>("GET", `/search?q=${encodeURIComponent(q)}`),
   getPage: (id: string) => request<Page>("GET", `/pages/${id}`),
+  rows: (databaseId: string) => request<{ rows: DatabaseRow[] }>("GET", `/databases/${databaseId}/rows`),
   createPage: (draft: PageDraft) => request<Page>("POST", "/pages", draft),
   updatePage: (id: string, baseRev: number, patch: PageDraft) =>
     request<Page>("PATCH", `/pages/${id}`, { baseRev, ...patch }),

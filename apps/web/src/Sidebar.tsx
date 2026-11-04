@@ -11,11 +11,12 @@ interface Props {
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onCreate: (parentId: string | null) => void;
+  onCreateDatabase: () => void;
   onDelete: (id: string) => void;
   onLogout: () => void;
 }
 
-export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCreate, onDelete, onLogout }: Props) {
+export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCreate, onCreateDatabase, onDelete, onLogout }: Props) {
   const tree = useMemo(() => buildTree(nodes), [nodes]);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
@@ -53,6 +54,7 @@ export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCre
             {isOpen ? "▾" : "▸"}
           </button>
           <button className="title" onClick={() => onSelect(item.id)}>
+            {item.kind === "database" && <span className="kind-icon" aria-label="Database">▦</span>}
             {item.title || "Sem título"}
           </button>
           <span className="actions">
@@ -106,6 +108,9 @@ export function Sidebar({ nodes, selectedId, expanded, onToggle, onSelect, onCre
       <div className="sidebar-foot">
         <button className="ghost" onClick={() => onCreate(null)}>
           + Nova página
+        </button>
+        <button className="ghost" onClick={onCreateDatabase}>
+          + Novo database
         </button>
         <button className="ghost" onClick={onLogout}>
           Sair

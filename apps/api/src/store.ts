@@ -1,12 +1,14 @@
-import type { ChangeFeed, Page, PageKind, SearchHit, TreeNode } from "@asa/core";
+import type { ChangeFeed, DatabaseRow, Page, PageKind, SearchHit, TreeNode } from "@asa/core";
 
 export interface NewPage {
   parentId: string | null;
+  databaseId: string | null;
   kind: PageKind;
   title: string;
   body: unknown | null;
   bodyText: string;
   props: Record<string, unknown>;
+  sortKey: string | null;
 }
 
 export interface PagePatch {
@@ -15,6 +17,7 @@ export interface PagePatch {
   body?: unknown | null;
   bodyText?: string;
   props?: Record<string, unknown>;
+  sortKey?: string | null;
 }
 
 export type UpdateResult =
@@ -27,6 +30,7 @@ export interface PageStore {
   changes(since: number, limit: number): Promise<ChangeFeed>;
   get(id: string): Promise<Page | null>;
   tree(): Promise<TreeNode[]>;
+  rows(databaseId: string): Promise<DatabaseRow[]>;
   create(input: NewPage): Promise<Page>;
   update(id: string, patch: PagePatch, baseRev: number): Promise<UpdateResult>;
   softDelete(id: string): Promise<boolean>;

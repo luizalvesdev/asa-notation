@@ -1,6 +1,8 @@
 import type { Page, TreeNode } from "@asa/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "./api.js";
+import { DatabaseView } from "./DatabaseView.js";
+import { asDatabaseProps } from "./db-model.js";
 import { PageEditor } from "./PageEditor.js";
 import { Sidebar } from "./Sidebar.js";
 import { ancestorsOf } from "./tree.js";
@@ -36,6 +38,39 @@ type PageState =
   | { status: "ready"; page: Page }
   | { status: "missing" };
 
+function RowPage({ page, seq, onSaved, onOpen }: { page: Page; seq: number | null; onSaved: (page: Page) => void; onOpen: (id: string) => void }) {
+  const [database, setDatabase] = useState<Page | null>(null);
+  const [remoteRev, setRemoteRev] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getPage(page.databaseId!).then(
+      (db) => !cancelled && setDatabase(db),
+      () => !cancelled && setDatabase(null),
+    );
+    if (seq !== null) {
+      api.getPage(page.id).then(
+        (fresh) => !cancelled && setRemoteRev(fresh.rev),
+        () => undefined,
+      );
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [page.id, page.databaseId, seq]);
+
+  if (!database) return <p className="placeholder">Carregando…</p>;
+  return (
+    <PageEditor
+      page={page}
+      remoteRev={remoteRev}
+      onSaved={onSaved}
+      schema={asDatabaseProps(database.props).schema}
+      breadcrumb={{ title: database.title, onClick: () => onOpen(database.id) }}
+    />
+  );
+}
+
 export function Workspace({ onLogout }: { onLogout: () => void }) {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -43,6 +78,7 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
   const [pageState, setPageState] = useState<PageState>({ status: "idle" });
   const [error, setError] = useState<string | null>(null);
+  const [seq, setSeq] = useState<number | null>(null);
 
   const refreshTree = useCallback(async () => {
     try {
@@ -63,9 +99,12 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
     const tick = async () => {
       if (document.visibilityState !== "visible") return;
       try {
-        const { seq } = await api.head();
-        if (lastSeq !== null && seq !== lastSeq) await refreshTree();
-        lastSeq = seq;
+        const { seq: current } = await api.head();
+        if (lastSeq !== null && current !== lastSeq) {
+          await refreshTree();
+          setSeq(current);
+        }
+        lastSeq = current;
       } catch {
         return;
       }
@@ -120,9 +159,9 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const create = useCallback(
-    async (parentId: string | null) => {
+    async (parentId: string | null, kind: "page" | "database" = "page") => {
       try {
-        const page = await api.createPage({ parentId });
+        const page = await api.createPage({ parentId, kind });
         setNodes((prev) => [
           ...prev,
           { id: page.id, parentId: page.parentId, kind: page.kind, title: page.title, rev: page.rev, updatedAt: page.updatedAt },
@@ -179,6 +218,7 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
         onToggle={toggle}
         onSelect={select}
         onCreate={(parentId) => void create(parentId)}
+        onCreateDatabase={() => void create(null, "database")}
         onDelete={(id) => void remove(id)}
         onLogout={onLogout}
       />
@@ -189,7 +229,20 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
         {pageState.status === "ready" ? (
-          <PageEditor key={pageState.page.id} page={pageState.page} remoteRev={remoteRev} onSaved={onSaved} />
+          pageState.page.kind === "database" ? (
+            <DatabaseView
+              key={pageState.page.id}
+              page={pageState.page}
+              seq={seq}
+              remoteRev={remoteRev}
+              onSaved={onSaved}
+              onOpenRow={select}
+            />
+          ) : pageState.page.databaseId !== null ? (
+            <RowPage key={pageState.page.id} page={pageState.page} seq={seq} onSaved={onSaved} onOpen={select} />
+          ) : (
+            <PageEditor key={pageState.page.id} page={pageState.page} remoteRev={remoteRev} onSaved={onSaved} />
+          )
         ) : pageState.status === "loading" ? (
           <p className="placeholder">Carregando…</p>
         ) : pageState.status === "missing" ? (

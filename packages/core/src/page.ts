@@ -11,6 +11,7 @@ export interface Page {
   body: unknown | null;
   props: Record<string, unknown>;
   origin: PageOrigin;
+  sortKey: string | null;
   rev: number;
   createdAt: string;
   updatedAt: string;

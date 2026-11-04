@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto";
-import { extractText } from "@asa/core";
+import {
+  applyRowProps,
+  defaultDatabaseProps,
+  extractText,
+  parseDatabaseProps,
+  SORT_KEY_PATTERN,
+  type DatabaseSchema,
+} from "@asa/core";
 import {
   CHALLENGE_COOKIE,
   CHALLENGE_TTL_SECONDS,
@@ -104,6 +111,10 @@ function validProps(value: unknown): value is Record<string, unknown> {
   return isRecord(value) && jsonSize(value) <= MAX_JSON_BYTES;
 }
 
+function validSortKey(value: unknown): value is string {
+  return typeof value === "string" && SORT_KEY_PATTERN.test(value);
+}
+
 function mergeProps(current: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
   const merged = { ...current };
   for (const [key, value] of Object.entries(patch)) {
@@ -124,6 +135,12 @@ export function createRouter(deps: RouterDeps) {
   const { store, auth, webauthn, config } = deps;
   const nowMs = deps.now ?? Date.now;
   const nowSeconds = () => Math.floor(nowMs() / 1000);
+
+  async function databaseSchema(id: string): Promise<DatabaseSchema | null> {
+    const database = await store.get(id);
+    if (!database || database.kind !== "database") return null;
+    return parseDatabaseProps(database.props)?.schema ?? { properties: [] };
+  }
 
   const sessionCookie = () =>
     serializeCookie(
@@ -228,8 +245,10 @@ export function createRouter(deps: RouterDeps) {
         if (typeof kind !== "string" || !PAGE_KINDS.includes(kind)) return json(400, { error: "invalid_kind" });
         const pageBody = body.body === undefined || body.body === null ? null : body.body;
         if (pageBody !== null && !validDoc(pageBody)) return json(400, { error: "invalid_page_body" });
-        const props = body.props === undefined ? {} : body.props;
-        if (!validProps(props)) return json(400, { error: "invalid_props" });
+        const rawProps = body.props;
+        if (rawProps !== undefined && !validProps(rawProps)) return json(400, { error: "invalid_props" });
+        const sortKey = body.sortKey === undefined ? null : body.sortKey;
+        if (sortKey !== null && !validSortKey(sortKey)) return json(400, { error: "invalid_sort_key" });
 
         let parentId: string | null = null;
         if (body.parentId !== undefined && body.parentId !== null) {
@@ -240,15 +259,46 @@ export function createRouter(deps: RouterDeps) {
           parentId = body.parentId;
         }
 
+        let databaseId: string | null = null;
+        let props: Record<string, unknown> = rawProps ?? {};
+        if (body.databaseId !== undefined && body.databaseId !== null) {
+          if (typeof body.databaseId !== "string" || !UUID_PATTERN.test(body.databaseId)) {
+            return json(400, { error: "invalid_database" });
+          }
+          if (kind !== "page" || parentId !== null) return json(400, { error: "invalid_row" });
+          const schema = await databaseSchema(body.databaseId);
+          if (!schema) return json(400, { error: "database_not_found" });
+          const applied = applyRowProps(schema, {}, props);
+          if (!applied.ok) return json(400, { error: "invalid_props", key: applied.key });
+          props = applied.props;
+          databaseId = body.databaseId;
+        } else if (kind === "database") {
+          const parsed = parseDatabaseProps(rawProps ?? defaultDatabaseProps());
+          if (!parsed) return json(400, { error: "invalid_database_props" });
+          props = parsed as unknown as Record<string, unknown>;
+        }
+
         const page = await store.create({
           parentId,
+          databaseId,
           kind: kind as "page" | "database",
           title,
           body: pageBody,
           bodyText: pageBody === null ? "" : extractText(pageBody),
           props,
+          sortKey,
         });
         return json(201, page);
+      },
+    },
+    {
+      method: "GET",
+      pattern: new RegExp(`^/databases/(${UUID})/rows$`),
+      access: "full",
+      handle: async ({ match }) => {
+        const database = await store.get(match[1]!);
+        if (!database || database.kind !== "database") return json(404, { error: "not_found" });
+        return json(200, { rows: await store.rows(database.id) });
       },
     },
     {
@@ -290,6 +340,10 @@ export function createRouter(deps: RouterDeps) {
           }
           patch.parentId = body.parentId;
         }
+        if (body.sortKey !== undefined) {
+          if (body.sortKey !== null && !validSortKey(body.sortKey)) return json(400, { error: "invalid_sort_key" });
+          patch.sortKey = body.sortKey;
+        }
         let propsPatch: Record<string, unknown> | undefined;
         if (body.props !== undefined) {
           if (!validProps(body.props)) return json(400, { error: "invalid_props" });
@@ -301,13 +355,30 @@ export function createRouter(deps: RouterDeps) {
         if (!current) return json(404, { error: "not_found" });
         if (current.rev !== baseRev) return json(409, { error: "conflict", page: current });
 
+        if (patch.parentId !== undefined && current.databaseId !== null) {
+          return json(400, { error: "invalid_parent" });
+        }
         if (typeof patch.parentId === "string") {
           if (patch.parentId === id || (await store.isDescendant(id, patch.parentId))) {
             return json(400, { error: "invalid_parent" });
           }
           if (!(await store.get(patch.parentId))) return json(400, { error: "parent_not_found" });
         }
-        if (propsPatch !== undefined) patch.props = mergeProps(current.props, propsPatch);
+        if (propsPatch !== undefined) {
+          if (current.kind === "database") {
+            const parsed = parseDatabaseProps(mergeProps(current.props, propsPatch));
+            if (!parsed) return json(400, { error: "invalid_database_props" });
+            patch.props = parsed as unknown as Record<string, unknown>;
+          } else if (current.databaseId !== null) {
+            const schema = await databaseSchema(current.databaseId);
+            if (!schema) return json(400, { error: "database_not_found" });
+            const applied = applyRowProps(schema, current.props, propsPatch);
+            if (!applied.ok) return json(400, { error: "invalid_props", key: applied.key });
+            patch.props = applied.props;
+          } else {
+            patch.props = mergeProps(current.props, propsPatch);
+          }
+        }
 
         const result = await store.update(id, patch, baseRev);
         if (result.status === "ok") return json(200, result.page);

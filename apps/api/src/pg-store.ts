@@ -1,9 +1,9 @@
-import type { ChangeFeed, Page, PageKind, PageOrigin, SearchHit, TreeNode } from "@asa/core";
+import type { ChangeFeed, DatabaseRow, Page, PageKind, PageOrigin, SearchHit, TreeNode } from "@asa/core";
 import type { Row, SqlClient } from "./sql.js";
 import type { NewPage, PagePatch, PageStore, UpdateResult } from "./store.js";
 
 const PAGE_COLUMNS =
-  "id, parent_id, database_id, kind, title, body, props, origin, rev, created_at, updated_at, deleted_at";
+  "id, parent_id, database_id, kind, title, body, props, origin, sort_key, rev, created_at, updated_at, deleted_at";
 
 const SEARCH_VECTOR = "to_tsvector('portuguese', title || ' ' || body_text)";
 
@@ -21,6 +21,7 @@ function toPage(row: Row): Page {
     body: row.body ?? null,
     props: (row.props as Record<string, unknown>) ?? {},
     origin: row.origin as PageOrigin,
+    sortKey: (row.sort_key as string | null) ?? null,
     rev: Number(row.rev),
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
@@ -67,17 +68,37 @@ export class PgPageStore implements PageStore {
     }));
   }
 
+  async rows(databaseId: string): Promise<DatabaseRow[]> {
+    const rows = await this.sql.query(
+      `select id, title, props, sort_key, rev, created_at, updated_at from pages
+       where database_id = $1 and deleted_at is null
+       order by sort_key asc nulls last, created_at asc, id asc`,
+      [databaseId],
+    );
+    return rows.map((row) => ({
+      id: row.id as string,
+      title: row.title as string,
+      props: (row.props as Record<string, unknown>) ?? {},
+      sortKey: (row.sort_key as string | null) ?? null,
+      rev: Number(row.rev),
+      createdAt: iso(row.created_at),
+      updatedAt: iso(row.updated_at),
+    }));
+  }
+
   async create(input: NewPage): Promise<Page> {
     const rows = await this.sql.query(
-      `insert into pages (parent_id, kind, title, body, body_text, props)
-       values ($1, $2, $3, $4::jsonb, $5, $6::jsonb) returning ${PAGE_COLUMNS}`,
+      `insert into pages (parent_id, database_id, kind, title, body, body_text, props, sort_key)
+       values ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, $8) returning ${PAGE_COLUMNS}`,
       [
         input.parentId,
+        input.databaseId,
         input.kind,
         input.title,
         input.body === null ? null : JSON.stringify(input.body),
         input.bodyText,
         JSON.stringify(input.props),
+        input.sortKey,
       ],
     );
     return toPage(rows[0]!);
@@ -97,6 +118,7 @@ export class PgPageStore implements PageStore {
       set("body_text", patch.bodyText ?? "");
     }
     if (patch.props !== undefined) set("props", JSON.stringify(patch.props), "::jsonb");
+    if (patch.sortKey !== undefined) set("sort_key", patch.sortKey);
     sets.push("rev = nextval('change_seq')", "updated_at = now()");
 
     const updated = await this.sql.query(
@@ -114,7 +136,8 @@ export class PgPageStore implements PageStore {
       `with recursive doomed as (
          select id from pages where id = $1 and deleted_at is null
          union
-         select p.id from pages p join doomed d on p.parent_id = d.id where p.deleted_at is null
+         select p.id from pages p join doomed d on (p.parent_id = d.id or p.database_id = d.id)
+         where p.deleted_at is null
        )
        update pages set deleted_at = now(), updated_at = now(), rev = nextval('change_seq')
        where id in (select id from doomed) returning id`,

@@ -1,9 +1,7 @@
-import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { applyMigrations } from "./migrations.js";
 import { PgAuthStore } from "../src/auth/pg-store.js";
-
-const migration = readFileSync(new URL("../migrations/001_init.sql", import.meta.url), "utf8");
 
 describe("PgAuthStore", () => {
   let db: PGlite;
@@ -11,7 +9,7 @@ describe("PgAuthStore", () => {
 
   beforeAll(async () => {
     db = new PGlite();
-    await db.exec(migration);
+    await applyMigrations(db);
     store = new PgAuthStore({
       query: async (text, params) => (await db.query(text, params)).rows as Record<string, unknown>[],
     });

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ChangeFeed, Page, SearchHit, TreeNode } from "@asa/core";
+import type { ChangeFeed, DatabaseRow, Page, SearchHit, TreeNode } from "@asa/core";
 import type { NewPage, PagePatch, PageStore, UpdateResult } from "./store.js";
 
 export type PageInput = Omit<Page, "rev">;
@@ -46,17 +46,40 @@ export class InMemoryPageStore implements PageStore {
       .map(({ id, parentId, kind, title, rev, updatedAt }) => ({ id, parentId, kind, title, rev, updatedAt }));
   }
 
+  async rows(databaseId: string): Promise<DatabaseRow[]> {
+    return [...this.pages.values()]
+      .filter((p) => p.databaseId === databaseId && p.deletedAt === null)
+      .sort((a, b) => {
+        if (a.sortKey !== b.sortKey) {
+          if (a.sortKey === null) return 1;
+          if (b.sortKey === null) return -1;
+          return a.sortKey < b.sortKey ? -1 : 1;
+        }
+        return a.createdAt.localeCompare(b.createdAt);
+      })
+      .map(({ id, title, props, sortKey, rev, createdAt, updatedAt }) => ({
+        id,
+        title,
+        props,
+        sortKey,
+        rev,
+        createdAt,
+        updatedAt,
+      }));
+  }
+
   async create(input: NewPage): Promise<Page> {
     const stamp = this.now().toISOString();
     const page = this.save({
       id: randomUUID(),
       parentId: input.parentId,
-      databaseId: null,
+      databaseId: input.databaseId,
       kind: input.kind,
       title: input.title,
       body: input.body,
       props: input.props,
       origin: "app",
+      sortKey: input.sortKey,
       createdAt: stamp,
       updatedAt: stamp,
       deletedAt: null,
@@ -75,6 +98,7 @@ export class InMemoryPageStore implements PageStore {
       ...(patch.parentId !== undefined ? { parentId: patch.parentId } : {}),
       ...(patch.body !== undefined ? { body: patch.body } : {}),
       ...(patch.props !== undefined ? { props: patch.props } : {}),
+      ...(patch.sortKey !== undefined ? { sortKey: patch.sortKey } : {}),
       updatedAt: this.now().toISOString(),
       rev: ++this.seq,
     };
@@ -115,7 +139,8 @@ export class InMemoryPageStore implements PageStore {
     while (queue.length > 0) {
       const parent = queue.shift()!;
       for (const page of this.pages.values()) {
-        if (page.parentId === parent && !out.includes(page.id)) {
+        const child = page.parentId === parent || page.databaseId === parent;
+        if (child && !out.includes(page.id)) {
           out.push(page.id);
           queue.push(page.id);
         }

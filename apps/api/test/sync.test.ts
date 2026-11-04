@@ -13,6 +13,7 @@ function pageInput(id: string, overrides: Partial<PageInput> = {}): PageInput {
     body: null,
     props: {},
     origin: "app",
+    sortKey: null,
     createdAt: "2026-11-04T10:00:00-03:00",
     updatedAt: "2026-11-04T10:00:00-03:00",
     deletedAt: null,

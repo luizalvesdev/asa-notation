@@ -1,9 +1,7 @@
-import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { applyMigrations } from "./migrations.js";
 import { PgPageStore } from "../src/pg-store.js";
-
-const migration = readFileSync(new URL("../migrations/001_init.sql", import.meta.url), "utf8");
 
 const doc = (text: string) => ({
   type: "doc",
@@ -12,11 +10,13 @@ const doc = (text: string) => ({
 
 const input = (title: string, extra: Partial<Parameters<PgPageStore["create"]>[0]> = {}) => ({
   parentId: null,
+  databaseId: null,
   kind: "page" as const,
   title,
   body: null,
   bodyText: "",
   props: {},
+  sortKey: null,
   ...extra,
 });
 
@@ -26,7 +26,7 @@ describe("PgPageStore page operations", () => {
 
   beforeAll(async () => {
     db = new PGlite();
-    await db.exec(migration);
+    await applyMigrations(db);
     store = new PgPageStore({
       query: async (text, params) => (await db.query(text, params)).rows as Record<string, unknown>[],
     });
@@ -164,6 +164,37 @@ describe("PgPageStore page operations", () => {
     expect((await store.search("receita", 10)).map((h) => h.id)).toEqual([receitas.id]);
     await store.softDelete(receitas.id);
     expect(await store.search("bolo", 10)).toEqual([]);
+  });
+
+  it("lists database rows in byte order of sort key, nulls last, without deleted rows", async () => {
+    const db = await store.create(input("db", { kind: "database" }));
+    const lower = await store.create(input("lower", { databaseId: db.id, sortKey: "a0" }));
+    const upper = await store.create(input("upper", { databaseId: db.id, sortKey: "Zz" }));
+    const none = await store.create(input("none", { databaseId: db.id }));
+    const gone = await store.create(input("gone", { databaseId: db.id, sortKey: "A0" }));
+    await store.softDelete(gone.id);
+    const rows = await store.rows(db.id);
+    expect(rows.map((r) => r.title)).toEqual(["upper", "lower", "none"]);
+    expect(rows[0]).toMatchObject({ id: upper.id, sortKey: "Zz", props: {} });
+    expect(rows.map((r) => r.id)).toContain(lower.id);
+    expect(rows.map((r) => r.id)).toContain(none.id);
+  });
+
+  it("persists sort key changes", async () => {
+    const db = await store.create(input("db", { kind: "database" }));
+    const row = await store.create(input("r", { databaseId: db.id, sortKey: "a0" }));
+    const moved = await store.update(row.id, { sortKey: "a5" }, row.rev);
+    if (moved.status !== "ok") throw new Error("expected ok");
+    expect(moved.page.sortKey).toBe("a5");
+    expect((await store.get(row.id))?.sortKey).toBe("a5");
+  });
+
+  it("soft deletes database rows together with the database", async () => {
+    const db = await store.create(input("db", { kind: "database" }));
+    const row = await store.create(input("r", { databaseId: db.id }));
+    expect(await store.softDelete(db.id)).toBe(true);
+    expect(await store.get(row.id)).toBeNull();
+    expect(await store.rows(db.id)).toEqual([]);
   });
 
   it("treats search input as plain text, not as query syntax or SQL", async () => {

@@ -1,10 +1,8 @@
-import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { applyMigrations } from "./migrations.js";
 import { PgPageStore } from "../src/pg-store.js";
 import type { SqlClient } from "../src/sql.js";
-
-const migration = readFileSync(new URL("../migrations/001_init.sql", import.meta.url), "utf8");
 
 describe("PgPageStore", () => {
   let db: PGlite;
@@ -13,7 +11,7 @@ describe("PgPageStore", () => {
 
   beforeAll(async () => {
     db = new PGlite();
-    await db.exec(migration);
+    await applyMigrations(db);
     sql = { query: async (text, params) => (await db.query(text, params)).rows as Record<string, unknown>[] };
     store = new PgPageStore(sql);
   });

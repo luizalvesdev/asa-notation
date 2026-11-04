@@ -19,6 +19,7 @@
     "@tiptap/react": "^3.32.2",
     "@tiptap/starter-kit": "^3.32.2",
     "@tiptap/suggestion": "^3.32.2",
+    "fractional-indexing": "^4.0.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

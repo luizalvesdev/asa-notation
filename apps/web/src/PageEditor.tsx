@@ -1,11 +1,12 @@
-import type { Page } from "@asa/core";
-import { Placeholder } from "@tiptap/extensions";
+import type { DatabaseSchema, Page } from "@asa/core";
+import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
+import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DragHandle } from "@tiptap/extension-drag-handle-react";
-import { api, ApiError } from "./api.js";
+import { api, ApiError, type PageDraft } from "./api.js";
+import { CellEditor } from "./CellEditor.js";
 import { SlashCommand } from "./slash-command.js";
 
 type SaveState = "saved" | "saving" | "error";
@@ -14,6 +15,8 @@ interface Props {
   page: Page;
   remoteRev: number | undefined;
   onSaved: (page: Page) => void;
+  schema?: DatabaseSchema;
+  breadcrumb?: { title: string; onClick: () => void };
 }
 
 const SAVE_DELAY_MS = 700;
@@ -59,14 +62,16 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
-export function PageEditor({ page, remoteRev, onSaved }: Props) {
+export function PageEditor({ page, remoteRev, onSaved, schema, breadcrumb }: Props) {
   const [title, setTitle] = useState(page.title);
+  const [rowProps, setRowProps] = useState(page.props);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [conflict, setConflict] = useState<Page | null>(null);
 
   const baseRev = useRef(page.rev);
   const titleRef = useRef(page.title);
   const dirty = useRef({ title: false, body: false });
+  const pendingProps = useRef<Record<string, unknown>>({});
   const inFlight = useRef(false);
   const rerun = useRef(false);
   const conflictRef = useRef<Page | null>(null);
@@ -74,6 +79,9 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
   const editorRef = useRef<Editor | null>(null);
   const onSavedRef = useRef(onSaved);
   onSavedRef.current = onSaved;
+
+  const hasPending = () =>
+    dirty.current.title || dirty.current.body || Object.keys(pendingProps.current).length > 0;
 
   const flush = useCallback(async (): Promise<void> => {
     window.clearTimeout(timer.current);
@@ -83,13 +91,16 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
       rerun.current = true;
       return;
     }
-    const snapshot = { ...dirty.current };
-    if (!snapshot.title && !snapshot.body) return;
+    if (!hasPending()) return;
 
-    const patch: { title?: string; body?: unknown } = {};
+    const snapshot = { ...dirty.current };
+    const sentProps = pendingProps.current;
+    const patch: PageDraft = {};
     if (snapshot.title) patch.title = titleRef.current;
     if (snapshot.body) patch.body = editor.getJSON();
+    if (Object.keys(sentProps).length > 0) patch.props = sentProps;
     dirty.current = { title: false, body: false };
+    pendingProps.current = {};
     inFlight.current = true;
     setSaveState("saving");
 
@@ -98,24 +109,25 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
       const saved = await api.updatePage(page.id, baseRev.current, patch);
       baseRev.current = saved.rev;
       onSavedRef.current(saved);
-      setSaveState(dirty.current.title || dirty.current.body ? "saving" : "saved");
+      setSaveState(hasPending() ? "saving" : "saved");
     } catch (err) {
       failed = true;
       dirty.current = {
         title: dirty.current.title || snapshot.title,
         body: dirty.current.body || snapshot.body,
       };
+      pendingProps.current = { ...sentProps, ...pendingProps.current };
       setSaveState("error");
       if (err instanceof ApiError && err.status === 409) {
         const current = (err.body as { page?: Page } | null)?.page ?? null;
         conflictRef.current = current;
         setConflict(current);
-      } else if (!(err instanceof ApiError && err.status === 401)) {
+      } else if (!(err instanceof ApiError && (err.status === 401 || err.status === 400))) {
         timer.current = window.setTimeout(() => void flush(), RETRY_DELAY_MS);
       }
     } finally {
       inFlight.current = false;
-      const pending = rerun.current || dirty.current.title || dirty.current.body;
+      const pending = rerun.current || hasPending();
       rerun.current = false;
       if (pending && !failed && !conflictRef.current) {
         timer.current = window.setTimeout(() => void flush(), 0);
@@ -153,15 +165,16 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
 
   useEffect(() => {
     if (remoteRev === undefined || remoteRev <= baseRev.current) return;
-    if (dirty.current.title || dirty.current.body || inFlight.current || conflictRef.current) return;
+    if (hasPending() || inFlight.current || conflictRef.current) return;
     let cancelled = false;
     api.getPage(page.id).then(
       (fresh) => {
         if (cancelled || fresh.rev <= baseRev.current) return;
-        if (dirty.current.title || dirty.current.body || inFlight.current) return;
+        if (hasPending() || inFlight.current) return;
         baseRev.current = fresh.rev;
         titleRef.current = fresh.title;
         setTitle(fresh.title);
+        setRowProps(fresh.props);
         editorRef.current?.commands.setContent(fresh.body ?? "", { emitUpdate: false });
         onSavedRef.current(fresh);
       },
@@ -176,6 +189,12 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
     setTitle(value);
     titleRef.current = value;
     dirty.current.title = true;
+    schedule();
+  };
+
+  const onPropChange = (key: string, value: unknown) => {
+    setRowProps((prev) => ({ ...prev, [key]: value }));
+    pendingProps.current = { ...pendingProps.current, [key]: value };
     schedule();
   };
 
@@ -194,8 +213,10 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
     baseRev.current = server.rev;
     titleRef.current = server.title;
     setTitle(server.title);
+    setRowProps(server.props);
     editorRef.current?.commands.setContent(server.body ?? "", { emitUpdate: false });
     dirty.current = { title: false, body: false };
+    pendingProps.current = {};
     conflictRef.current = null;
     setConflict(null);
     setSaveState("saved");
@@ -204,6 +225,11 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
 
   return (
     <article className="page">
+      {breadcrumb && (
+        <button type="button" className="breadcrumb" onClick={breadcrumb.onClick}>
+          ← {breadcrumb.title || "Sem título"}
+        </button>
+      )}
       {conflict && (
         <div className="conflict" role="alert">
           <span>Esta página foi alterada em outro lugar.</span>
@@ -229,6 +255,22 @@ export function PageEditor({ page, remoteRev, onSaved }: Props) {
           }
         }}
       />
+      {schema && schema.properties.length > 0 && (
+        <dl className="row-props">
+          {schema.properties.map((property) => (
+            <div className="row-prop" key={property.key}>
+              <dt>{property.name}</dt>
+              <dd>
+                <CellEditor
+                  property={property}
+                  value={rowProps[property.key]}
+                  onChange={(value) => onPropChange(property.key, value)}
+                />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
       {editor && <Toolbar editor={editor} />}
       {editor && (
         <DragHandle editor={editor} nested>
