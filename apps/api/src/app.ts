@@ -13,6 +13,11 @@ import { taskRoutes } from "./tasks/routes.js";
 import { studyRoutes } from "./study/routes.js";
 import { PgStudyStore } from "./study/store.js";
 import { PgTaskStore } from "./tasks/store.js";
+import { notificationRoutes } from "./notifications/routes.js";
+import { PgNotificationStore } from "./notifications/store.js";
+import { progressRoutes } from "./progress/routes.js";
+import { routineRoutes } from "./routine/routes.js";
+import { PgRoutineStore } from "./routine/store.js";
 import { exportRoutes } from "./export/routes.js";
 import { settingsRoutes } from "./settings/routes.js";
 import { PgSettingsStore } from "./settings/store.js";
@@ -36,6 +41,7 @@ export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
   const tokenStore = new PgTokenStore(sql, now);
+  const settingsStore = new PgSettingsStore(sql, now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(pageStore),
@@ -43,7 +49,10 @@ export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
     ...goalRoutes(new PgGoalStore(sql, now), taskStore),
     ...studyRoutes(new PgStudyStore(sql, now)),
     ...captureRoutes(new PgCaptureStore(sql, now), pageStore),
-    ...settingsRoutes(new PgSettingsStore(sql, now)),
+    ...settingsRoutes(settingsStore),
+    ...notificationRoutes({ store: new PgNotificationStore(sql, now), settings: settingsStore, tasks: taskStore, sql, now }),
+    ...routineRoutes(new PgRoutineStore(sql, now), taskStore, sql),
+    ...progressRoutes(sql),
     ...tokenRoutes(tokenStore),
     ...exportRoutes(sql, now),
   ];

@@ -15,7 +15,7 @@ export function validTimeZone(tz: unknown): tz is string {
 
 /** Aplica só os campos enviados sobre o que já existe e valida tudo. Devolve o erro ou as configurações novas. */
 export function mergeSettings(current: Settings, body: Record<string, unknown>): Settings | string {
-  const next: Settings = { ...current, checkins: { ...current.checkins }, quiet: { ...current.quiet } };
+  const next: Settings = { ...current, checkins: { ...current.checkins }, checkinsEnabled: { ...current.checkinsEnabled }, quiet: { ...current.quiet } };
   if (body.timezone !== undefined) {
     if (!validTimeZone(body.timezone)) return "invalid_timezone";
     next.timezone = body.timezone;
@@ -31,6 +31,15 @@ export function mergeSettings(current: Settings, body: Record<string, unknown>):
       if (value === undefined) continue;
       if (!isTime(value)) return "invalid_checkins";
       next.checkins[key] = value;
+    }
+  }
+  if (body.checkinsEnabled !== undefined) {
+    if (!isRecord(body.checkinsEnabled)) return "invalid_checkins_enabled";
+    for (const key of ["plan", "thursday", "saturday"] as const) {
+      const value = body.checkinsEnabled[key];
+      if (value === undefined) continue;
+      if (typeof value !== "boolean") return "invalid_checkins_enabled";
+      next.checkinsEnabled[key] = value;
     }
   }
   if (body.quiet !== undefined) {

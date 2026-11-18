@@ -13,6 +13,7 @@ interface SettingsJson {
   timezone: string;
   weekStart: number;
   checkins: { plan: string; thursday: string; saturday: string };
+  checkinsEnabled: { plan: boolean; thursday: boolean; saturday: boolean };
   quiet: { start: string; end: string };
 }
 const get = async () => ((await app.call("GET", "/settings", { cookies })).body as { settings: SettingsJson }).settings;
@@ -21,7 +22,7 @@ const patch = (body: unknown) => app.call("PATCH", "/settings", { cookies, body 
 describe("configurações", () => {
   it("exige sessão e devolve os padrões", async () => {
     expect((await app.call("GET", "/settings")).status).toBe(401);
-    expect(await get()).toEqual({ timezone: "America/Sao_Paulo", weekStart: 1, checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" }, quiet: { start: "22:00", end: "07:30" } });
+    expect(await get()).toEqual({ timezone: "America/Sao_Paulo", weekStart: 1, checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" }, checkinsEnabled: { plan: true, thursday: true, saturday: true }, quiet: { start: "22:00", end: "07:30" } });
   });
 
   it("muda só o que foi enviado", async () => {
@@ -33,8 +34,13 @@ describe("configurações", () => {
     expect(await get()).toMatchObject({ weekStart: 0, quiet: { start: "22:00", end: "08:00" }, timezone: "Europe/Lisbon" });
   });
 
+  it("liga e desliga check-ins sem mexer nos outros", async () => {
+    await patch({ checkinsEnabled: { thursday: false } });
+    expect((await get()).checkinsEnabled).toEqual({ plan: true, thursday: false, saturday: true });
+  });
+
   it("valida cada campo", async () => {
-    for (const body of [{}, { timezone: "Nao/Existe" }, { timezone: "x; drop" }, { weekStart: 2 }, { checkins: "x" }, { checkins: { plan: "25:00" } }, { quiet: { start: "9h" } }]) {
+    for (const body of [{}, { timezone: "Nao/Existe" }, { timezone: "x; drop" }, { weekStart: 2 }, { checkins: "x" }, { checkins: { plan: "25:00" } }, { quiet: { start: "9h" } }, { checkinsEnabled: { plan: "sim" } }, { checkinsEnabled: 1 }]) {
       expect((await patch(body)).status, JSON.stringify(body)).toBe(400);
     }
     expect((await get()).timezone).toBe("America/Sao_Paulo");
