@@ -13,6 +13,11 @@ import { taskRoutes } from "./tasks/routes.js";
 import { studyRoutes } from "./study/routes.js";
 import { PgStudyStore } from "./study/store.js";
 import { PgTaskStore } from "./tasks/store.js";
+import type { FetchLike } from "./ai/anthropic.js";
+import { chatRoutes } from "./chat/routes.js";
+import { PgChatStore } from "./chat/store.js";
+import { secretsKey } from "./secrets/crypto.js";
+import { PgSecretStore } from "./secrets/store.js";
 import { notificationRoutes } from "./notifications/routes.js";
 import { PgNotificationStore } from "./notifications/store.js";
 import { progressRoutes } from "./progress/routes.js";
@@ -33,26 +38,41 @@ export interface AppDeps {
   sql: SqlClient;
   config: AuthConfig;
   now?: () => number;
+  /** Para chamar o provedor de IA. Os testes trocam por uma versão falsa. */
+  fetchImpl?: FetchLike;
 }
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
+export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
   const tokenStore = new PgTokenStore(sql, now);
   const settingsStore = new PgSettingsStore(sql, now);
+  const goalStore = new PgGoalStore(sql, now);
+  const captureStore = new PgCaptureStore(sql, now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(pageStore),
     ...taskRoutes(taskStore),
-    ...goalRoutes(new PgGoalStore(sql, now), taskStore),
+    ...goalRoutes(goalStore, taskStore),
     ...studyRoutes(new PgStudyStore(sql, now)),
-    ...captureRoutes(new PgCaptureStore(sql, now), pageStore),
+    ...captureRoutes(captureStore, pageStore),
     ...settingsRoutes(settingsStore),
     ...notificationRoutes({ store: new PgNotificationStore(sql, now), settings: settingsStore, tasks: taskStore, sql, now }),
     ...routineRoutes(new PgRoutineStore(sql, now), taskStore, sql),
     ...progressRoutes(sql),
+    ...chatRoutes({
+      chat: new PgChatStore(sql, now),
+      secrets: new PgSecretStore(sql, secretsKey(config.sessionSecret), now),
+      settings: settingsStore,
+      tasks: taskStore,
+      goals: goalStore,
+      pages: pageStore,
+      captures: captureStore,
+      fetchImpl,
+      now,
+    }),
     ...tokenRoutes(tokenStore),
     ...exportRoutes(sql, now),
   ];

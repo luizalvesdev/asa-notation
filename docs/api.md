@@ -143,6 +143,24 @@ Todas exigem sessão (ou token).
 
 Avaliação da semana: 60% taxa de tarefas concluídas + 40% dias com atividade. 70 pontos ou mais é "forte", 40 a 69 "boa", abaixo disso "abaixo do ritmo".
 
+## Assistentes (Hermes e Renato)
+
+Usam a API do Claude (Anthropic) com a chave do próprio dono. A chave fica cifrada no banco (AES-256-GCM, derivada do segredo do servidor) e nunca volta inteira. **O assistente nunca escreve sozinho**: as ferramentas `propose_*` só criam rascunhos, e nada vira tarefa, captura ou página antes de `approve`.
+
+| Método | Rota | Acesso | Descrição |
+| --- | --- | --- | --- |
+| GET | `/ai/status` | sessão ou token | `{ configured, last4, model }` |
+| PUT | `/ai/key` | só sessão | `{ key }`. Testa com uma chamada mínima antes de guardar: 400 `key_rejected` se o provedor recusar |
+| DELETE | `/ai/key` | só sessão | Remove a chave |
+| GET | `/chat/conversations?agent=` | sessão ou token | `hermes` ou `renato` |
+| GET | `/chat/conversations/:id` | sessão ou token | Mensagens visíveis, cada uma com seus `drafts` |
+| DELETE | `/chat/conversations/:id` | sessão ou token | Apaga a conversa e os rascunhos |
+| POST | `/chat/send` | sessão ou token | `{ agent, text, conversationId? }`. Roda até 6 idas e vindas com ferramentas. 412 `no_key`, 502 `invalid_key` ou `provider_error`, 429 `rate_limited`, 504 se o provedor não responde |
+| POST | `/chat/drafts/:id/approve` | sessão ou token | Cria de verdade (tarefas, captura ou página). 409 se já foi decidido |
+| POST | `/chat/drafts/:id/discard` | sessão ou token | Descarta |
+
+**Ferramentas.** Hermes: `list_tasks`, `list_goals`, `propose_tasks`. Renato: `search_notes`, `read_note`, `list_inbox`, `propose_capture`, `propose_page`, `propose_diagram` (Mermaid, inclusive `mindmap`). O texto das notas é tratado como dado, não como instrução. As respostas não usam streaming.
+
 ## Limites conhecidos
 
 - O destaque do trecho na busca só marca o termo quando ele é digitado com o mesmo acento do texto.
