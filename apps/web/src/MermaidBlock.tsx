@@ -16,6 +16,8 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
   const [grabbing, setGrabbing] = useState(false);
+  const restoreDraggable = useRef<(() => void) | null>(null);
+  useEffect(() => () => restoreDraggable.current?.(), []);
 
   /** Zoom ao redor de um ponto do quadro (padrão: o centro, para os botões). */
   const zoomBy = (factor: number, at?: { x: number; y: number }) => {
@@ -110,6 +112,16 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
           title="Arraste para mover · roda do mouse para zoom · duplo clique para ajustar"
           onPointerDown={(e) => {
             if (e.button !== 0) return;
+            // O bloco inteiro é "arrastável" no editor (mover o bloco na página): enquanto arrasta o desenho, desliga isso,
+            // senão o navegador inicia um arrasto nativo e cancela o nosso (pointercancel).
+            const host = e.currentTarget.closest<HTMLElement>("[draggable=true]");
+            if (host) {
+              host.draggable = false;
+              restoreDraggable.current = () => {
+                host.draggable = true;
+                restoreDraggable.current = null;
+              };
+            }
             drag.current = { x: e.clientX, y: e.clientY };
             e.currentTarget.setPointerCapture(e.pointerId);
             setGrabbing(true);
@@ -122,10 +134,12 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
           }}
           onPointerUp={() => {
             drag.current = null;
+            restoreDraggable.current?.();
             setGrabbing(false);
           }}
           onPointerCancel={() => {
             drag.current = null;
+            restoreDraggable.current?.();
             setGrabbing(false);
           }}
           onDoubleClick={() => setView(INITIAL_VIEW)}
