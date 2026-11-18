@@ -26,7 +26,7 @@ Parameters:
   BedrockModelId:
     Type: String
     Default: ""
-    Description: ID do modelo ou do perfil de inferência no Bedrock (obrigatório quando AiProvider=bedrock)
+    Description: ID do modelo ou do perfil de inferência no Bedrock (obrigatório quando AiProvider=bedrock). Testado com global.anthropic.claude-haiku-4-5-20251001-v1:0 (mais barato) e global.anthropic.claude-sonnet-4-6
   AllowedOrigins:
     Type: String
     Default: http://localhost:5173

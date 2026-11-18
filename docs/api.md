@@ -161,7 +161,7 @@ Usam o Claude por um de dois provedores, escolhido no servidor por `AI_PROVIDER`
 | POST | `/chat/drafts/:id/approve` | sessão ou token | Cria de verdade (tarefas, captura ou página). 409 se já foi decidido |
 | POST | `/chat/drafts/:id/discard` | sessão ou token | Descarta |
 
-**Testado de verdade** no Bedrock com `global.anthropic.claude-sonnet-4-6` (perfil de inferência), 3 a 9 s por turno, ferramentas e rascunhos funcionando (`npm run smoke:chat -w @asa/api` com `SMOKE_PROVIDER=bedrock`). O ID do modelo depende do que a conta liberou: `aws bedrock-runtime invoke-model` mostra rápido se um modelo está disponível.
+**Testado de verdade** no Bedrock com `global.anthropic.claude-haiku-4-5-20251001-v1:0` (o mais barato; 5/5 em duas rodadas seguidas, 3 a 10 s por turno) e com `global.anthropic.claude-sonnet-4-6` (5/5, mais caro). O Haiku só acertou depois de o prompt exigir chamar a ferramenta `propose_*` antes de dizer que deixou um rascunho. Ferramentas e rascunhos funcionando (`npm run smoke:chat -w @asa/api` com `SMOKE_PROVIDER=bedrock`). O ID do modelo depende do que a conta liberou: `aws bedrock-runtime invoke-model` mostra rápido se um modelo está disponível.
 
 **Agentes**: `hermes`, `renato` e `tutor` (professor socrático: lê pontos fracos e notas, só conversa, não escreve).
 
