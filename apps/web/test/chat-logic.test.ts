@@ -41,6 +41,8 @@ describe("classifyChatError", () => {
     expect(classifyChatError(new ApiError(429, { error: "rate_limited" })).kind).toBe("rate_limited");
     expect(classifyChatError(new ApiError(504, { error: "provider_timeout" })).message).toContain("demorou");
     expect(classifyChatError(new ApiError(500, null)).kind).toBe("other");
+    expect(classifyChatError(new ApiError(502, { error: "provider_error", status: 400, detail: "Your credit balance is too low to access the Anthropic API." })).message).toContain("sem créditos");
+    expect(classifyChatError(new ApiError(502, { error: "provider_error", status: 404, detail: "model: x" })).message).toContain("model: x");
     expect(classifyChatError(new NetworkError("offline")).kind).toBe("offline");
   });
 });

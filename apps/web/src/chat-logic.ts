@@ -48,6 +48,8 @@ export function classifyChatError(err: unknown): { kind: ChatErrorKind; message:
     if (code === "invalid_key") return { kind: "invalid_key", message: "O provedor recusou a chave. Confira em Configurações > Assistentes." };
     if (err.status === 429) return { kind: "rate_limited", message: "Muitas mensagens em pouco tempo. Aguarde um instante e tente de novo." };
     if (err.status === 504) return { kind: "other", message: "O provedor demorou para responder. Tente de novo." };
+    const raw = typeof err.body === "object" && err.body !== null ? (err.body as { detail?: unknown }).detail : undefined;
+    if (typeof raw === "string" && /credit balance/i.test(raw)) return { kind: "other", message: "A conta do provedor está sem créditos. Adicione saldo em Plans & Billing (console.anthropic.com) e tente de novo." };
     const detail = typeof err.body === "object" && err.body !== null ? (err.body as { detail?: unknown }).detail : undefined;
     return { kind: "other", message: `Não foi possível falar com o assistente.${typeof detail === "string" && detail ? ` (${detail})` : " Tente de novo."}` };
   }
