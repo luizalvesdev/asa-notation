@@ -12,6 +12,36 @@ const PALETTES = {
 
 const FONT = "'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif";
 
+
+/**
+ * Estilo dos diagramas, aplicado dentro do próprio SVG (themeCSS) para que SVG/PNG exportados fiquem iguais à tela:
+ * caixas escuras com borda colorida fina, linhas leves, cantos arredondados e um ramo de cada cor no mapa mental.
+ */
+function themeCss(theme: "default" | "dark"): string {
+  const c = PALETTES[theme];
+  const [blue, green, orange, purple, red, ok] = c.cat;
+  const branch = [blue, green, orange, purple, red, ok];
+  const soft = (color: string, pct = 14) => `color-mix(in srgb, ${color} ${pct}%, ${c.bg})`;
+  const sections = Array.from({ length: 12 }, (_, n) => {
+    const color = branch[n % branch.length]!;
+    return `.mindmap-node.section-${n} .node-bkg, .mindmap-node.section-${n} rect { fill: ${soft(color)} !important; stroke: ${color} !important; }
+.section-edge-${n} { stroke: ${color} !important; }`;
+  }).join("\n");
+  return `
+.nodeLabel, .nodeLabel p, .label, .edgeLabel, .edgeLabel p, .cluster-label, .cluster-label span { color: ${c.text} !important; fill: ${c.text} !important; font-weight: 500; }
+.edgeLabel, .edgeLabel p, .edgeLabel rect { background-color: ${c.bg} !important; fill: ${c.bg} !important; }
+.node rect, .node polygon, .node circle, .node ellipse, .node path:not(.node-bkg) { fill: ${soft(blue, 12)} !important; stroke: ${blue} !important; stroke-width: 1.5px !important; rx: 8px; ry: 8px; }
+.flowchart-link, .edgePath .path, .messageLine0, .messageLine1 { stroke: ${c.line} !important; stroke-width: 1.5px !important; }
+.arrowheadPath, .marker { fill: ${c.line} !important; stroke: ${c.line} !important; }
+.cluster rect { fill: ${soft(orange, 8)} !important; stroke: ${orange} !important; stroke-width: 1.2px !important; stroke-dasharray: 5 4; rx: 12px; }
+.mindmap-node.section-root circle, .mindmap-node.section-root path, .mindmap-node.section-root rect { fill: ${soft(blue, 22)} !important; stroke: ${blue} !important; stroke-width: 1.6px !important; }
+.mindmap-node .node-bkg, .mindmap-node rect:not(.node-bkg) { stroke-width: 1.4px !important; stroke-dasharray: none !important; }
+.mindmap-node .nodeLabel, .mindmap-node .nodeLabel p { font-weight: 600; }
+.mindmap-node [class*="node-line-"] { display: none; }
+.edge[class*="section-edge-"] { stroke-width: 2px !important; opacity: 0.75; stroke-linecap: round; }
+${sections}`;
+}
+
 function themeVariables(theme: "default" | "dark") {
   const c = PALETTES[theme];
   const label = theme === "dark" ? "#0D1030" : "#FFFFFF";
@@ -59,6 +89,7 @@ async function mermaid(theme: "default" | "dark"): Promise<Mermaid> {
       securityLevel: "strict",
       theme: "base",
       themeVariables: themeVariables(theme),
+      themeCSS: themeCss(theme),
       fontFamily: FONT,
       flowchart: { curve: "basis", padding: 14, htmlLabels: true },
       mindmap: { padding: 16, maxNodeWidth: 220 },

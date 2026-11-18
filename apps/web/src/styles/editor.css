@@ -502,10 +502,27 @@ input.p-title::placeholder {
   resize: vertical;
 }
 
+/* Quadro do diagrama: pontilhado discreto, arrasto para mover, Ctrl + roda para zoom. */
+.mermaid-view {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--text) 14%, transparent) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.mermaid-view.is-grabbing {
+  cursor: grabbing;
+}
+
 .mermaid-svg {
-  overflow: auto;
   display: flex;
   justify-content: center;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 .mermaid-svg svg {
