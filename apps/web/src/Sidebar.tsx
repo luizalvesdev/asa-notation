@@ -2,7 +2,9 @@ import { Icon, isIconName } from "./icons";
 import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, navParent, routeHash, type NavItem, type Route, type RouteId } from "./nav";
 import { NewMenu } from "./NewMenu";
 import { PageTree } from "./PageTree";
-import type { TreeItem } from "./pages-tree";
+import { displayTitle, type TreeItem } from "./pages-tree";
+import type { TreeNode } from "./pages-types";
+import { pageHash } from "./nav";
 
 interface SidebarProps {
   route: Route;
@@ -19,6 +21,9 @@ interface SidebarProps {
   onToggleCollapsed: () => void;
   onNavigate?: () => void;
   inDrawer?: boolean;
+  /** Páginas favoritas e abertas há pouco, em atalhos no topo da árvore. */
+  favorites: TreeNode[];
+  recents: TreeNode[];
   /** Contadores ao lado de itens da barra (ex.: notificações não lidas). */
   badges?: Partial<Record<RouteId, number>>;
 }
@@ -60,7 +65,17 @@ function NavLink({ item, route, onNavigate, onOpenSearch, badge }: { item: NavIt
   );
 }
 
-export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges }: SidebarProps) {
+function ShortcutLink({ node, current, onNavigate }: { node: TreeNode; current: string | null; onNavigate?: () => void }) {
+  const selected = node.id === current;
+  return (
+    <a className={`tr${selected ? " s" : ""}`} href={pageHash(node.id)} aria-current={selected ? "page" : undefined} onClick={onNavigate}>
+      {node.icon ? <span className="page-emoji" aria-hidden="true">{node.icon}</span> : <Icon name={node.kind === "database" ? "table" : "doc"} />}
+      <span className="lab">{displayTitle(node.title)}</span>
+    </a>
+  );
+}
+
+export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites, recents }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
@@ -92,6 +107,18 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
         {NAV_HERMES.map((item) => (
           <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
         ))}
+        {favorites.length > 0 && (
+          <>
+            <div className="sgroup"><span>Favoritas</span></div>
+            {favorites.map((n) => <ShortcutLink key={n.id} node={n} current={currentPageId} onNavigate={onNavigate} />)}
+          </>
+        )}
+        {recents.length > 0 && (
+          <>
+            <div className="sgroup"><span>Recentes</span></div>
+            {recents.slice(0, 5).map((n) => <ShortcutLink key={n.id} node={n} current={currentPageId} onNavigate={onNavigate} />)}
+          </>
+        )}
         <div className="sgroup">
           <span>Páginas</span>
           <span className="row" style={{ gap: 0 }}>

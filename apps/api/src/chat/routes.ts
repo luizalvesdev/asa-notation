@@ -2,6 +2,7 @@ import { DEFAULT_MODEL, ProviderError, createModel, type FetchLike } from "../ai
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
 import type { PgPageStore } from "../pages/store.js";
+import type { PgStudyStore } from "../study/store.js";
 import { UUID_SOURCE, badRequest, isRecord, json, notFound, type Route } from "../routing.js";
 import type { PgSecretStore } from "../secrets/store.js";
 import type { PgSettingsStore } from "../settings/store.js";
@@ -24,11 +25,12 @@ interface Deps {
   goals: PgGoalStore;
   pages: PgPageStore;
   captures: PgCaptureStore;
+  study: PgStudyStore;
   fetchImpl: FetchLike;
   now: () => number;
 }
 
-const isAgent = (v: unknown): v is Agent => v === "hermes" || v === "renato";
+const isAgent = (v: unknown): v is Agent => v === "hermes" || v === "renato" || v === "tutor";
 
 /** Resposta HTTP para uma falha do provedor, sem vazar detalhes. */
 function providerFailure(err: ProviderError) {
@@ -127,6 +129,7 @@ export function chatRoutes(deps: Deps): Route[] {
           goals: deps.goals,
           pages: deps.pages,
           captures: deps.captures,
+          study: deps.study,
           today,
           draft: async (kind: DraftKind, payload) => {
             const id = await chat.addDraft(conversationId, kind, payload);

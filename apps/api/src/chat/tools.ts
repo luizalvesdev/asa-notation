@@ -2,6 +2,7 @@ import type { ToolSpec } from "../ai/anthropic.js";
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
 import type { PgPageStore } from "../pages/store.js";
+import type { PgStudyStore } from "../study/store.js";
 import { extractText } from "../pages/text.js";
 import { isUuid } from "../routing.js";
 import { addDays, isDate, isTime } from "../tasks/recurrence.js";
@@ -15,6 +16,7 @@ export interface ToolContext {
   goals: PgGoalStore;
   pages: PgPageStore;
   captures: PgCaptureStore;
+  study: PgStudyStore;
   /** Dia de hoje (AAAA-MM-DD) no fuso do dono. */
   today: string;
   /** Registra um rascunho para aprovação e devolve o id. */
@@ -31,6 +33,11 @@ const SPECS: Record<string, ToolSpec> = {
     input_schema: obj({ from: str("Primeiro dia, AAAA-MM-DD"), to: str("Último dia, AAAA-MM-DD") }, ["from", "to"]),
   },
   list_goals: { name: "list_goals", description: "Lista as metas ativas com prazo e progresso.", input_schema: obj({}) },
+  list_weak_cards: {
+    name: "list_weak_cards",
+    description: "Lista os cards de estudo que o usuário mais errou nos últimos 14 dias, com pergunta e resposta.",
+    input_schema: obj({}),
+  },
   propose_tasks: {
     name: "propose_tasks",
     description: "Propõe tarefas novas como RASCUNHO. Nada é criado até o usuário aprovar. Use sempre que o usuário pedir para criar ou planejar tarefas.",
@@ -73,6 +80,10 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
     },
     async list_goals() {
       return JSON.stringify((await ctx.goals.list()).filter((g) => !g.done).map((g) => ({ id: g.id, title: g.title, dueDate: g.dueDate, tasksDone: g.tasksDone, tasksTotal: g.tasksTotal })));
+    },
+    async list_weak_cards() {
+      const cards = await ctx.study.weakWithContent(10);
+      return JSON.stringify(cards.map((c) => ({ kind: c.kind, front: clip(c.front, 400), back: clip(c.back, 400), errors: c.lapses })));
     },
     async propose_tasks(input) {
       const raw = input.tasks;
@@ -134,7 +145,7 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
     },
   };
 
-  const names = agent === "hermes" ? ["list_tasks", "list_goals", "propose_tasks"] : ["search_notes", "read_note", "list_inbox", "propose_capture", "propose_page", "propose_diagram"];
+  const names = agent === "hermes" ? ["list_tasks", "list_goals", "propose_tasks"] : agent === "tutor" ? ["list_weak_cards", "search_notes", "read_note"] : ["search_notes", "read_note", "list_inbox", "propose_capture", "propose_page", "propose_diagram"];
   return { specs: names.map((n) => SPECS[n]!), handlers: Object.fromEntries(names.map((n) => [n, handlers[n]!])) };
 }
 
@@ -148,6 +159,14 @@ export function systemPrompt(agent: Agent, today: string, timezone: string): str
     return [
       "Você é o Hermes, assistente de rotina, tarefas e metas do usuário.",
       "Use list_tasks e list_goals para saber o que existe antes de planejar. Proponha tarefas com propose_tasks, com datas e horários realistas, e poucas por dia.",
+      ...common,
+    ].join("\n");
+  }
+  if (agent === "tutor") {
+    return [
+      "Você é o Tutor, um professor socrático. Ajuda o usuário a aprender fazendo perguntas, não dando respostas prontas.",
+      "Comece com list_weak_cards (pontos fracos) ou, se o usuário disser um tema, com search_notes e read_note para se basear nas notas dele.",
+      "Faça UMA pergunta por vez, espere a resposta, dê uma pista se ele errar e só explique de vez depois de duas tentativas. Elogie o que estiver certo. No fim, resuma em 3 linhas o que ele já domina e o que revisar.",
       ...common,
     ].join("\n");
   }

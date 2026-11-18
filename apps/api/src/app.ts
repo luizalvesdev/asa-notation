@@ -50,13 +50,14 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
   const tokenStore = new PgTokenStore(sql, now);
   const settingsStore = new PgSettingsStore(sql, now);
   const goalStore = new PgGoalStore(sql, now);
+  const studyStore = new PgStudyStore(sql, now);
   const captureStore = new PgCaptureStore(sql, now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(pageStore),
     ...taskRoutes(taskStore),
     ...goalRoutes(goalStore, taskStore),
-    ...studyRoutes(new PgStudyStore(sql, now)),
+    ...studyRoutes(studyStore),
     ...captureRoutes(captureStore, pageStore),
     ...settingsRoutes(settingsStore),
     ...notificationRoutes({ store: new PgNotificationStore(sql, now), settings: settingsStore, tasks: taskStore, sql, now }),
@@ -70,6 +71,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
       goals: goalStore,
       pages: pageStore,
       captures: captureStore,
+      study: studyStore,
       fetchImpl,
       now,
     }),

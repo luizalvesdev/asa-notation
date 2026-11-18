@@ -340,6 +340,19 @@ describe("conversa com os assistentes", () => {
     expect((await app.call("GET", "/chat/conversations", { cookies, query: { agent: "x" } })).status).toBe(400);
   });
 
+  it("Tutor lê os pontos fracos e não tem ferramentas de escrita", async () => {
+    await app.call("POST", "/study/cards", { cookies, body: { kind: "basic", front: "O que é quorum?", back: "A maioria" } });
+    const queue = ((await app.call("GET", "/study/queue", { cookies, query: { dayStart: "2026-11-18T03:00:00.000Z" } })).body as { cards: { id: string }[] }).cards;
+    await app.call("POST", `/study/cards/${queue[0]!.id}/review`, { cookies, body: { rating: 1 } });
+    replies.push(ok(tool("list_weak_cards", {})), ok(text("Vamos começar: o que você sabe sobre quorum?")));
+    const res = await send({ agent: "tutor", text: "Me ajuda a estudar" });
+    expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(["list_weak_cards", "search_notes", "read_note"]);
+    expect(provider.calls[0]!.body.system).toContain("socrático");
+    expect(JSON.stringify(provider.calls[1]!.body.messages.at(-1))).toContain("O que é quorum?");
+    expect(messages(res).at(-1)!.text).toContain("quorum");
+    expect(messages(res).at(-1)!.drafts).toEqual([]);
+  });
+
   it("conversa de um agente não abre com o outro", async () => {
     replies.push(ok(text("ok")));
     const res = await send({ agent: "hermes", text: "oi" });

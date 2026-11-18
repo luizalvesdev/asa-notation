@@ -128,7 +128,7 @@ describe("link público", () => {
     const child = ((await call("POST", "/pages", { title: "Filha", parentId: parent.id, body: doc("y") })).body as { page: { id: string } }).page;
     const { share: s } = await share(child.id);
     const body = JSON.stringify((await read(s.slug)).body);
-    expect(Object.keys(((JSON.parse(body) as { page: object }).page))).toEqual(["title", "icon", "body", "updatedAt"]);
+    expect(Object.keys(((JSON.parse(body) as { page: object }).page))).toEqual(["title", "icon", "cover", "kind", "body", "updatedAt"]);
     expect(body).not.toContain(child.id);
     expect(body).not.toContain(parent.id);
   });

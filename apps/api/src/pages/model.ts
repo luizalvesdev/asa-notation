@@ -6,8 +6,10 @@ export interface Page {
   favorite: boolean;
   position: string;
   body: unknown | null;
-  /** `page` comum, `database` (tem esquema) ou `row` (linha de uma database). */
+  /** `page` comum, `database` (tem esquema), `row` (linha de uma database) ou `canvas` (quadro livre). */
   kind: PageKind;
+  /** Degradê (`grad:ocean`) ou endereço de imagem. */
+  cover: string | null;
   /** Valores das propriedades, só em linhas. */
   props: Record<string, unknown>;
   /** Propriedades e views, só em databases. */
@@ -18,7 +20,7 @@ export interface Page {
   deletedAt: string | null;
 }
 
-export type PageKind = "page" | "database" | "row";
+export type PageKind = "page" | "database" | "row" | "canvas";
 
 export interface TreeNode {
   id: string;
@@ -52,6 +54,7 @@ export interface SearchHit extends PageRef {
 }
 
 export interface PagePatch {
+  cover?: string | null;
   /** Junta com os valores atuais; `null` apaga um valor. */
   props?: Record<string, unknown>;
   schema?: unknown;
@@ -67,6 +70,7 @@ export interface NewPage {
   icon: string | null;
   body: unknown | null;
   kind?: PageKind;
+  cover?: string | null;
   props?: Record<string, unknown>;
   schema?: unknown;
 }
@@ -117,6 +121,8 @@ export interface VersionFull {
 export interface PublicPage {
   title: string;
   icon: string | null;
+  cover: string | null;
+  kind: PageKind;
   body: unknown | null;
   updatedAt: string;
 }

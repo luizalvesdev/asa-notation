@@ -53,6 +53,8 @@ Uma database é uma página com `kind: "database"` e um `schema`. Cada linha é 
 - `POST /pages` com `kind: "database"` cria com Status e Data e as views Tabela e Kanban (ou com o `schema` enviado). Com `kind: "row"`, `parentId` é a database e `props` é validado pelo esquema.
 - `PATCH /pages/:id` aceita `props` (mescla com os valores atuais; `null` apaga) em linhas e `schema` (substitui) em databases. Valores inválidos para o esquema dão 400.
 - `GET /databases/:id/rows` devolve as linhas (`id`, `title`, `icon`, `props`, `createdAt`, `updatedAt`), da mais antiga para a mais nova, até 2000.
+- `kind: "canvas"` é um quadro livre: o `body` é `{ type: "canvas", shapes }` (retângulo, elipse, linha, seta, traço à mão e texto; até 3000 formas e 500 KB) e só aceita esse formato. O texto das formas entra na busca.
+- `cover` (em qualquer página): `grad:sunrise|ocean|forest|dusk|slate|rose` ou o endereço http(s) de uma imagem.
 - Linhas não se movem (`POST /pages/:id/move` dá 409 `row_locked`) e não têm filhas.
 
 ## Tarefas
@@ -159,7 +161,9 @@ Usam a API do Claude (Anthropic) com a chave do próprio dono. A chave fica cifr
 | POST | `/chat/drafts/:id/approve` | sessão ou token | Cria de verdade (tarefas, captura ou página). 409 se já foi decidido |
 | POST | `/chat/drafts/:id/discard` | sessão ou token | Descarta |
 
-**Ferramentas.** Hermes: `list_tasks`, `list_goals`, `propose_tasks`. Renato: `search_notes`, `read_note`, `list_inbox`, `propose_capture`, `propose_page`, `propose_diagram` (Mermaid, inclusive `mindmap`). O texto das notas é tratado como dado, não como instrução. As respostas não usam streaming.
+**Agentes**: `hermes`, `renato` e `tutor` (professor socrático: lê pontos fracos e notas, só conversa, não escreve).
+
+**Ferramentas.** Hermes: `list_tasks`, `list_goals`, `propose_tasks`. Tutor: `list_weak_cards`, `search_notes`, `read_note`. Renato: `search_notes`, `read_note`, `list_inbox`, `propose_capture`, `propose_page`, `propose_diagram` (Mermaid, inclusive `mindmap`). O texto das notas é tratado como dado, não como instrução. As respostas não usam streaming.
 
 ## Limites conhecidos
 

@@ -1,3 +1,4 @@
+import { parseCanvas, validCover } from "../canvas/schema.js";
 import { defaultSchema, parseProps, parseSchema, type Schema } from "../databases/schema.js";
 import { UUID_SOURCE, badRequest, isRecord, isUuid, json, notFound, type Route } from "../routing.js";
 import type { MoveTarget, PagePatch } from "./model.js";
@@ -67,11 +68,18 @@ export function pageRoutes(store: PgPageStore): Route[] {
         const icon = body.icon ?? null;
         const doc = body.body ?? null;
         const kind = body.kind ?? "page";
-        if (kind !== "page" && kind !== "database" && kind !== "row") return badRequest("invalid_kind");
+        if (kind !== "page" && kind !== "database" && kind !== "row" && kind !== "canvas") return badRequest("invalid_kind");
+        const cover = body.cover ?? null;
+        if (!validCover(cover)) return badRequest("invalid_cover");
         if (parentId !== null && !isUuid(parentId)) return badRequest("invalid_parent");
         if (!validTitle(title)) return badRequest("invalid_title");
         if (!validIcon(icon)) return badRequest("invalid_icon");
-        if (doc !== null && !validBody(doc)) return badRequest("invalid_body");
+        let content: unknown = doc;
+        if (kind === "canvas") {
+          const parsed = parseCanvas(doc ?? { type: "canvas", shapes: [] });
+          if (typeof parsed === "string") return badRequest(parsed);
+          content = parsed;
+        } else if (doc !== null && !validBody(doc)) return badRequest("invalid_body");
 
         let props: Record<string, unknown> = {};
         let schema: Schema | undefined;
@@ -93,7 +101,7 @@ export function pageRoutes(store: PgPageStore): Route[] {
           if (typeof parsed === "string") return badRequest(parsed);
           schema = parsed;
         } else if (body.schema !== undefined) return badRequest("invalid_schema");
-        const page = await store.create({ parentId, title, icon, body: doc, kind, props, schema });
+        const page = await store.create({ parentId, title, icon, body: content, kind, cover, props, schema });
         return page ? json(201, { page }) : json(404, { error: "parent_not_found" });
       },
     },
@@ -125,9 +133,23 @@ export function pageRoutes(store: PgPageStore): Route[] {
           if (typeof body.favorite !== "boolean") return badRequest("invalid_favorite");
           patch.favorite = body.favorite;
         }
+        if (body.cover !== undefined) {
+          if (!validCover(body.cover)) return badRequest("invalid_cover");
+          patch.cover = body.cover;
+        }
         if (body.body !== undefined) {
-          if (!validBody(body.body)) return badRequest("invalid_body");
-          patch.body = body.body;
+          if (isRecord(body.body) && body.body.type === "canvas") {
+            // Quadro: só em páginas canvas, e com formas válidas.
+            const current = await store.get(match[1]!);
+            if (!current) return notFound();
+            if (current.kind !== "canvas") return badRequest("invalid_body");
+            const parsed = parseCanvas(body.body);
+            if (typeof parsed === "string") return badRequest(parsed);
+            patch.body = parsed;
+          } else {
+            if (!validBody(body.body)) return badRequest("invalid_body");
+            patch.body = body.body;
+          }
         }
         let baseRev: number | undefined;
         if (body.baseRev !== undefined) {

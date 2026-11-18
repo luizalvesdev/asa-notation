@@ -1,7 +1,7 @@
 import type { Row, SqlClient } from "../sql.js";
 import type { Block } from "../ai/anthropic.js";
 
-export type Agent = "hermes" | "renato";
+export type Agent = "hermes" | "renato" | "tutor";
 export type DraftKind = "tasks" | "capture" | "page";
 export type DraftStatus = "pending" | "approved" | "discarded";
 

@@ -30,6 +30,7 @@ import type { Preference } from "./theme";
 import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
 import { useUnread } from "./use-notifications";
+import { useRecents } from "./recents";
 import { usePages, type CreateExtra } from "./use-pages";
 
 interface ShellProps {
@@ -56,7 +57,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const { unread, refresh: refreshUnread } = useUnread();
 
   const tree = useMemo(() => buildTree(pages.nodes), [pages.nodes]);
+  const favorites = useMemo(() => pages.nodes.filter((n) => n.favorite), [pages.nodes]);
   const pageId = route.kind === "pagina" ? route.pageId : null;
+  const recents = useRecents(pages.nodes, pageId);
 
   useEffect(() => {
     if (!drawer) return;
@@ -202,6 +205,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     onRetryTree: pages.reload,
     onOpenSearch: () => setSearchOpen(true),
     badges: { notificacoes: unread },
+    favorites,
+    recents,
   };
 
   const onRestored = useCallback(

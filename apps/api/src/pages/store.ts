@@ -17,10 +17,11 @@ import type {
   VersionFull,
   VersionItem,
 } from "./model.js";
+import { canvasText } from "../canvas/schema.js";
 import { extractLinks, extractText, normalizeTitle } from "./text.js";
 
 const COLUMNS =
-  "id, parent_id, title, icon, favorite, position, body, kind, props, schema, rev, created_at, updated_at, deleted_at";
+  "id, parent_id, title, icon, favorite, position, body, kind, cover, props, schema, rev, created_at, updated_at, deleted_at";
 
 const SNIPPET_START = "\u0001";
 const SNIPPET_STOP = "\u0002";
@@ -40,6 +41,7 @@ function toPage(row: Row): Page {
     position: row.position as string,
     body: row.body ?? null,
     kind: row.kind as Page["kind"],
+    cover: (row.cover as string | null) ?? null,
     props: (row.props as Record<string, unknown> | null) ?? {},
     schema: row.schema ?? null,
     rev: Number(row.rev),
@@ -135,13 +137,13 @@ export class PgPageStore {
   async create(input: NewPage): Promise<Page | null> {
     if (input.parentId && !(await this.get(input.parentId))) return null;
     const position = keyBetween(await this.lastPosition(input.parentId), null);
-    const text = input.body === null ? "" : extractText(input.body);
+    const text = input.body === null ? "" : input.kind === "canvas" ? canvasText(input.body) : extractText(input.body);
     const links = extractLinks(text);
     const now = this.nowIso();
     const rows = await this.sql.query(
       `with p as (
-         insert into pages (parent_id, title, icon, position, body, body_text, created_at, updated_at, kind, props, schema)
-         values ($1, $2, $3, $4, $5::jsonb, $6, $7, $7, $9, $10::jsonb, $11::jsonb)
+         insert into pages (parent_id, title, icon, position, body, body_text, created_at, updated_at, kind, props, schema, cover)
+         values ($1, $2, $3, $4, $5::jsonb, $6, $7, $7, $9, $10::jsonb, $11::jsonb, $12)
          returning ${COLUMNS}
        ), l as (
          insert into page_links (from_page, to_title)
@@ -150,7 +152,7 @@ export class PgPageStore {
          returning 1
        )
        select * from p`,
-      [input.parentId, input.title, input.icon, position, input.body === null ? null : JSON.stringify(input.body), text, now, links, input.kind ?? "page", JSON.stringify(input.props ?? {}), input.schema === undefined ? null : JSON.stringify(input.schema)],
+      [input.parentId, input.title, input.icon, position, input.body === null ? null : JSON.stringify(input.body), text, now, links, input.kind ?? "page", JSON.stringify(input.props ?? {}), input.schema === undefined ? null : JSON.stringify(input.schema), input.cover ?? null],
     );
     return toPage(rows[0]!);
   }
@@ -230,11 +232,11 @@ export class PgPageStore {
     const rows = await this.sql.query(
       `with s as (update page_shares set views = views + 1 where slug = $1
                     and exists (select 1 from pages p where p.id = page_id and p.deleted_at is null) returning page_id)
-       select p.title, p.icon, p.body, p.updated_at from pages p join s on s.page_id = p.id`,
+       select p.title, p.icon, p.cover, p.kind, p.body, p.updated_at from pages p join s on s.page_id = p.id`,
       [slug],
     );
     const r = rows[0];
-    return r ? { title: r.title as string, icon: (r.icon as string | null) ?? null, body: r.body ?? null, updatedAt: iso(r.updated_at) } : null;
+    return r ? { title: r.title as string, icon: (r.icon as string | null) ?? null, cover: (r.cover as string | null) ?? null, kind: r.kind as Page["kind"], body: r.body ?? null, updatedAt: iso(r.updated_at) } : null;
   }
 
   async update(id: string, patch: PagePatch, baseRev?: number): Promise<UpdateResult> {
@@ -247,6 +249,7 @@ export class PgPageStore {
     if (patch.title !== undefined) add("title", patch.title);
     if (patch.icon !== undefined) add("icon", patch.icon);
     if (patch.favorite !== undefined) add("favorite", patch.favorite);
+    if (patch.cover !== undefined) add("cover", patch.cover);
     if (patch.schema !== undefined) add("schema", JSON.stringify(patch.schema), "::jsonb");
     if (patch.props !== undefined) {
       params.push(JSON.stringify(patch.props));
@@ -257,7 +260,7 @@ export class PgPageStore {
     let links: string[] | null = null;
     if (patch.body !== undefined) {
       await this.snapshot(id, patch.body, baseRev);
-      const text = extractText(patch.body);
+      const text = (patch.body as { type?: string } | null)?.type === "canvas" ? canvasText(patch.body) : extractText(patch.body);
       links = extractLinks(text);
       add("body", JSON.stringify(patch.body), "::jsonb");
       add("body_text", text);

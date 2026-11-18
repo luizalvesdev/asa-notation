@@ -46,7 +46,7 @@ export function HojeView({ onToast }: HojeViewProps) {
     });
   const moveToToday = (ids: string[]) => void tasks.reschedule(ids, today).then((ok) => !ok && fail("Não foi possível mover as tarefas."));
 
-  const rowProps = { onToggle: toggle, onToggleSubtask: toggleSub, onRemove: remove };
+  const rowProps = { onToggle: toggle, onToggleSubtask: toggleSub, onRemove: remove, onAddSubtask: (parentId: string, title: string) => tasks.addSubtask(parentId, title) };
 
   return (
     <div style={{ padding: "40px 40px 120px", maxWidth: 780 }}>

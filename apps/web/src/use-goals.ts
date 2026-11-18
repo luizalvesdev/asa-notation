@@ -85,6 +85,7 @@ export interface GoalDetailState {
   removeTask: (item: TaskItem) => Promise<boolean>;
   restoreTask: (id: string) => Promise<boolean>;
   unlinkTask: (item: TaskItem) => Promise<boolean>;
+  addSubtask: (parentId: string, title: string) => Promise<boolean>;
 }
 
 /** Tarefas ligadas a uma meta. `onChanged` roda depois de cada mudança confirmada (para recontar o progresso). */
@@ -176,7 +177,8 @@ export function useGoalDetail(goalId: string | null, onChanged: () => void): Goa
   const addTask = useCallback((title: string) => attempt(() => tasksApi.create({ title, goalId })), [attempt, goalId]);
   const removeTask = useCallback((item: TaskItem) => attempt(() => tasksApi.remove(item.id)), [attempt]);
   const restoreTask = useCallback((id: string) => attempt(() => tasksApi.restore(id)), [attempt]);
+  const addSubtask = useCallback((parentId: string, title: string) => attempt(() => tasksApi.create({ title, parentId })), [attempt]);
   const unlinkTask = useCallback((item: TaskItem) => attempt(() => tasksApi.update(item.id, { goalId: null })), [attempt]);
 
-  return { status, tasks, reload, toggle, toggleSubtask, addTask, removeTask, restoreTask, unlinkTask };
+  return { status, tasks, reload, toggle, toggleSubtask, addTask, removeTask, restoreTask, unlinkTask, addSubtask };
 }

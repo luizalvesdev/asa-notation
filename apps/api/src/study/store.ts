@@ -209,6 +209,17 @@ export class PgStudyStore {
     return { kind: "ok", dueAt: next.dueAt, state: next.state, preview: await fsrs.preview(next, now) };
   }
 
+  /** Cards mais errados dos últimos 14 dias, com o texto, para o tutor. */
+  async weakWithContent(limit = 10): Promise<{ id: string; kind: string; front: string; back: string; lapses: number }[]> {
+    const rows = await this.sql.query(
+      `select c.id, c.kind, c.front, c.back, count(*)::int as lapses from cards c join review_logs r on r.card_id = c.id
+        where r.rating = 1 and r.reviewed_at >= $1::timestamptz - interval '14 days' and c.deleted_at is null
+        group by c.id order by count(*) desc, c.id limit $2`,
+      [this.now().toISOString(), limit],
+    );
+    return rows.map((r) => ({ id: r.id as string, kind: r.kind as string, front: r.front as string, back: r.back as string, lapses: Number(r.lapses) }));
+  }
+
   // ---- estatísticas ----------------------------------------------------------
 
   async stats(tz: string, days: number): Promise<Stats> {

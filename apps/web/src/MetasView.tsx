@@ -207,6 +207,7 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
                 onToggle={toggle}
                 onToggleSubtask={toggleSub}
                 onRemove={remove}
+                onAddSubtask={(parentId, title) => detail.addSubtask(parentId, title)}
                 extra={{ label: "Desligar", run: (t) => void detail.unlinkTask(t).then((ok) => !ok && fail("Não foi possível desligar a tarefa.")) }}
               />
             ))}

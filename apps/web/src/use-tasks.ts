@@ -15,6 +15,7 @@ export interface TasksState {
   add: (input: NewTaskInput) => Promise<boolean>;
   remove: (item: TaskItem) => Promise<boolean>;
   restore: (id: string) => Promise<boolean>;
+  addSubtask: (parentId: string, title: string) => Promise<boolean>;
   /** Muda a data de tarefas simples. */
   reschedule: (ids: string[], date: string) => Promise<boolean>;
 }
@@ -85,7 +86,8 @@ export function useTasks(from: string, to: string, today: string): TasksState {
   const add = useCallback((input: NewTaskInput) => attempt(() => tasksApi.create(input)), [attempt]);
   const remove = useCallback((item: TaskItem) => attempt(() => tasksApi.remove(item.id)), [attempt]);
   const restore = useCallback((id: string) => attempt(() => tasksApi.restore(id)), [attempt]);
+  const addSubtask = useCallback((parentId: string, title: string) => attempt(() => tasksApi.create({ title, parentId })), [attempt]);
   const reschedule = useCallback((ids: string[], date: string) => attempt(() => tasksApi.reschedule(ids, date)), [attempt]);
 
-  return { status, list, reload, toggle, toggleSubtask, add, remove, restore, reschedule };
+  return { status, list, reload, toggle, toggleSubtask, add, remove, restore, reschedule, addSubtask };
 }

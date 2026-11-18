@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AddTask } from "./AddTask";
 import { Icon } from "./icons";
 import type { TaskItem } from "./tasks-types";
 
@@ -10,6 +11,8 @@ interface TaskRowProps {
   onToggle: (item: TaskItem) => void;
   onToggleSubtask: (subId: string, done: boolean) => void;
   onRemove: (item: TaskItem) => void;
+  /** Cria uma subtarefa. Sem isso, o botão de subtarefa não aparece. */
+  onAddSubtask?: (parentId: string, title: string) => Promise<boolean>;
   /** Não repete o nome da meta (já está no contexto, como no detalhe da meta). */
   hideGoal?: boolean;
   /** Ação extra (ex.: "Fazer hoje") mostrada ao passar o mouse. */
@@ -26,7 +29,7 @@ function Check({ on, small }: { on: boolean; small?: boolean }) {
   );
 }
 
-export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRemove, hideGoal, extra }: TaskRowProps) {
+export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRemove, onAddSubtask, hideGoal, extra }: TaskRowProps) {
   const [open, setOpen] = useState(false);
   const subDone = item.subtasks.filter((s) => s.done).length;
   const hasSubs = item.subtasks.length > 0;
@@ -65,12 +68,17 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
             </span>
           )}
           {item.time ? <span className="mono">{item.time}</span> : when ? <span style={whenLate ? { color: "var(--danger)" } : undefined}>{when}</span> : null}
+          {onAddSubtask && (
+            <button className="btn btn-fan btn-sm row-action" type="button" onClick={() => setOpen(true)} aria-label={`Adicionar subtarefa a “${item.title}”`}>
+              Subtarefa
+            </button>
+          )}
           <button className="btn btn-fan btn-ico btn-sm row-action" type="button" aria-label={`Apagar “${item.title}”`} onClick={() => onRemove(item)}>
             <Icon name="close" />
           </button>
         </span>
       </div>
-      {hasSubs && (
+      {(hasSubs || (onAddSubtask && open)) && (
         <div className={`kids${open ? " on" : ""}`}>
           <div style={{ paddingLeft: 32 }}>
             {item.subtasks.map((sub) => (
@@ -79,6 +87,7 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
                 <span className={sub.done ? "done-txt" : undefined}>{sub.title}</span>
               </button>
             ))}
+            {onAddSubtask && open && <AddTask compact label="Adicionar subtarefa" onAdd={(q) => onAddSubtask(item.id, q.title)} />}
           </div>
         </div>
       )}
