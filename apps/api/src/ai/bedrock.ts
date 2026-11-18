@@ -1,4 +1,4 @@
-import { ProviderError, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
+import { DEFAULT_MAX_TOKENS, ProviderError, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
 
 export type AiConfig = { provider: "anthropic" } | { provider: "bedrock"; modelId: string; region: string };
 
@@ -9,7 +9,7 @@ export type BedrockInvoke = (input: { modelId: string; body: string; signal: Abo
 export function bedrockBody(req: ModelRequest): string {
   return JSON.stringify({
     anthropic_version: "bedrock-2023-05-31",
-    max_tokens: req.maxTokens ?? 1500,
+    max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS,
     system: req.system,
     messages: req.messages,
     ...(req.tools.length > 0 ? { tools: req.tools } : {}),

@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Block, ModelMessage, ModelRequest, ModelResponse } from "../src/ai/anthropic.js";
 import { ProviderError, createBudgetedModel, createModel } from "../src/ai/anthropic.js";
-import { MAX_STEPS, runTurn, trimHistory } from "../src/chat/agent.js";
+import { MAX_STEPS, TRUNCATED, runTurn, trimHistory } from "../src/chat/agent.js";
 import { markdownToDoc } from "../src/chat/markdown.js";
 import { decryptSecret, encryptSecret, secretsKey } from "../src/secrets/crypto.js";
 import { createTestApp, doc, type TestApp } from "./helpers.js";
@@ -23,6 +23,52 @@ describe("cofre de segredos", () => {
     raw[raw.length - 1] = raw[raw.length - 1]! ^ 1;
     expect(decryptSecret(raw.toString("base64"), key)).toBeNull();
     expect(decryptSecret("curto", key)).toBeNull();
+  });
+});
+
+describe("markdownToDoc rico", () => {
+  const types = (md: string) => markdownToDoc(md).content.map((n) => (n as { type: string }).type);
+
+  it("bloco de código com linguagem e bloco mermaid", () => {
+    const d = markdownToDoc("Antes\n\n```ts\nconst a = 1;\nconsole.log(a);\n```\n\n```mermaid\nmindmap\n  root((Raft))\n```\n\nDepois");
+    expect(types("Antes\n\n```ts\nx\n```\n\n```mermaid\ngraph TD\n```\n\nDepois")).toEqual(["paragraph", "codeBlock", "mermaid", "paragraph"]);
+    expect(d.content[1]).toMatchObject({ type: "codeBlock", attrs: { language: "ts" }, content: [{ type: "text", text: "const a = 1;\nconsole.log(a);" }] });
+    expect(d.content[2]).toMatchObject({ type: "mermaid", attrs: { code: "mindmap\n  root((Raft))" } });
+  });
+
+  it("cerca sem fechamento vai até o fim do texto", () => {
+    expect(markdownToDoc("```py\nprint(1)").content[0]).toMatchObject({ type: "codeBlock", content: [{ text: "print(1)" }] });
+  });
+
+  it("dentro da cerca, # e - não viram título nem lista", () => {
+    expect(types("```sh\n# comentário\n- item\n```")).toEqual(["codeBlock"]);
+  });
+
+  it("lista numerada, citação e divisor", () => {
+    expect(types("1. um\n2. dois\n\n> citado\n> em duas linhas\n\n---")).toEqual(["orderedList", "blockquote", "horizontalRule"]);
+    expect((markdownToDoc("> a\n> b").content[0] as { content: unknown[] }).content).toHaveLength(2);
+  });
+
+  it("marcas no texto: negrito, itálico, código e link", () => {
+    const [p] = markdownToDoc("Um **forte**, *itálico*, `code` e [site](https://x.dev).").content as { content: { text: string; marks?: { type: string; attrs?: { href: string } }[] }[] }[];
+    const by = (t: string) => p!.content.find((n) => n.text === t)!;
+    expect(by("forte").marks).toEqual([{ type: "bold" }]);
+    expect(by("itálico").marks).toEqual([{ type: "italic" }]);
+    expect(by("code").marks).toEqual([{ type: "code" }]);
+    expect(by("site").marks).toEqual([{ type: "link", attrs: { href: "https://x.dev" } }]);
+    expect(p!.content.map((n) => n.text).join("")).toBe("Um forte, itálico, code e site.");
+  });
+
+  it("link com protocolo perigoso fica como texto puro", () => {
+    const json = JSON.stringify(markdownToDoc("[clique](javascript:alert(1)) e [ok](mailto:a@b.dev)"));
+    expect(json).not.toContain('"href":"javascript');
+    expect(json).toContain('"href":"mailto:a@b.dev"');
+  });
+
+  it("título com negrito e tarefa com código", () => {
+    const d = markdownToDoc("## Plano **final**\n\n- [ ] rodar `npm test`");
+    expect(JSON.stringify(d.content[0])).toContain('"bold"');
+    expect(JSON.stringify(d.content[1])).toContain('"code"');
   });
 });
 
@@ -105,6 +151,21 @@ describe("runTurn", () => {
     const out = await runTurn([], "x", { system: "s", specs: [], handlers: { t: async () => "r" }, model });
     expect(requests).toHaveLength(MAX_STEPS);
     expect(out.text).toBe("pensando");
+  });
+
+  it("resposta cortada no limite de tokens: não executa a ferramenta incompleta e avisa", async () => {
+    const run = vi.fn(async () => "x");
+    const model = async (): Promise<ModelResponse> => ({ content: [{ type: "text", text: "Vou criar a página." }, { type: "tool_use", id: "t", name: "propose_page", input: { title: "só o título" } }], stopReason: "max_tokens" });
+    const out = await runTurn([], "crie", { system: "s", specs: [], handlers: { propose_page: run }, model });
+    expect(run).not.toHaveBeenCalled();
+    expect(out.text).toBe(`Vou criar a página.\n\n${TRUNCATED}`);
+    // O histórico guardado não leva a chamada incompleta (a API recusaria um tool_use sem tool_result).
+    expect(JSON.stringify(out.messages)).not.toContain("tool_use");
+  });
+
+  it("resposta cortada sem texto: só o aviso", async () => {
+    const model = async (): Promise<ModelResponse> => ({ content: [], stopReason: "max_tokens" });
+    expect((await runTurn([], "x", { system: "s", specs: [], handlers: {}, model })).text).toBe(TRUNCATED);
   });
 
   it("corta o resultado de ferramenta muito grande", async () => {
@@ -251,7 +312,7 @@ describe("conversa com os assistentes", () => {
     expect(call.body.system).toContain("2026-11-18");
     expect(call.body.system).toContain("NUNCA cria");
     expect(call.body.system).toContain("texto simples");
-    expect(call.body.tools!.map((t) => t.name)).toEqual(["list_tasks", "list_goals", "propose_tasks"]);
+    expect(call.body.tools!.map((t) => t.name)).toEqual(["list_tasks", "list_goals", "propose_tasks", "propose_page", "propose_diagram"]);
     replies.push(ok(text("ok")));
     await send({ agent: "renato", text: "oi" });
     expect(provider.calls[1]!.body.tools!.map((t) => t.name)).toContain("search_notes");
@@ -378,6 +439,12 @@ describe("conversa com os assistentes", () => {
     expect(JSON.stringify(provider.calls[1]!.body.messages.at(-1))).toContain("O que é quorum?");
     expect(messages(res).at(-1)!.text).toContain("quorum");
     expect(messages(res).at(-1)!.drafts).toEqual([]);
+  });
+
+  it("resposta vazia do modelo vira uma mensagem clara, nunca um balão em branco", async () => {
+    replies.push({ status: 200, body: { content: [], stop_reason: "end_turn" } });
+    const res = await send({ agent: "hermes", text: "oi" });
+    expect(messages(res).at(-1)!.text).toContain("Não consegui responder");
   });
 
   it("conversa de um agente não abre com o outro", async () => {

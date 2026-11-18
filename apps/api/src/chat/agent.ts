@@ -1,6 +1,7 @@
 import type { Block, ModelMessage, ModelRequest, ModelResponse, ToolResultBlock, ToolSpec, ToolUseBlock } from "../ai/anthropic.js";
 
 export const MAX_STEPS = 6;
+export const TRUNCATED = "A resposta ficou grande demais para caber de uma vez, então não criei nada. Peça por partes: por exemplo, primeiro a explicação e o diagrama, depois o código.";
 const MAX_TOOL_RESULT = 8000;
 
 export type ToolHandler = (input: Record<string, unknown>) => Promise<string>;
@@ -31,6 +32,15 @@ export async function runTurn(history: ModelMessage[], userText: string, config:
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const response = await config.model({ system: config.system, messages: all(), tools: config.specs });
+
+    // Resposta cortada no limite de tokens: uma chamada de ferramenta no meio fica incompleta e não pode ser executada.
+    if (response.stopReason === "max_tokens") {
+      const said = textOf(response.content);
+      const text = said ? `${said}\n\n${TRUNCATED}` : TRUNCATED;
+      fresh.push({ role: "assistant", content: [{ type: "text", text }] });
+      return { messages: fresh, text };
+    }
+
     fresh.push({ role: "assistant", content: response.content });
 
     const calls = response.content.filter((b): b is ToolUseBlock => b.type === "tool_use");

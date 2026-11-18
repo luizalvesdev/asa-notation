@@ -160,6 +160,8 @@ export function chatRoutes(deps: Deps): Route[] {
         }
 
         // Guarda o turno: o que o usuário viu fica visível; chamadas e resultados de ferramenta ficam só para o histórico.
+        // Nunca deixa a resposta em branco: se o modelo só chamou ferramentas, diz o que aconteceu.
+        if (turn.text === "") turn.text = draftIds.length > 0 ? "Deixei um rascunho para você aprovar." : "Não consegui responder agora. Tente de novo ou peça de outro jeito.";
         let finalId = "";
         for (let i = 0; i < turn.messages.length; i++) {
           const m = turn.messages[i]!;

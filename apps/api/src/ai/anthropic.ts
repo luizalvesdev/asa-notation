@@ -51,6 +51,9 @@ export class ProviderError extends Error {
   }
 }
 
+/** Espaço de saída de um turno: uma página documentada pede alguns milhares de tokens (cerca de 230 tokens/s no Haiku). */
+export const DEFAULT_MAX_TOKENS = 4000;
+
 export const DEFAULT_MODEL = "claude-sonnet-5-5";
 const URL = "https://api.anthropic.com/v1/messages";
 export const TIMEOUT_MS = 60_000;
@@ -68,7 +71,7 @@ export function createModel(apiKey: string, model: string, fetchImpl: FetchLike,
       const res = await fetchImpl(URL, {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model, max_tokens: req.maxTokens ?? 1500, system: req.system, messages: req.messages, ...(req.tools.length > 0 ? { tools: req.tools } : {}) }),
+        body: JSON.stringify({ model, max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS, system: req.system, messages: req.messages, ...(req.tools.length > 0 ? { tools: req.tools } : {}) }),
         signal: controller.signal,
       });
       const data = (await res.json().catch(() => null)) as { content?: Block[]; stop_reason?: string; error?: { message?: string } } | null;

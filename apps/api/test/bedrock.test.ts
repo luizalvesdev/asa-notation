@@ -14,7 +14,7 @@ describe("corpo da chamada ao Bedrock", () => {
   it("sem ferramentas, não manda o campo tools; max_tokens tem padrão", () => {
     const body = JSON.parse(bedrockBody({ system: "s", messages: [], tools: [] }));
     expect(body.tools).toBeUndefined();
-    expect(body.max_tokens).toBe(1500);
+    expect(body.max_tokens).toBe(4000);
   });
 });
 
