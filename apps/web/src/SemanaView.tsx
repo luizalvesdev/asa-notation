@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { settingsApi } from "./api";
 import { AddTask } from "./AddTask";
 import { Icon } from "./icons";
 import type { Toast } from "./toast";
@@ -55,7 +56,26 @@ function WeekCard({ item, onToggle, onDragStart, onDragEnd }: { item: TaskItem; 
 
 export function SemanaView({ onToast }: SemanaViewProps) {
   const today = localDate();
+  const [first, setFirst] = useState<0 | 1>(1);
   const [start, setStart] = useState(() => weekStart(today));
+
+  // A semana pode começar no domingo (Configurações). Reposiciona se a escolha for diferente da segunda.
+  useEffect(() => {
+    let live = true;
+    settingsApi
+      .get()
+      .then((s) => {
+        if (!live || s.weekStart === first) return;
+        setFirst(s.weekStart);
+        setStart((cur) => weekStart(cur, s.weekStart));
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+    // Só na abertura da tela.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const dates = weekDates(start);
   const tasks = useTasks(start, addDays(start, 6), today);
   const dragging = useRef<TaskItem | null>(null);
@@ -63,7 +83,7 @@ export function SemanaView({ onToast }: SemanaViewProps) {
 
   const byDay = groupByDate(tasks.list.days);
   const ready = tasks.status === "pronto";
-  const isThisWeek = start === weekStart(today);
+  const isThisWeek = start === weekStart(today, first);
 
   const fail = (text: string) => onToast({ text });
   const toggle = (item: TaskItem) => void tasks.toggle(item).then((ok) => !ok && fail("Não foi possível atualizar a tarefa."));
@@ -117,7 +137,7 @@ export function SemanaView({ onToast }: SemanaViewProps) {
               <path d="M15 6l-6 6 6 6" />
             </svg>
           </button>
-          <button className="btn btn-sec btn-sm" type="button" disabled={isThisWeek} onClick={() => setStart(weekStart(today))}>
+          <button className="btn btn-sec btn-sm" type="button" disabled={isThisWeek} onClick={() => setStart(weekStart(today, first))}>
             Esta semana
           </button>
           <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Próxima semana" onClick={() => setStart(addDays(start, 7))}>

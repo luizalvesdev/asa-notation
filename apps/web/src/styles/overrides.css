@@ -49,3 +49,24 @@ body,
 .ds.full {
   min-height: 100%;
 }
+
+/* Movimento reduzido escolhido em Configurações (o do sistema já vale pela media query de base.css) */
+[data-reduce-motion="1"] .ds {
+  --instante: 80ms;
+  --rapido: 80ms;
+  --medio: 80ms;
+  --lento: 120ms;
+  --mola-d: 80ms;
+  --mola: linear;
+}
+
+[data-reduce-motion="1"] .sk::after,
+[data-reduce-motion="1"] .btn-load::after,
+[data-reduce-motion="1"] .caret,
+[data-reduce-motion="1"] .hcaret,
+[data-reduce-motion="1"] .cb.on,
+[data-reduce-motion="1"] .enter,
+[data-reduce-motion="1"] .grow,
+[data-reduce-motion="1"] .rise {
+  animation: none !important;
+}

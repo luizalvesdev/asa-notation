@@ -16,6 +16,8 @@ import { TrashView } from "./TrashView";
 import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
 import type { Page } from "./pages-types";
 import { Sidebar } from "./Sidebar";
+import { SettingsView } from "./SettingsView";
+import type { Preference } from "./theme";
 import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
 import { usePages } from "./use-pages";
@@ -23,11 +25,13 @@ import { usePages } from "./use-pages";
 interface ShellProps {
   dark: boolean;
   route: Route;
+  preference: Preference;
+  onPreference: (preference: Preference) => void;
   onToggleTheme: () => void;
   onLogout: () => void;
 }
 
-export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
+export function Shell({ dark, route, preference, onPreference, onToggleTheme, onLogout }: ShellProps) {
   const pages = usePages();
   const [collapsed, setCollapsed] = useState(false);
   const [drawer, setDrawer] = useState(false);
@@ -243,6 +247,8 @@ export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
                 setToast({ text: "Movida para uma página", action: { label: "Abrir", run: () => { setToast(null); location.hash = pageHash(page.id); } } });
               }}
             />
+          ) : route.id === "configuracoes" ? (
+            <SettingsView preference={preference} onPreference={onPreference} onLogout={onLogout} onToast={setToast} />
           ) : route.id === "estudo" ? (
             <StudyView nodes={pages.nodes} onToast={setToast} />
           ) : route.id === "revisao" ? (

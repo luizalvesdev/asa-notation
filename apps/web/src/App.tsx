@@ -9,7 +9,7 @@ import { useTheme } from "./use-theme";
 type Session = "checando" | "anonimo" | "autenticado";
 
 export function App() {
-  const [theme, toggleTheme] = useTheme();
+  const { theme, toggle: toggleTheme, preference, setPreference } = useTheme();
   const [session, setSession] = useState<Session>("checando");
   const route = useRoute();
 
@@ -41,7 +41,7 @@ export function App() {
     <div className={`ds full${theme === "escuro" ? " escuro" : ""}`} style={{ height: "100%" }}>
       {session === "checando" && null}
       {session === "anonimo" && <Login dark={theme === "escuro"} onAuthenticated={onAuthenticated} onToggleTheme={toggleTheme} />}
-      {session === "autenticado" && <Shell dark={theme === "escuro"} route={route} onToggleTheme={toggleTheme} onLogout={onLogout} />}
+      {session === "autenticado" && <Shell dark={theme === "escuro"} route={route} preference={preference} onPreference={setPreference} onToggleTheme={toggleTheme} onLogout={onLogout} />}
     </div>
   );
 }

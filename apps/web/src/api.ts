@@ -3,6 +3,7 @@ import { NetworkError } from "./capture-outbox";
 import type { Capture, Counts, Kind, KindFilter } from "./captures-types";
 import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import type { Candidate, Deck, NewCardInput, Overview, QueueCard, ReviewResponse, Stats, StudyCard } from "./study-types";
+import type { ApiToken, Settings } from "./settings-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
 export class ApiError extends Error {
@@ -98,6 +99,23 @@ export const studyApi = {
   createDeck: (title: string, goalId: string | null) => request<{ deck: Deck }>("POST", "/study/decks", { title, goalId }).then((r) => r.deck),
   updateDeck: (id: string, patch: { title?: string; goalId?: string | null }) => request<{ deck: Deck }>("PATCH", `/study/decks/${id}`, patch).then((r) => r.deck),
   deleteDeck: (id: string) => request<{ deleted: number }>("DELETE", `/study/decks/${id}`),
+};
+
+export const settingsApi = {
+  get: () => request<{ settings: Settings }>("GET", "/settings").then((r) => r.settings),
+  patch: (patch: Partial<Settings> | { checkins?: Partial<Settings["checkins"]>; quiet?: Partial<Settings["quiet"]> }) =>
+    request<{ settings: Settings }>("PATCH", "/settings", patch).then((r) => r.settings),
+};
+
+export const tokensApi = {
+  list: () => request<{ tokens: ApiToken[] }>("GET", "/tokens").then((r) => r.tokens),
+  create: (name: string, scope: "read" | "write") => request<{ token: ApiToken; secret: string }>("POST", "/tokens", { name, scope }),
+  revoke: (id: string) => request<{ revoked: number }>("DELETE", `/tokens/${id}`),
+};
+
+export const accountApi = {
+  changePassword: (currentPassword: string, newPassword: string) => request<{ ok: true }>("POST", "/auth/password/change", { currentPassword, newPassword }),
+  exportAll: () => request<{ pages: { id: string; parent_id: string | null; title: string; body: unknown }[] } & Record<string, unknown>>("GET", "/export"),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {

@@ -14,6 +14,13 @@ describe("tasks-dates", () => {
     expect(weekStart("2026-11-23")).toBe("2026-11-23");
   });
 
+  it("weekStart pode começar no domingo", () => {
+    expect(weekStart("2026-11-18", 0)).toBe("2026-11-15"); // quarta -> domingo anterior
+    expect(weekStart("2026-11-15", 0)).toBe("2026-11-15");
+    expect(weekStart("2026-11-21", 0)).toBe("2026-11-15"); // sábado
+    expect(weekStart("2026-11-22", 0)).toBe("2026-11-22"); // domingo abre a semana seguinte
+  });
+
   it("weekDates lista 7 dias atravessando o mês", () => {
     expect(weekDates("2026-11-30")).toEqual(["2026-11-30", "2026-12-01", "2026-12-02", "2026-12-03", "2026-12-04", "2026-12-05", "2026-12-06"]);
     expect(addDays("2026-03-01", -1)).toBe("2026-02-28");

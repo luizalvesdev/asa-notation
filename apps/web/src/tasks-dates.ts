@@ -21,10 +21,10 @@ export function addDays(date: string, days: number): string {
   return fmt(new Date(utc(date).getTime() + days * DAY_MS));
 }
 
-/** Segunda-feira da semana de `date`. */
-export function weekStart(date: string): string {
+/** Primeiro dia da semana de `date`: segunda-feira (padrão) ou domingo (`first` = 0). */
+export function weekStart(date: string, first: 0 | 1 = 1): string {
   const weekday = utc(date).getUTCDay(); // 0 = domingo
-  return addDays(date, -((weekday + 6) % 7));
+  return addDays(date, -((weekday - first + 7) % 7));
 }
 
 export function weekDates(start: string): string[] {

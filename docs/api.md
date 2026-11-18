@@ -97,6 +97,19 @@ Todas exigem sessão. Cards são `basic` (frente e verso) ou `cloze` (`front` co
 | DELETE | `/study/decks/:id` | Os cards ficam sem trilha |
 | GET | `/study/stats?tz=&days=` | Revisões por dia no fuso `tz`, retenção (cards em revisão lembrados), tempo, cards por estado, mais errados e vencimentos dos próximos 7 dias |
 
+## Configurações, tokens e export
+
+| Método | Rota | Acesso | Descrição |
+| --- | --- | --- | --- |
+| GET | `/settings` | sessão ou token | `{ timezone, weekStart, checkins: { plan, thursday, saturday }, quiet: { start, end } }` |
+| PATCH | `/settings` | só sessão | Qualquer parte do documento; o que não vem fica como estava |
+| GET | `/tokens` | só sessão | Tokens ativos (nunca o segredo) |
+| POST | `/tokens` | só sessão | `{ name, scope }`, `scope` = `read` ou `write`. O `secret` (`asa_…`) vem só nesta resposta |
+| DELETE | `/tokens/:id` | só sessão | Revoga |
+| GET | `/export` | sessão ou token | JSON com páginas, tarefas, metas, capturas, trilhas, cards, revisões e configurações. Sem senha, tokens nem lixeira |
+
+**Token de API**: cabeçalho `Authorization: Bearer asa_…`. Token `read` só faz GET; `write` faz tudo, menos senha, configurações e tokens (que exigem a sessão do dono). Como o token não é enviado sozinho pelo navegador, não precisa do cabeçalho `Origin`.
+
 ## Limites conhecidos
 
 - O destaque do trecho na busca só marca o termo quando ele é digitado com o mesmo acento do texto.

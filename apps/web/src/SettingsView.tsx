@@ -1,0 +1,346 @@
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { ApiError, accountApi, settingsApi, tokensApi } from "./api";
+import { downloadFile } from "./download";
+import { buildMarkdownZip } from "./export-zip";
+import { removePending, usePending } from "./outbox";
+import { canInstall, isStandalone, onInstallChange, promptInstall } from "./pwa";
+import { DEFAULT_SETTINGS, type ApiToken, type Settings } from "./settings-types";
+import { loadReduceMotion, applyReduceMotion, type Preference } from "./theme";
+import { formatAgo } from "./time-utils";
+import type { Toast } from "./toast";
+
+interface SettingsViewProps {
+  preference: Preference;
+  onPreference: (preference: Preference) => void;
+  onLogout: () => void;
+  onToast: (toast: Toast) => void;
+}
+
+const TABS = ["Geral", "Rotina", "API", "Dados", "Aplicativo", "Conta"] as const;
+type Tab = (typeof TABS)[number];
+
+const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" } as const;
+
+function useSettings(onToast: (t: Toast) => void) {
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    settingsApi
+      .get()
+      .then((s) => live && setSettings(s))
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const save = useCallback(
+    async (patch: Parameters<typeof settingsApi.patch>[0]) => {
+      try {
+        setSettings(await settingsApi.patch(patch));
+        return true;
+      } catch {
+        onToast({ text: "Não foi possível salvar a configuração." });
+        return false;
+      }
+    },
+    [onToast],
+  );
+  return { settings, failed, save };
+}
+
+function Segment<T extends string | number>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+  const index = Math.max(0, options.findIndex((o) => o.value === value));
+  return (
+    <div className="seg" role="radiogroup" aria-label={label} style={{ width: 360, maxWidth: "100%" }}>
+      <span className="seg-ind" style={{ width: `calc((100% - 4px) / ${options.length})`, transform: `translateX(${index * 100}%)` }} />
+      {options.map((o) => (
+        <button key={String(o.value)} className={`seg-b${o.value === value ? " on" : ""}`} type="button" role="radio" aria-checked={o.value === value} onClick={() => onChange(o.value)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TimeField({ label, value, onSave }: { label: string; value: string; onSave: (v: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  return (
+    <input
+      className="inp mono"
+      type="time"
+      aria-label={label}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => draft && draft !== value && onSave(draft)}
+      style={{ width: 110 }}
+    />
+  );
+}
+
+function General({ settings, save, preference, onPreference }: { settings: Settings; save: ReturnType<typeof useSettings>["save"]; preference: Preference; onPreference: (p: Preference) => void }) {
+  const [tz, setTz] = useState(settings.timezone);
+  const [tzError, setTzError] = useState(false);
+  const [reduce, setReduce] = useState(loadReduceMotion);
+  const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
+
+  return (
+    <div className="col enter" style={{ gap: 20 }}>
+      <div className="col" style={{ gap: 8 }}>
+        <span className="label">Tema</span>
+        <Segment label="Tema" value={preference} onChange={onPreference} options={[{ value: "claro", label: "Claro" }, { value: "escuro", label: "Escuro" }, { value: "sistema", label: "Sistema" }]} />
+        <span className="help">“Sistema” segue a preferência do dispositivo.</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: 14 }}>
+        <div className="field">
+          <label className="label" htmlFor="tz">Fuso horário</label>
+          <input id="tz" className={`inp${tzError ? " err" : ""}`} list="zones" value={tz} onChange={(e) => { setTz(e.target.value); setTzError(false); }} onBlur={() => { if (tz !== settings.timezone) void save({ timezone: tz }).then((ok) => { if (!ok) { setTzError(true); } }); }} />
+          <datalist id="zones">{zones.map((z) => <option key={z} value={z} />)}</datalist>
+          <span className="help" style={tzError ? { color: "var(--danger)" } : undefined}>{tzError ? "Fuso não reconhecido. Use o formato America/Sao_Paulo." : "Usado em check-ins, lembretes e datas."}</span>
+        </div>
+        <div className="field">
+          <span className="label">Semana começa em</span>
+          <Segment label="Semana começa em" value={settings.weekStart} onChange={(v) => void save({ weekStart: v })} options={[{ value: 1, label: "Segunda" }, { value: 0, label: "Domingo" }]} />
+        </div>
+      </div>
+      <button className="tog" type="button" role="switch" aria-checked={reduce} onClick={() => { const next = !reduce; setReduce(next); applyReduceMotion(next); }} style={{ padding: 0, color: "var(--text)", justifyContent: "space-between", maxWidth: 520, height: "auto", minHeight: 40 }}>
+        <span className="col" style={{ textAlign: "left" }}>
+          <span>Reduzir movimento</span>
+          <span style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 400 }}>Troca deslocamentos por opacidade. Também segue o sistema.</span>
+        </span>
+        <span className={`sw${reduce ? " on" : ""}`}><span className="knob" /></span>
+      </button>
+    </div>
+  );
+}
+
+function Routine({ settings, save }: { settings: Settings; save: ReturnType<typeof useSettings>["save"] }) {
+  const rows: { label: string; badge: string; aria: string; key: "plan" | "thursday" | "saturday" }[] = [
+    { label: "Plano do dia", badge: "todo dia", aria: "Horário do plano do dia", key: "plan" },
+    { label: "Métricas da quinta", badge: "quinta", aria: "Horário das métricas", key: "thursday" },
+    { label: "Revisão do sábado", badge: "sábado", aria: "Horário da revisão", key: "saturday" },
+  ];
+  return (
+    <div className="col enter">
+      <span className="label" style={{ marginBottom: 6 }}>Horários dos check-ins do Hermes</span>
+      {rows.map((r) => (
+        <div key={r.key} className="row" style={{ gap: 12, minHeight: 52, borderTop: "1px solid var(--border)" }}>
+          <span className="grow1">{r.label}</span>
+          <span className="badge out">{r.badge}</span>
+          <TimeField label={r.aria} value={settings.checkins[r.key]} onSave={(v) => void save({ checkins: { [r.key]: v } })} />
+        </div>
+      ))}
+      <div className="row" style={{ gap: 12, minHeight: 52, borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
+        <span className="grow1">Silêncio</span>
+        <span className="help">sem notificações</span>
+        <TimeField label="Início do silêncio" value={settings.quiet.start} onSave={(v) => void save({ quiet: { start: v } })} />
+        <span>até</span>
+        <TimeField label="Fim do silêncio" value={settings.quiet.end} onSave={(v) => void save({ quiet: { end: v } })} />
+      </div>
+    </div>
+  );
+}
+
+function Tokens({ onToast }: { onToast: (t: Toast) => void }) {
+  const [tokens, setTokens] = useState<ApiToken[] | null>(null);
+  const [name, setName] = useState("");
+  const [scope, setScope] = useState<"read" | "write">("read");
+  const [secret, setSecret] = useState<{ name: string; value: string } | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const load = useCallback(() => {
+    tokensApi.list().then(setTokens).catch(() => setTokens([]));
+  }, []);
+  useEffect(load, [load]);
+
+  const create = async () => {
+    if (name.trim() === "") return;
+    try {
+      const res = await tokensApi.create(name.trim(), scope);
+      setSecret({ name: res.token.name, value: res.secret });
+      setName("");
+      setCopied(false);
+      load();
+    } catch {
+      onToast({ text: "Não foi possível criar o token." });
+    }
+  };
+
+  return (
+    <div className="col enter" style={{ gap: 14 }}>
+      <p className="muted" style={{ fontSize: 14 }}>Tokens para scripts e integrações acessarem suas páginas pela API (cabeçalho <code>Authorization: Bearer …</code>). Token não altera senha, configurações nem outros tokens.</p>
+      {secret && (
+        <div className="draft-ok enter" role="status" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+          <b style={{ fontWeight: 600 }}>Token “{secret.name}” criado. Copie agora: ele não aparece de novo.</b>
+          <div className="row" style={{ gap: 8 }}>
+            <input className="inp mono" readOnly value={secret.value} aria-label="Token novo" onFocus={(e) => e.currentTarget.select()} />
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => void navigator.clipboard.writeText(secret.value).then(() => setCopied(true)).catch(() => onToast({ text: "Não foi possível copiar. Selecione o texto." }))}>{copied ? "Copiado" : "Copiar"}</button>
+            <button className="btn btn-fan btn-sm" type="button" onClick={() => setSecret(null)}>Fechar</button>
+          </div>
+        </div>
+      )}
+      <div className="dgrid card" role="table" aria-label="Tokens" style={{ ["--cols" as string]: "minmax(0, 1.3fr) 140px 130px 150px", overflow: "hidden" }}>
+        <div className="drow hd" role="row"><span role="columnheader">Nome</span><span role="columnheader">Escopo</span><span role="columnheader">Último uso</span><span role="columnheader" /></div>
+        {tokens === null && <div className="drow" role="row"><span className="sk" style={{ height: 14, margin: "0 10px" }} /></div>}
+        {tokens?.length === 0 && <div className="drow" role="row"><span style={{ color: "var(--text-3)" }}>Nenhum token ainda.</span></div>}
+        {tokens?.map((t) => (
+          <div key={t.id} className="drow" role="row">
+            <span>{t.name}</span>
+            <span><span className="badge out">{t.scope === "read" ? "leitura" : "leitura e escrita"}</span></span>
+            <span style={{ color: "var(--text-2)" }}>{t.lastUsedAt ? formatAgo(t.lastUsedAt) : "nunca"}</span>
+            <span style={{ textAlign: "right" }}>
+              {confirm === t.id ? (
+                <button className="btn btn-sm btn-sec" type="button" onClick={() => void tokensApi.revoke(t.id).then(() => { setConfirm(null); load(); }).catch(() => onToast({ text: "Não foi possível revogar." }))}>Confirmar</button>
+              ) : (
+                <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => setConfirm(t.id)}>Revogar</button>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      <form className="row" style={{ gap: 8, flexWrap: "wrap" }} onSubmit={(e) => { e.preventDefault(); void create(); }}>
+        <input className="inp" style={{ width: 240 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do token (ex.: script de backup)" aria-label="Nome do token" />
+        <select className="inp" style={{ width: "auto" }} value={scope} onChange={(e) => setScope(e.target.value as "read" | "write")} aria-label="Escopo">
+          <option value="read">Leitura</option>
+          <option value="write">Leitura e escrita</option>
+        </select>
+        <button className="btn btn-sec" type="submit" disabled={name.trim() === ""}>Novo token</button>
+      </form>
+    </div>
+  );
+}
+
+function Data({ onToast }: { onToast: (t: Toast) => void }) {
+  const [busy, setBusy] = useState<"json" | "md" | null>(null);
+
+  const run = async (kind: "json" | "md") => {
+    setBusy(kind);
+    try {
+      const data = await accountApi.exportAll();
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (kind === "json") downloadFile(`asa-backup-${stamp}.json`, JSON.stringify(data, null, 2), "application/json");
+      else downloadFile(`asa-markdown-${stamp}.zip`, buildMarkdownZip(data.pages) as BlobPart, "application/zip");
+      onToast({ text: `Export pronto · ${data.pages.length} ${data.pages.length === 1 ? "página" : "páginas"}` });
+    } catch {
+      onToast({ text: "Não foi possível exportar." });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="col enter" style={{ gap: 14 }}>
+      <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <b style={{ fontWeight: 600 }}>Backup e export</b>
+        <span style={{ fontSize: 13, color: "var(--text-2)" }}>Markdown espelha a árvore de páginas em pastas. JSON leva tudo: páginas, tarefas, metas, capturas, cards e revisões. Senha e tokens nunca entram.</span>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-pri" type="button" disabled={busy !== null} onClick={() => void run("md")}>{busy === "md" ? "Gerando…" : "Exportar Markdown (.zip)"}</button>
+          <button className="btn btn-sec" type="button" disabled={busy !== null} onClick={() => void run("json")}>{busy === "json" ? "Gerando…" : "Exportar JSON"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const installable = useSyncExternalStore(onInstallChange, canInstall);
+  const pending = usePending();
+  return (
+    <div className="col enter" style={{ gap: 14 }}>
+      <div className="card" style={{ padding: 16, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <span className="col grow1">
+          <b style={{ fontWeight: 600 }}>Instalar como aplicativo</b>
+          <span style={{ fontSize: 13, color: "var(--text-2)" }}>Abre em janela própria e funciona sem rede para leitura.</span>
+        </span>
+        {isStandalone() ? <span className="badge ok">instalado</span> : installable ? <button className="btn btn-pri" type="button" onClick={() => void promptInstall()}>Instalar</button> : <span className="help">O navegador oferece a instalação quando o app pode ser instalado.</span>}
+      </div>
+      <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="row"><b style={{ fontWeight: 600 }}>Fila offline</b>{pending.length > 0 && <span className="badge warn" style={{ marginLeft: "auto" }}>{pending.length} {pending.length === 1 ? "captura" : "capturas"} na fila</span>}</div>
+        <span style={{ fontSize: 13, color: "var(--text-2)" }}>Capturas feitas sem rede esperam aqui e sobem ao reconectar.</span>
+        {pending.length === 0 && <span style={{ fontSize: 13, color: "var(--text-3)" }}>Nada na fila.</span>}
+        {pending.map((p) => (
+          <div key={p.id} className="row" style={{ gap: 10, fontSize: 13, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+            <span className="grow1 trunc">{p.text}</span>
+            <span className="spec">{formatAgo(p.createdAt)}</span>
+            <button className="btn btn-fan btn-sm" type="button" onClick={() => removePending(p.id)}>Descartar</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Account({ onLogout, onToast }: { onLogout: () => void; onToast: (t: Toast) => void }) {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const valid = current !== "" && next.length >= 12;
+
+  const submit = async () => {
+    if (!valid || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await accountApi.changePassword(current, next);
+      setCurrent("");
+      setNext("");
+      onToast({ text: "Senha alterada" });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 403) setError("Senha atual incorreta.");
+      else if (err instanceof ApiError && err.status === 429) setError("Muitas tentativas. Aguarde alguns minutos.");
+      else if (err instanceof ApiError && err.status === 400) setError("A nova senha precisa ter de 12 a 200 caracteres.");
+      else setError("Não foi possível alterar a senha.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="col enter" style={{ gap: 14 }}>
+      <form className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }} onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+        <b style={{ fontWeight: 600 }}>Senha</b>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 12 }}>
+          <div className="field"><label className="label" htmlFor="sa">Senha atual</label><input id="sa" className="inp" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} /></div>
+          <div className="field"><label className="label" htmlFor="sn">Nova senha</label><input id="sn" className="inp" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} /><span className="help">Mínimo de 12 caracteres.</span></div>
+        </div>
+        {error && <span role="alert" style={{ fontSize: 13, color: "var(--danger)" }}>{error}</span>}
+        <button className="btn btn-sec" type="submit" disabled={!valid || busy} style={{ alignSelf: "flex-start" }}>Alterar senha</button>
+      </form>
+      <div className="card" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
+        <span className="col grow1"><b style={{ fontWeight: 600 }}>Sessão</b><span style={{ fontSize: 13, color: "var(--text-2)" }}>Este navegador</span></span>
+        <button className="btn btn-fan btn-sm" type="button" onClick={onLogout}>Sair</button>
+      </div>
+    </div>
+  );
+}
+
+export function SettingsView({ preference, onPreference, onLogout, onToast }: SettingsViewProps) {
+  const [tab, setTab] = useState<Tab>("Geral");
+  const { settings, failed, save } = useSettings(onToast);
+  const needsSettings = tab === "Geral" || tab === "Rotina";
+  const s = settings ?? DEFAULT_SETTINGS;
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "36px 32px 120px", display: "flex", flexDirection: "column", gap: 18 }}>
+      <h1 style={H1}>Configurações</h1>
+      <div className="tabs" role="tablist" aria-label="Seções" style={{ overflowX: "auto", overflowY: "hidden" }}>
+        {TABS.map((t) => (
+          <button key={t} className={`plain tab${tab === t ? " on" : ""}`} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ whiteSpace: "nowrap", position: "relative", padding: "8px 12px", height: 36 }}>{t}</button>
+        ))}
+      </div>
+      {needsSettings && !settings && !failed && <span className="sk" style={{ height: 80, borderRadius: 10 }} aria-busy="true" aria-label="Carregando as configurações" />}
+      {needsSettings && failed && <div className="card" role="alert" style={{ padding: 16, fontSize: 14 }}>Não foi possível carregar as configurações.</div>}
+      {tab === "Geral" && settings && <General key="g" settings={s} save={save} preference={preference} onPreference={onPreference} />}
+      {tab === "Rotina" && settings && <Routine key="r" settings={s} save={save} />}
+      {tab === "API" && <Tokens onToast={onToast} />}
+      {tab === "Dados" && <Data onToast={onToast} />}
+      {tab === "Aplicativo" && <App />}
+      {tab === "Conta" && <Account onLogout={onLogout} onToast={onToast} />}
+    </div>
+  );
+}
