@@ -1,3 +1,5 @@
+import { goalRoutes } from "./goals/routes.js";
+import { PgGoalStore } from "./goals/store.js";
 import { PgAuthStore } from "./auth/store.js";
 import { authRoutes } from "./auth/routes.js";
 import { SESSION_COOKIE, type AuthConfig } from "./auth/config.js";
@@ -22,10 +24,12 @@ export interface AppDeps {
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
+  const taskStore = new PgTaskStore(sql, now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(new PgPageStore(sql, now)),
-    ...taskRoutes(new PgTaskStore(sql, now)),
+    ...taskRoutes(taskStore),
+    ...goalRoutes(new PgGoalStore(sql, now), taskStore),
   ];
 
   return async function handle(incoming: ApiRequest): Promise<ApiResponse> {

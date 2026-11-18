@@ -3,6 +3,7 @@ import { ApiError } from "./api";
 import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
 import { HojeView } from "./HojeView";
+import { MetasView } from "./MetasView";
 import { PageView } from "./PageView";
 import { SearchPalette } from "./SearchPalette";
 import { SemanaView } from "./SemanaView";
@@ -176,6 +177,8 @@ export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
             <PageView key={route.pageId} pageId={route.pageId} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
           ) : route.id === "hoje" ? (
             <HojeView onToast={setToast} />
+          ) : route.id === "metas" ? (
+            <MetasView onToast={setToast} />
           ) : route.id === "semana" ? (
             <SemanaView onToast={setToast} />
           ) : route.id === "lixeira" ? (

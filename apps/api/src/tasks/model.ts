@@ -16,6 +16,9 @@ export interface TaskItem {
   time: string | null;
   recurrence: Recurrence | null;
   done: boolean;
+  /** Meta ligada (some se a meta foi apagada). */
+  goalId: string | null;
+  goalTitle: string | null;
   subtasks: Subtask[];
 }
 
@@ -34,6 +37,7 @@ export interface NewTask {
   date: string | null;
   time: string | null;
   recurrence: Recurrence | null;
+  goalId: string | null;
 }
 
 export interface TaskPatch {
@@ -41,4 +45,5 @@ export interface TaskPatch {
   date?: string | null;
   time?: string | null;
   recurrence?: Recurrence | null;
+  goalId?: string | null;
 }

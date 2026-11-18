@@ -1,4 +1,5 @@
 import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-types";
+import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
 export class ApiError extends Error {
@@ -47,13 +48,22 @@ export const tasksApi = {
   list: (from: string, to: string, today: string) =>
     request<TaskList>("GET", `/tasks?from=${from}&to=${to}&today=${today}`),
   create: (input: NewTaskInput) => request<{ task: TaskItem }>("POST", "/tasks", input).then((r) => r.task),
-  update: (id: string, patch: { title?: string; date?: string | null; time?: string | null }) =>
+  update: (id: string, patch: { title?: string; date?: string | null; time?: string | null; goalId?: string | null }) =>
     request<{ task: TaskItem }>("PATCH", `/tasks/${id}`, patch).then((r) => r.task),
   setDone: (id: string, done: boolean, date: string | null) =>
     request<{ done: boolean }>("POST", `/tasks/${id}/done`, date ? { done, date } : { done }),
   reschedule: (ids: string[], date: string) => request<{ updated: number }>("POST", "/tasks/reschedule", { ids, date }),
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/tasks/${id}`),
   restore: (id: string) => request<{ task: TaskItem }>("POST", `/tasks/${id}/restore`).then((r) => r.task),
+};
+
+export const goalsApi = {
+  list: () => request<{ goals: Goal[] }>("GET", "/goals").then((r) => r.goals),
+  get: (id: string) => request<{ goal: Goal; tasks: TaskItem[] }>("GET", `/goals/${id}`),
+  create: (input: NewGoalInput) => request<{ goal: Goal }>("POST", "/goals", input).then((r) => r.goal),
+  update: (id: string, patch: GoalPatch) => request<{ goal: Goal }>("PATCH", `/goals/${id}`, patch).then((r) => r.goal),
+  remove: (id: string) => request<{ deleted: number }>("DELETE", `/goals/${id}`),
+  restore: (id: string) => request<{ goal: Goal }>("POST", `/goals/${id}/restore`).then((r) => r.goal),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {

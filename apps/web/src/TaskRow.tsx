@@ -10,6 +10,8 @@ interface TaskRowProps {
   onToggle: (item: TaskItem) => void;
   onToggleSubtask: (subId: string, done: boolean) => void;
   onRemove: (item: TaskItem) => void;
+  /** Não repete o nome da meta (já está no contexto, como no detalhe da meta). */
+  hideGoal?: boolean;
   /** Ação extra (ex.: "Fazer hoje") mostrada ao passar o mouse. */
   extra?: { label: string; run: (item: TaskItem) => void };
 }
@@ -24,7 +26,7 @@ function Check({ on, small }: { on: boolean; small?: boolean }) {
   );
 }
 
-export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRemove, extra }: TaskRowProps) {
+export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRemove, hideGoal, extra }: TaskRowProps) {
   const [open, setOpen] = useState(false);
   const subDone = item.subtasks.filter((s) => s.done).length;
   const hasSubs = item.subtasks.length > 0;
@@ -51,6 +53,11 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
             <button className="btn btn-fan btn-sm row-action" type="button" onClick={() => extra.run(item)}>
               {extra.label}
             </button>
+          )}
+          {item.goalTitle && !hideGoal && (
+            <span className="hide-m trunc" style={{ maxWidth: 160 }}>
+              {item.goalTitle}
+            </span>
           )}
           {item.recurrence && (
             <span title="Recorrente" aria-label="Recorrente" style={{ display: "inline-flex" }}>

@@ -14,6 +14,8 @@ export interface TaskItem {
   time: string | null;
   recurrence: Recurrence | null;
   done: boolean;
+  goalId: string | null;
+  goalTitle: string | null;
   subtasks: Subtask[];
 }
 
@@ -29,6 +31,7 @@ export interface NewTaskInput {
   date?: string | null;
   time?: string | null;
   recurrence?: Recurrence | null;
+  goalId?: string | null;
 }
 
 export const EMPTY_LIST: TaskList = { days: [], late: [], undated: [] };

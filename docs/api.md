@@ -41,17 +41,30 @@ Links `[[Título]]` são extraídos do texto do corpo ao salvar e casam por tít
 
 ## Tarefas
 
-Todas exigem sessão. Datas são `AAAA-MM-DD` (o dia local de quem usa) e horas `HH:MM`. Uma tarefa é `{ id, title, date, time, recurrence, done, subtasks }`.
+Todas exigem sessão. Datas são `AAAA-MM-DD` (o dia local de quem usa) e horas `HH:MM`. Uma tarefa é `{ id, title, date, time, recurrence, done, goalId, goalTitle, subtasks }`.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | GET | `/tasks?from=&to=&today=` | Intervalo de até 63 dias. `days`: tarefas com data no intervalo, recorrentes já expandidas por dia. `late`: simples, não concluídas, antes de `today`. `undated`: sem data e não concluídas |
-| POST | `/tasks` | `{ title, date?, time?, recurrence?, parentId? }`. `recurrence`: `daily`, `weekdays` ou `weekly`. Hora e recorrência exigem data; subtarefa (`parentId`) não tem data. 201 |
-| PATCH | `/tasks/:id` | Qualquer de `title, date, time, recurrence`. `date: null` limpa também hora e recorrência |
+| POST | `/tasks` | `{ title, date?, time?, recurrence?, parentId?, goalId? }`. `recurrence`: `daily`, `weekdays` ou `weekly`. Hora e recorrência exigem data; subtarefa (`parentId`) não tem data. 201 |
+| PATCH | `/tasks/:id` | Qualquer de `title, date, time, recurrence, goalId` (`null` desliga da meta). `date: null` limpa também hora e recorrência |
 | POST | `/tasks/:id/done` | `{ done, date? }`. Em recorrente, `date` é obrigatório e conclui só aquele dia |
 | POST | `/tasks/reschedule` | `{ ids, date }`. Muda a data de tarefas simples (ignora recorrentes e subtarefas). `{ updated: n }` |
 | DELETE | `/tasks/:id` | Lixeira (com as subtarefas) |
 | POST | `/tasks/:id/restore` | Restaura a tarefa e as subtarefas apagadas junto com ela |
+
+## Metas
+
+Todas exigem sessão. Meta: `{ id, title, description, dueDate, done, createdAt, tasksTotal, tasksDone }`. O progresso conta só tarefas principais, simples (sem recorrência) e não apagadas ligadas à meta. O status (no ritmo, atrás, em risco) não vem da API: o cliente compara progresso com o tempo entre `createdAt` e `dueDate`.
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/goals` | Metas ativas, por prazo (sem prazo por último) |
+| POST | `/goals` | `{ title, description?, dueDate? }`. 201 |
+| GET | `/goals/:id` | `{ goal, tasks }`, com as tarefas ligadas (abertas primeiro) |
+| PATCH | `/goals/:id` | Qualquer de `title, description, dueDate, done` |
+| DELETE | `/goals/:id` | Lixeira. As tarefas ficam soltas até a meta voltar |
+| POST | `/goals/:id/restore` | Restaura a meta e religa as tarefas |
 
 ## Limites conhecidos
 

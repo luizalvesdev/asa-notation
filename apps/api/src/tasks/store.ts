@@ -2,10 +2,13 @@ import type { Row, SqlClient } from "../sql.js";
 import type { NewTask, Subtask, TaskItem, TaskList, TaskPatch } from "./model.js";
 import { occurrences, type Recurrence } from "./recurrence.js";
 
-const SELECT = `id, title, due_date::text as d, to_char(due_time, 'HH24:MI') as t, recurrence, done_at is not null as done, parent_id`;
+// Meta apagada não aparece: a tarefa fica solta até a meta voltar da lixeira.
+const SELECT = `id, title, due_date::text as d, to_char(due_time, 'HH24:MI') as t, recurrence, done_at is not null as done, parent_id,
+  (select g.id from goals g where g.id = tasks.goal_id and g.deleted_at is null) as goal_id,
+  (select g.title from goals g where g.id = tasks.goal_id and g.deleted_at is null) as goal_title`;
 
-export type CreateResult = { kind: "ok"; task: TaskItem } | { kind: "parent_not_found" } | { kind: "invalid" };
-export type UpdateResult = { kind: "ok"; task: TaskItem } | { kind: "not_found" } | { kind: "invalid" };
+export type CreateResult = { kind: "ok"; task: TaskItem } | { kind: "parent_not_found" } | { kind: "goal_not_found" } | { kind: "invalid" };
+export type UpdateResult = { kind: "ok"; task: TaskItem } | { kind: "not_found" } | { kind: "goal_not_found" } | { kind: "invalid" };
 export type DoneResult = "ok" | "not_found" | "invalid";
 
 function toItem(row: Row, date: string | null, done: boolean, subtasks: Subtask[]): TaskItem {
@@ -16,6 +19,8 @@ function toItem(row: Row, date: string | null, done: boolean, subtasks: Subtask[
     time: (row.t as string | null) ?? null,
     recurrence: (row.recurrence as Recurrence | null) ?? null,
     done,
+    goalId: (row.goal_id as string | null) ?? null,
+    goalTitle: (row.goal_title as string | null) ?? null,
     subtasks,
   };
 }
@@ -52,6 +57,25 @@ export class PgTaskStore {
       map.set(row.parent_id as string, list);
     }
     return map;
+  }
+
+  private async goalExists(id: string): Promise<boolean> {
+    const rows = await this.sql.query(`select 1 from goals where id = $1 and deleted_at is null`, [id]);
+    return rows.length > 0;
+  }
+
+  /** Tarefas principais de uma meta: abertas primeiro, depois por data. */
+  async forGoal(goalId: string): Promise<TaskItem[]> {
+    const rows = await this.sql.query(
+      `select ${SELECT} from tasks
+        where goal_id = $1 and deleted_at is null and parent_id is null
+        order by (done_at is not null), due_date nulls last, created_at, id`,
+      [goalId],
+    );
+    const subs = await this.subtasksOf(rows.map((r) => r.id as string));
+    return rows.map((row) =>
+      toItem(row, (row.d as string | null) ?? null, row.recurrence ? false : (row.done as boolean), subs.get(row.id as string) ?? []),
+    );
   }
 
   async list(from: string, to: string, today: string): Promise<TaskList> {
@@ -121,14 +145,15 @@ export class PgTaskStore {
         [input.parentId],
       );
       if (parent.length === 0) return { kind: "parent_not_found" };
-      if (input.date || input.time || input.recurrence) return { kind: "invalid" };
+      if (input.date || input.time || input.recurrence || input.goalId) return { kind: "invalid" };
     }
+    if (input.goalId && !(await this.goalExists(input.goalId))) return { kind: "goal_not_found" };
     if ((input.time || input.recurrence) && !input.date) return { kind: "invalid" };
     const now = this.nowIso();
     const rows = await this.sql.query(
-      `insert into tasks (parent_id, title, due_date, due_time, recurrence, created_at, updated_at)
-       values ($1, $2, $3, $4, $5, $6, $6) returning id`,
-      [input.parentId, input.title, input.date, input.time, input.recurrence, now],
+      `insert into tasks (parent_id, title, due_date, due_time, recurrence, goal_id, created_at, updated_at)
+       values ($1, $2, $3, $4, $5, $7, $6, $6) returning id`,
+      [input.parentId, input.title, input.date, input.time, input.recurrence, now, input.goalId],
     );
     return { kind: "ok", task: (await this.get(rows[0]!.id as string))! };
   }
@@ -144,13 +169,15 @@ export class PgTaskStore {
     const recurrence =
       date === null ? null : patch.recurrence !== undefined ? patch.recurrence : ((cur.recurrence as Recurrence | null) ?? null);
     const title = patch.title ?? (cur.title as string);
-    if (cur.parent_id && (date !== null || recurrence !== null)) return { kind: "invalid" };
+    const goalId = patch.goalId !== undefined ? patch.goalId : ((cur.goal_id as string | null) ?? null);
+    if (cur.parent_id && (date !== null || recurrence !== null || goalId !== null)) return { kind: "invalid" };
+    if (patch.goalId && !(await this.goalExists(patch.goalId))) return { kind: "goal_not_found" };
 
     await this.sql.query(
-      `update tasks set title = $2, due_date = $3, due_time = $4, recurrence = $5, updated_at = $6,
+      `update tasks set title = $2, due_date = $3, due_time = $4, recurrence = $5, updated_at = $6, goal_id = $7,
               done_at = case when $5::text is not null then null else done_at end
         where id = $1`,
-      [id, title, date, time, recurrence, this.nowIso()],
+      [id, title, date, time, recurrence, this.nowIso(), goalId],
     );
     return { kind: "ok", task: (await this.get(id))! };
   }

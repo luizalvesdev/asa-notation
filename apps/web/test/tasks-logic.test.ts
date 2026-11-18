@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyDone, applySubtaskDone, groupByDate, parseQuickAdd, progress } from "../src/tasks-logic";
 import type { TaskItem, TaskList } from "../src/tasks-types";
 
-const task = (over: Partial<TaskItem>): TaskItem => ({ id: "a", title: "A", date: "2026-11-18", time: null, recurrence: null, done: false, subtasks: [], ...over });
+const task = (over: Partial<TaskItem>): TaskItem => ({ id: "a", title: "A", date: "2026-11-18", time: null, recurrence: null, done: false, goalId: null, goalTitle: null, subtasks: [], ...over });
 
 describe("progress", () => {
   it("conta concluídas e arredonda", () => {

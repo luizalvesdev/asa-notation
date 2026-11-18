@@ -80,3 +80,82 @@
 .wkd.over {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
+
+/* Metas */
+.goal-title {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.015em;
+}
+
+.ds input.goal-title {
+  font: 500 30px/36px var(--serif);
+}
+
+.goal-date {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+  color-scheme: light;
+}
+
+.escuro .goal-date {
+  color-scheme: dark;
+}
+
+.goal-desc {
+  width: 100%;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 15px;
+  line-height: 25px;
+  outline: none;
+}
+
+.goal-desc:hover,
+.goal-desc:focus {
+  border-color: var(--border-2);
+}
+
+.metas-list,
+.metas-detail {
+  min-width: 0;
+}
+
+.metas-back {
+  display: none;
+}
+
+/* Celular: lista e detalhe viram duas telas. */
+@container app (max-width: 720px) {
+  .metas.has-sel .metas-list {
+    display: none;
+  }
+
+  .metas:not(.has-sel) .metas-detail {
+    display: none;
+  }
+
+  .metas-back {
+    display: inline-flex;
+  }
+
+  .metas-detail-in {
+    padding: 20px 16px 120px !important;
+  }
+}

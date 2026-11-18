@@ -74,3 +74,13 @@ export function formatWhen(date: string, today: string): string {
   const p = parts(date, { weekday: "short", day: "numeric", month: "short" });
   return `${p.weekday}, ${p.day} ${p.month}`;
 }
+
+/** "31 mar 2027" */
+export function formatDate(date: string): string {
+  const p = parts(date, { day: "numeric", month: "short", year: "numeric" });
+  return `${p.day} ${p.month} ${p.year}`;
+}
+
+export function daysBetween(from: string, to: string): number {
+  return Math.round((utc(to).getTime() - utc(from).getTime()) / DAY_MS);
+}

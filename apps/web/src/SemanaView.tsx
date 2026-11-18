@@ -36,10 +36,11 @@ function WeekCard({ item, onToggle, onDragStart, onDragEnd }: { item: TaskItem; 
           </span>
           <span className={item.done ? "done-txt" : undefined}>{item.title}</span>
         </span>
-        {(item.time || item.recurrence || item.subtasks.length > 0) && (
+        {(item.time || item.recurrence || item.subtasks.length > 0 || item.goalTitle) && (
           <span className="row" style={{ gap: 6, fontSize: 11, color: "var(--text-3)", paddingLeft: 24 }}>
             {item.time && <span className="mono">{item.time}</span>}
             {item.recurrence && <Icon name="repeat" className="sm" />}
+            {item.goalTitle && <span className="trunc">{item.goalTitle}</span>}
             {item.subtasks.length > 0 && (
               <span>
                 {item.subtasks.filter((s) => s.done).length}/{item.subtasks.length}

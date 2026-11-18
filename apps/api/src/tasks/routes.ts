@@ -43,15 +43,18 @@ export function taskRoutes(store: PgTaskStore): Route[] {
         const date = body.date ?? null;
         const time = body.time ?? null;
         const recurrence = body.recurrence ?? null;
+        const goalId = body.goalId ?? null;
+        if (goalId !== null && !isUuid(goalId)) return badRequest("invalid_goal");
         if (!validTitle(title)) return badRequest("invalid_title");
         if (parentId !== null && !isUuid(parentId)) return badRequest("invalid_parent");
         if (!validDate(date)) return badRequest("invalid_date");
         if (!validTime(time)) return badRequest("invalid_time");
         if (!validRecurrence(recurrence)) return badRequest("invalid_recurrence");
 
-        const result = await store.create({ title, parentId, date, time, recurrence });
+        const result = await store.create({ title, parentId, date, time, recurrence, goalId });
         if (result.kind === "ok") return json(201, { task: result.task });
         if (result.kind === "parent_not_found") return json(404, { error: "parent_not_found" });
+        if (result.kind === "goal_not_found") return json(404, { error: "goal_not_found" });
         return badRequest("invalid_combination");
       },
     },
@@ -93,11 +96,16 @@ export function taskRoutes(store: PgTaskStore): Route[] {
           if (!validRecurrence(body.recurrence)) return badRequest("invalid_recurrence");
           patch.recurrence = body.recurrence;
         }
+        if (body.goalId !== undefined) {
+          if (body.goalId !== null && !isUuid(body.goalId)) return badRequest("invalid_goal");
+          patch.goalId = body.goalId;
+        }
         if (Object.keys(patch).length === 0) return badRequest("empty_patch");
 
         const result = await store.update(match[1]!, patch);
         if (result.kind === "ok") return json(200, { task: result.task });
         if (result.kind === "not_found") return notFound();
+        if (result.kind === "goal_not_found") return json(404, { error: "goal_not_found" });
         return badRequest("invalid_combination");
       },
     },
