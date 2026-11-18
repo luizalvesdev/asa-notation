@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, isConflict, pagesApi } from "./api";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
 import { Backlinks } from "./Backlinks";
+import { CanvasView } from "./CanvasView";
+import { Cover, CoverPicker } from "./Cover";
 import { DatabaseView } from "./DatabaseView";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { normalizeSchema } from "./use-database";
@@ -70,6 +72,9 @@ export function PageView({ pageId, nodes, onSaved, onDelete, onToast }: PageView
       </div>
     );
   }
+  if (load.page.kind === "canvas") {
+    return <CanvasView key={load.page.id} page={load.page} onSaved={onSaved} onDelete={onDelete} />;
+  }
   if (load.page.kind === "database") {
     return <DatabaseView key={load.page.id} page={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onToast={onToast} />;
   }
@@ -95,6 +100,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
   const [title, setTitle] = useState(initial.title);
   const [favorite, setFavorite] = useState(initial.favorite);
   const [icon, setIcon] = useState(initial.icon);
+  const [cover, setCover] = useState(initial.cover);
   const [saveState, setSaveState] = useState<SaveState>("salvo");
   const [conflict, setConflict] = useState<Page | null>(null);
   const [focusBody, setFocusBody] = useState(0);
@@ -163,6 +169,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
 
   return (
     <div className="page">
+      <Cover cover={cover} />
       <div className="page-head">
         <span className={`save-state${saveState === "erro" ? " erro" : ""}`} role="status">
           {SAVE_LABEL[saveState]}
@@ -173,6 +180,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
           )}
         </span>
         <span className="spacer" />
+        <CoverPicker cover={cover} onChange={(next) => { setCover(next); saver.current?.queue({ cover: next }); }} />
         <IconPicker icon={icon} onChange={(next) => { setIcon(next); saver.current?.queue({ icon: next }); }} />
         <span style={{ position: "relative" }}>
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>

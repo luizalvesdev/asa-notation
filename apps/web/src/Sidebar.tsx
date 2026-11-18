@@ -14,7 +14,7 @@ interface SidebarProps {
   onToggleExpanded: (id: string) => void;
   onCreatePage: (parentId: string | null) => void;
   /** Cria uma página na raiz já com título, modelo ou como database. */
-  onCreateFrom: (extra: { title?: string; body?: unknown; icon?: string; kind?: "page" | "database" }) => void;
+  onCreateFrom: (extra: { title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "canvas" }) => void;
   onRetryTree: () => void;
   onOpenSearch: () => void;
   collapsed: boolean;
@@ -69,7 +69,7 @@ function ShortcutLink({ node, current, onNavigate }: { node: TreeNode; current: 
   const selected = node.id === current;
   return (
     <a className={`tr${selected ? " s" : ""}`} href={pageHash(node.id)} aria-current={selected ? "page" : undefined} onClick={onNavigate}>
-      {node.icon ? <span className="page-emoji" aria-hidden="true">{node.icon}</span> : <Icon name={node.kind === "database" ? "table" : "doc"} />}
+      {node.icon ? <span className="page-emoji" aria-hidden="true">{node.icon}</span> : <Icon name={node.kind === "database" ? "table" : node.kind === "canvas" ? "canvas" : "doc"} />}
       <span className="lab">{displayTitle(node.title)}</span>
     </a>
   );

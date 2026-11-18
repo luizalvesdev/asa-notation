@@ -7,6 +7,7 @@ export interface Page {
   position: string;
   body: unknown | null;
   kind: PageKind;
+  cover: string | null;
   props: Record<string, unknown>;
   schema: unknown | null;
   rev: number;
@@ -15,7 +16,7 @@ export interface Page {
   deletedAt: string | null;
 }
 
-export type PageKind = "page" | "database" | "row";
+export type PageKind = "page" | "database" | "row" | "canvas";
 
 export interface TreeNode {
   id: string;
@@ -28,6 +29,7 @@ export interface TreeNode {
 }
 
 export interface PagePatch {
+  cover?: string | null;
   props?: Record<string, unknown>;
   schema?: unknown;
   title?: string;

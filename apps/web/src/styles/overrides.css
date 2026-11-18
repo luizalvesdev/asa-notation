@@ -95,3 +95,8 @@ body,
     bottom: 76px;
   }
 }
+
+.av.t {
+  background: var(--accent);
+  color: var(--on-accent);
+}

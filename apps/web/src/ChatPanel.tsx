@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiApi, chatApi } from "./api";
 import { classifyChatError, describeDraft, describeResult, type ChatErrorKind } from "./chat-logic";
-import { AGENT_HINT, AGENT_NAME, type Agent, type ChatMessage, type Conversation, type Draft } from "./chat-types";
+import { AGENTS, AGENT_HINT, AGENT_NAME, type Agent, type ChatMessage, type Conversation, type Draft } from "./chat-types";
 import { Icon } from "./icons";
 import { pageHash, routeHash } from "./nav";
 import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
 
 interface ChatPanelProps {
+  /** Agente e pergunta pedidos de fora (ex.: "Sessão guiada" em Estudo). A pergunta é enviada uma vez. */
+  request?: { agent: Agent; prompt?: string; id: number } | null;
   onClose: () => void;
   onToast: (toast: Toast) => void;
   /** Depois de aprovar um rascunho que muda dados (ex.: cria página), para a árvore atualizar. */
@@ -15,11 +17,12 @@ interface ChatPanelProps {
 }
 
 const AGENT_KEY = "asa.chat.agent";
-const AVATAR: Record<Agent, string> = { hermes: "h", renato: "r" };
+const AVATAR: Record<Agent, string> = { hermes: "h", renato: "r", tutor: "t" };
 
 function loadAgent(): Agent {
   try {
-    return localStorage.getItem(AGENT_KEY) === "renato" ? "renato" : "hermes";
+    const saved = localStorage.getItem(AGENT_KEY);
+    return saved === "renato" || saved === "tutor" ? saved : "hermes";
   } catch {
     return "hermes";
   }
@@ -74,8 +77,9 @@ function DraftCard({ draft, agent, onChange, onDataChanged, onToast }: { draft: 
   );
 }
 
-export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
-  const [agent, setAgent] = useState<Agent>(loadAgent);
+export function ChatPanel({ request, onClose, onToast, onDataChanged }: ChatPanelProps) {
+  const [agent, setAgent] = useState<Agent>(() => request?.agent ?? loadAgent());
+  const handled = useRef<number | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -86,7 +90,7 @@ export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
   const [error, setError] = useState<{ kind: ChatErrorKind; message: string } | null>(null);
   const body = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
-  const current = useRef<Record<Agent, Conversation | null>>({ hermes: null, renato: null });
+  const current = useRef<Record<Agent, Conversation | null>>({ hermes: null, renato: null, tutor: null });
 
   useEffect(() => {
     let live = true;
@@ -165,6 +169,15 @@ export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
     [agent, conversation, sending],
   );
 
+  // Pedido de fora: troca de agente e, se veio uma pergunta, envia depois de saber se há chave.
+  useEffect(() => {
+    if (!request || handled.current === request.id || configured === null) return;
+    handled.current = request.id;
+    if (request.agent !== agent) switchAgent(request.agent);
+    if (request.prompt && configured) void send(request.prompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request, configured]);
+
   const updateDraft = (messageId: string, draft: Draft) =>
     setMessages((list) => list.map((m) => (m.id === messageId ? { ...m, drafts: m.drafts.map((d) => (d.id === draft.id ? draft : d)) } : m)));
 
@@ -180,9 +193,9 @@ export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
   return (
     <aside className="chat" aria-label="Assistentes">
       <div className="chat-h">
-        <div className="seg" role="tablist" aria-label="Assistente" style={{ width: 200 }}>
-          <span className="seg-ind" style={{ width: "calc((100% - 4px) / 2)", transform: `translateX(${agent === "hermes" ? 0 : 100}%)` }} />
-          {(["hermes", "renato"] as const).map((a) => (
+        <div className="seg" role="tablist" aria-label="Assistente" style={{ width: 280 }}>
+          <span className="seg-ind" style={{ width: "calc((100% - 4px) / 3)", transform: `translateX(${AGENTS.indexOf(agent) * 100}%)` }} />
+          {AGENTS.map((a) => (
             <button key={a} className={`seg-b${agent === a ? " on" : ""}`} type="button" role="tab" aria-selected={agent === a} onClick={() => switchAgent(a)}>
               <span className={`av ${AVATAR[a]}`} style={{ width: 16, height: 16, fontSize: 10, borderRadius: 4 }}>{AGENT_NAME[a][0]}</span>
               {AGENT_NAME[a]}
@@ -226,7 +239,7 @@ export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
             <div className="col enter" style={{ gap: 10 }}>
               <div className="bub-a">
                 <span className={`av ${AVATAR[agent]}`}>{name[0]}</span>
-                <span>{agent === "hermes" ? "Oi! Eu cuido da sua rotina, tarefas e metas." : "Oi! Eu cuido das suas capturas e notas."} O que vamos fazer?</span>
+                <span>{agent === "hermes" ? "Oi! Eu cuido da sua rotina, tarefas e metas." : agent === "renato" ? "Oi! Eu cuido das suas capturas e notas." : "Oi! Eu ajudo você a aprender com perguntas, a partir dos seus cards e notas."} O que vamos fazer?</span>
               </div>
               <div className="col" style={{ gap: 6, paddingLeft: 32 }}>
                 {AGENT_HINT[agent].map((hint) => (
@@ -251,7 +264,7 @@ export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
           {sending && (
             <div className="bub-a" aria-label={`${name} está respondendo`}>
               <span className={`av ${AVATAR[agent]}`}>{name[0]}</span>
-              <span className={agent === "hermes" ? "hcaret" : "rcaret"} />
+              <span className={agent === "renato" ? "rcaret" : "hcaret"} />
             </div>
           )}
           {error && (
@@ -284,7 +297,7 @@ export function ChatPanel({ onClose, onToast, onDataChanged }: ChatPanelProps) {
           />
           <button className="btn btn-pri btn-sm" type="submit" disabled={sending || text.trim() === "" || configured === false}>Enviar</button>
         </div>
-        <span style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6, display: "block" }}>{name} só faz rascunhos: nada é criado sem a sua aprovação. Enter envia, Shift+Enter quebra a linha.</span>
+        <span style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6, display: "block" }}>{agent === "tutor" ? `${name} só conversa e lê suas notas: não altera nada.` : `${name} só faz rascunhos: nada é criado sem a sua aprovação.`} Enter envia, Shift+Enter quebra a linha.</span>
       </form>
     </aside>
   );

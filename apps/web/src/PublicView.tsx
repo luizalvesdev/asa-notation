@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { ApiError, publicApi } from "./api";
+import { boundsOf } from "./canvas-logic";
+import type { Shape } from "./canvas-types";
+import { Cover } from "./Cover";
 import { DocView } from "./DocView";
+import { ShapesSvg } from "./ShapesSvg";
 import { ThemeIcon } from "./icons";
 
 interface PublicViewProps {
@@ -8,7 +12,8 @@ interface PublicViewProps {
   onToggleTheme: () => void;
 }
 
-type Load = { status: "carregando" } | { status: "ausente" } | { status: "erro" } | { status: "pronto"; page: { title: string; icon: string | null; body: unknown; updatedAt: string } };
+type PublicPageData = { title: string; icon: string | null; cover: string | null; kind: string; body: unknown; updatedAt: string };
+type Load = { status: "carregando" } | { status: "ausente" } | { status: "erro" } | { status: "pronto"; page: PublicPageData };
 
 /** Página compartilhada por link: só leitura, sem login e sem nada do resto do app. */
 export function PublicView({ slug, onToggleTheme }: PublicViewProps) {
@@ -72,17 +77,34 @@ export function PublicView({ slug, onToggleTheme }: PublicViewProps) {
         )}
         {load.status === "pronto" && (
           <article>
+            <Cover cover={load.page.cover} />
             <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "46px", letterSpacing: "-0.02em" }}>
               {load.page.icon ? `${load.page.icon} ` : ""}
               {load.page.title.trim() || "Sem título"}
             </h1>
+            {load.page.kind === "canvas" ? (
+              <CanvasReadOnly shapes={((load.page.body as { shapes?: Shape[] } | null)?.shapes ?? [])} />
+            ) : (
             <div style={{ marginTop: 20 }}>
               {/* Links para outras páginas do dono não abrem aqui: quem lê não tem acesso a elas. */}
               <DocView doc={load.page.body} onLinkClick={(href) => (href.startsWith("#/") ? undefined : window.open(href, "_blank", "noopener,noreferrer"))} />
             </div>
+            )}
           </article>
         )}
       </main>
     </div>
+  );
+}
+
+/** Quadro compartilhado, só para ver: enquadrado no desenho. */
+function CanvasReadOnly({ shapes }: { shapes: Shape[] }) {
+  const box = boundsOf(shapes);
+  if (!box) return <p className="muted" style={{ marginTop: 20 }}>Quadro vazio.</p>;
+  const pad = 24;
+  return (
+    <svg role="img" aria-label="Quadro" viewBox={`${box.x - pad} ${box.y - pad} ${box.w + pad * 2} ${box.h + pad * 2}`} style={{ width: "100%", maxHeight: "70vh", marginTop: 20, border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)" }}>
+      <ShapesSvg shapes={shapes} />
+    </svg>
   );
 }

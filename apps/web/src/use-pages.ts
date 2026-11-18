@@ -6,7 +6,7 @@ import { toTreeNode, type Page, type TreeNode } from "./pages-types";
 export interface CreateExtra {
   body?: unknown;
   icon?: string;
-  kind?: "page" | "database";
+  kind?: "page" | "database" | "canvas";
 }
 
 export type TreeStatus = "carregando" | "pronto" | "erro";

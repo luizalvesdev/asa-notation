@@ -46,7 +46,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const pagesApi = {
   tree: () => request<{ pages: TreeNode[] }>("GET", "/pages/tree").then((r) => r.pages),
   get: (id: string) => request<{ page: Page }>("GET", `/pages/${id}`).then((r) => r.page),
-  create: (input: { parentId?: string | null; title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "row"; props?: Record<string, unknown> }) =>
+  create: (input: { parentId?: string | null; title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "row" | "canvas"; props?: Record<string, unknown> }) =>
     request<{ page: Page }>("POST", "/pages", input).then((r) => r.page),
   update: (id: string, patch: PagePatch, baseRev?: number) =>
     request<{ page: Page }>("PATCH", `/pages/${id}`, baseRev === undefined ? patch : { ...patch, baseRev }).then((r) => r.page),
@@ -65,7 +65,7 @@ export const pagesApi = {
 };
 
 export const publicApi = {
-  get: (slug: string) => request<{ page: { title: string; icon: string | null; body: unknown; updatedAt: string } }>("GET", `/public/${slug}`).then((r) => r.page),
+  get: (slug: string) => request<{ page: { title: string; icon: string | null; cover: string | null; kind: string; body: unknown; updatedAt: string } }>("GET", `/public/${slug}`).then((r) => r.page),
 };
 
 export const tasksApi = {

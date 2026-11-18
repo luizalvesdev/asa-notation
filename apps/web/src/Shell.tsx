@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, capturesApi } from "./api";
 import { BottomNav } from "./BottomNav";
 import { ChatPanel } from "./ChatPanel";
+import { OPEN_CHAT_EVENT, type Agent, type OpenChatRequest } from "./chat-types";
 import { CapturePanel } from "./CapturePanel";
 import { ImportView } from "./ImportView";
 import { InboxView } from "./InboxView";
@@ -51,6 +52,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const [searchOpen, setSearchOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatRequest, setChatRequest] = useState<{ agent: Agent; prompt?: string; id: number } | null>(null);
   const [captureTick, setCaptureTick] = useState(0);
   const [online, setOnline] = useState(() => navigator.onLine);
   const pending = usePending();
@@ -103,6 +105,16 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     const timer = setTimeout(() => setToast(null), 6000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  // Outras telas pedem o chat (ex.: "Sessão guiada com tutor" em Estudo).
+  useEffect(() => {
+    const onRequest = (event: Event) => {
+      setChatRequest({ ...(event as CustomEvent<OpenChatRequest>).detail, id: Date.now() });
+      setChatOpen(true);
+    };
+    window.addEventListener(OPEN_CHAT_EVENT, onRequest);
+    return () => window.removeEventListener(OPEN_CHAT_EVENT, onRequest);
+  }, []);
 
   // Sobe a fila de capturas ao abrir o app e sempre que a conexão voltar.
   useEffect(() => {
@@ -307,7 +319,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         </main>
         <BottomNav route={route} onCapture={() => setCaptureOpen(true)} onMenu={() => setDrawer(true)} />
       </div>
-      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />}
+      {chatOpen && <ChatPanel request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />}
       <div className={`drawer${drawer ? " on" : ""}`} aria-hidden={!drawer}>
         <div className="scr" onClick={() => setDrawer(false)} />
         <div className="pane">

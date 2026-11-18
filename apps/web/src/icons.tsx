@@ -27,6 +27,7 @@ const ICONS = {
   kanban: ["M4 5h5v14H4z", "M10 5h5v9h-5z", "M16 5h4v6h-4z"],
   list: ["M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"],
   calendar: ["M4 6h16v14H4z", "M4 10h16M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01"],
+  canvas: ["M4 5h16v14H4z", "M8 15l3-4 2 2 3-4", "M16 9h.01"],
   close: ["M6 6l12 12M18 6L6 18"],
   repeat: ["M17 2l3 3-3 3", "M4 11V9a4 4 0 0 1 4-4h12", "M7 22l-3-3 3-3", "M20 13v2a4 4 0 0 1-4 4H4"],
 } satisfies Record<string, Shape[]>;

@@ -4,7 +4,7 @@ import { Icon } from "./icons";
 import { TEMPLATES } from "./templates";
 
 interface NewMenuProps {
-  onCreate: (extra: { title?: string; body?: unknown; icon?: string; kind?: "page" | "database" }) => void;
+  onCreate: (extra: { title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "canvas" }) => void;
 }
 
 /** Menu ao lado do "+" da barra lateral: database e modelos de página. */
@@ -33,6 +33,13 @@ export function NewMenu({ onCreate }: NewMenuProps) {
               <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                 <span>Database</span>
                 <span className="subtle" style={{ fontSize: 11 }}>Tabela, kanban, lista e calendário</span>
+              </span>
+            </button>
+            <button className="plain mrow" type="button" role="menuitem" onClick={() => pick({ kind: "canvas", title: "Quadro", icon: "🎨" })}>
+              <Icon name="canvas" />
+              <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
+                <span>Quadro</span>
+                <span className="subtle" style={{ fontSize: 11 }}>Desenho livre com formas e texto</span>
               </span>
             </button>
             <div className="mgroup">Modelos</div>

@@ -4,6 +4,7 @@ import type { Goal } from "./goals-types";
 import { routeHash, pageHash } from "./nav";
 import { displayTitle } from "./pages-tree";
 import type { TreeNode } from "./pages-types";
+import { openChat } from "./chat-types";
 import { clozeSegments, estimateMinutes } from "./study-logic";
 import type { Candidate, CardKind, Deck, StudyCard } from "./study-types";
 import type { Toast } from "./toast";
@@ -306,6 +307,10 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
               ) : (
                 <>
                   <span style={{ fontSize: 14, lineHeight: "21px" }}>{overview.weak.length} {overview.weak.length === 1 ? "card errado" : "cards errados"} 2 vezes ou mais esta semana:</span>
+                  <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                    <button className="btn btn-sec btn-sm" type="button" onClick={() => openChat({ agent: "tutor", prompt: "Me faça um quiz nos meus pontos fracos, uma pergunta por vez." })}>Quiz nos pontos fracos</button>
+                    <button className="btn btn-fan btn-sm" type="button" onClick={() => openChat({ agent: "tutor", prompt: "Quero uma sessão guiada: me ensine os meus pontos fracos com perguntas." })}>Sessão guiada com tutor</button>
+                  </div>
                   {overview.weak.map((w) => <span key={w.id} className="trunc" style={{ fontSize: 13, color: "var(--text-2)" }}>· {w.kind === "cloze" ? w.front.replace(/\{\{|\}\}/g, "") : w.front} <span className="badge bad" style={{ height: 18, fontSize: 11 }}>{w.lapses}×</span></span>)}
                 </>
               )}
