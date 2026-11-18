@@ -6,11 +6,19 @@ export interface Page {
   favorite: boolean;
   position: string;
   body: unknown | null;
+  /** `page` comum, `database` (tem esquema) ou `row` (linha de uma database). */
+  kind: PageKind;
+  /** Valores das propriedades, só em linhas. */
+  props: Record<string, unknown>;
+  /** Propriedades e views, só em databases. */
+  schema: unknown | null;
   rev: number;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
+
+export type PageKind = "page" | "database" | "row";
 
 export interface TreeNode {
   id: string;
@@ -19,6 +27,7 @@ export interface TreeNode {
   icon: string | null;
   favorite: boolean;
   position: string;
+  kind: PageKind;
 }
 
 export interface TrashItem {
@@ -43,6 +52,9 @@ export interface SearchHit extends PageRef {
 }
 
 export interface PagePatch {
+  /** Junta com os valores atuais; `null` apaga um valor. */
+  props?: Record<string, unknown>;
+  schema?: unknown;
   title?: string;
   icon?: string | null;
   favorite?: boolean;
@@ -54,6 +66,18 @@ export interface NewPage {
   title: string;
   icon: string | null;
   body: unknown | null;
+  kind?: PageKind;
+  props?: Record<string, unknown>;
+  schema?: unknown;
+}
+
+export interface RowItem {
+  id: string;
+  title: string;
+  icon: string | null;
+  props: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type UpdateResult =
@@ -66,7 +90,8 @@ export type MoveResult =
   | { kind: "not_found" }
   | { kind: "parent_not_found" }
   | { kind: "cycle" }
-  | { kind: "anchor_invalid" };
+  | { kind: "anchor_invalid" }
+  | { kind: "row_locked" };
 
 export interface MoveTarget {
   parentId: string | null;

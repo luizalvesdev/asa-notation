@@ -12,6 +12,7 @@ import type {
   TrashItem,
   TreeNode,
   UpdateResult,
+  RowItem,
   PublicPage,
   VersionFull,
   VersionItem,
@@ -19,7 +20,7 @@ import type {
 import { extractLinks, extractText, normalizeTitle } from "./text.js";
 
 const COLUMNS =
-  "id, parent_id, title, icon, favorite, position, body, rev, created_at, updated_at, deleted_at";
+  "id, parent_id, title, icon, favorite, position, body, kind, props, schema, rev, created_at, updated_at, deleted_at";
 
 const SNIPPET_START = "\u0001";
 const SNIPPET_STOP = "\u0002";
@@ -38,6 +39,9 @@ function toPage(row: Row): Page {
     favorite: row.favorite as boolean,
     position: row.position as string,
     body: row.body ?? null,
+    kind: row.kind as Page["kind"],
+    props: (row.props as Record<string, unknown> | null) ?? {},
+    schema: row.schema ?? null,
     rev: Number(row.rev),
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
@@ -76,8 +80,8 @@ export class PgPageStore {
 
   async tree(): Promise<TreeNode[]> {
     const rows = await this.sql.query(
-      `select id, parent_id, title, icon, favorite, position from pages
-        where deleted_at is null order by position asc, created_at asc, id asc`,
+      `select id, parent_id, title, icon, favorite, position, kind from pages
+        where deleted_at is null and kind <> 'row' order by position asc, created_at asc, id asc`,
     );
     return rows.map((row) => ({
       id: row.id as string,
@@ -86,6 +90,30 @@ export class PgPageStore {
       icon: (row.icon as string | null) ?? null,
       favorite: row.favorite as boolean,
       position: row.position as string,
+      kind: row.kind as Page["kind"],
+    }));
+  }
+
+  /** Esquema de uma database (ou null se o id não é de uma database ativa). */
+  async schemaOf(id: string): Promise<unknown | null> {
+    const rows = await this.sql.query(`select schema from pages where id = $1 and kind = 'database' and deleted_at is null`, [id]);
+    return rows[0] ? (rows[0].schema ?? null) : null;
+  }
+
+  /** Linhas de uma database, da mais antiga para a mais nova. */
+  async rows(databaseId: string, limit = 2000): Promise<RowItem[]> {
+    const rows = await this.sql.query(
+      `select id, title, icon, props, created_at, updated_at from pages
+        where parent_id = $1 and kind = 'row' and deleted_at is null order by created_at asc, id asc limit $2`,
+      [databaseId, limit],
+    );
+    return rows.map((r) => ({
+      id: r.id as string,
+      title: r.title as string,
+      icon: (r.icon as string | null) ?? null,
+      props: (r.props as Record<string, unknown> | null) ?? {},
+      createdAt: iso(r.created_at),
+      updatedAt: iso(r.updated_at),
     }));
   }
 
@@ -112,8 +140,8 @@ export class PgPageStore {
     const now = this.nowIso();
     const rows = await this.sql.query(
       `with p as (
-         insert into pages (parent_id, title, icon, position, body, body_text, created_at, updated_at)
-         values ($1, $2, $3, $4, $5::jsonb, $6, $7, $7)
+         insert into pages (parent_id, title, icon, position, body, body_text, created_at, updated_at, kind, props, schema)
+         values ($1, $2, $3, $4, $5::jsonb, $6, $7, $7, $9, $10::jsonb, $11::jsonb)
          returning ${COLUMNS}
        ), l as (
          insert into page_links (from_page, to_title)
@@ -122,7 +150,7 @@ export class PgPageStore {
          returning 1
        )
        select * from p`,
-      [input.parentId, input.title, input.icon, position, input.body === null ? null : JSON.stringify(input.body), text, now, links],
+      [input.parentId, input.title, input.icon, position, input.body === null ? null : JSON.stringify(input.body), text, now, links, input.kind ?? "page", JSON.stringify(input.props ?? {}), input.schema === undefined ? null : JSON.stringify(input.schema)],
     );
     return toPage(rows[0]!);
   }
@@ -219,6 +247,12 @@ export class PgPageStore {
     if (patch.title !== undefined) add("title", patch.title);
     if (patch.icon !== undefined) add("icon", patch.icon);
     if (patch.favorite !== undefined) add("favorite", patch.favorite);
+    if (patch.schema !== undefined) add("schema", JSON.stringify(patch.schema), "::jsonb");
+    if (patch.props !== undefined) {
+      params.push(JSON.stringify(patch.props));
+      // Junta com o que já existe e tira as chaves nulas (null = apagar o valor).
+      sets.push(`props = jsonb_strip_nulls(props || $${params.length}::jsonb)`);
+    }
 
     let links: string[] | null = null;
     if (patch.body !== undefined) {
@@ -257,7 +291,10 @@ export class PgPageStore {
   }
 
   async move(id: string, target: MoveTarget): Promise<MoveResult> {
-    if (!(await this.get(id))) return { kind: "not_found" };
+    const current = await this.get(id);
+    if (!current) return { kind: "not_found" };
+    // Linha de database fica na database: mover é só pelo título/propriedades.
+    if (current.kind === "row") return { kind: "row_locked" };
     if (target.parentId) {
       if (!(await this.get(target.parentId))) return { kind: "parent_not_found" };
       const cycle = await this.sql.query(
@@ -346,7 +383,7 @@ export class PgPageStore {
        update pages
           set deleted_at = null, updated_at = $2, rev = nextval('change_seq'),
               parent_id = case
-                when pages.id = $1 and not exists (
+                when pages.id = $1 and pages.kind <> 'row' and not exists (
                   select 1 from pages par where par.id = pages.parent_id and par.deleted_at is null
                 ) then null
                 else pages.parent_id end

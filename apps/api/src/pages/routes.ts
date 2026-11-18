@@ -1,3 +1,4 @@
+import { defaultSchema, parseProps, parseSchema, type Schema } from "../databases/schema.js";
 import { UUID_SOURCE, badRequest, isRecord, isUuid, json, notFound, type Route } from "../routing.js";
 import type { MoveTarget, PagePatch } from "./model.js";
 import type { PgPageStore } from "./store.js";
@@ -65,11 +66,34 @@ export function pageRoutes(store: PgPageStore): Route[] {
         const title = body.title ?? "";
         const icon = body.icon ?? null;
         const doc = body.body ?? null;
+        const kind = body.kind ?? "page";
+        if (kind !== "page" && kind !== "database" && kind !== "row") return badRequest("invalid_kind");
         if (parentId !== null && !isUuid(parentId)) return badRequest("invalid_parent");
         if (!validTitle(title)) return badRequest("invalid_title");
         if (!validIcon(icon)) return badRequest("invalid_icon");
         if (doc !== null && !validBody(doc)) return badRequest("invalid_body");
-        const page = await store.create({ parentId, title, icon, body: doc });
+
+        let props: Record<string, unknown> = {};
+        let schema: Schema | undefined;
+        if (parentId !== null) {
+          const parent = await store.get(parentId);
+          if (!parent) return json(404, { error: "parent_not_found" });
+          // Linhas não têm filhas.
+          if (parent.kind === "row") return badRequest("invalid_parent");
+          if (kind === "row") {
+            if (parent.kind !== "database") return badRequest("invalid_parent");
+            const parsed = parseProps(parent.schema as Schema, body.props ?? {});
+            if (typeof parsed === "string") return badRequest(parsed);
+            props = parsed;
+          }
+        } else if (kind === "row") return badRequest("invalid_parent");
+        if (kind !== "row" && body.props !== undefined) return badRequest("invalid_props");
+        if (kind === "database") {
+          const parsed = body.schema === undefined ? defaultSchema() : parseSchema(body.schema);
+          if (typeof parsed === "string") return badRequest(parsed);
+          schema = parsed;
+        } else if (body.schema !== undefined) return badRequest("invalid_schema");
+        const page = await store.create({ parentId, title, icon, body: doc, kind, props, schema });
         return page ? json(201, { page }) : json(404, { error: "parent_not_found" });
       },
     },
@@ -112,6 +136,24 @@ export function pageRoutes(store: PgPageStore): Route[] {
           }
           baseRev = body.baseRev;
         }
+        if (body.props !== undefined || body.schema !== undefined) {
+          const current = await store.get(match[1]!);
+          if (!current) return notFound();
+          if (body.props !== undefined) {
+            if (current.kind !== "row" || !current.parentId) return badRequest("invalid_props");
+            const parent = await store.get(current.parentId);
+            if (!parent) return badRequest("invalid_props");
+            const parsed = parseProps(parent.schema as Schema, body.props);
+            if (typeof parsed === "string") return badRequest(parsed);
+            patch.props = parsed;
+          }
+          if (body.schema !== undefined) {
+            if (current.kind !== "database") return badRequest("invalid_schema");
+            const parsed = parseSchema(body.schema);
+            if (typeof parsed === "string") return badRequest(parsed);
+            patch.schema = parsed;
+          }
+        }
         if (Object.keys(patch).length === 0) return badRequest("empty_patch");
 
         const result = await store.update(match[1]!, patch, baseRev);
@@ -148,6 +190,8 @@ export function pageRoutes(store: PgPageStore): Route[] {
             return json(409, { error: "cycle" });
           case "anchor_invalid":
             return badRequest("invalid_anchor");
+          case "row_locked":
+            return json(409, { error: "row_locked" });
         }
       },
     },
@@ -221,6 +265,15 @@ export function pageRoutes(store: PgPageStore): Route[] {
       handle: async ({ match }) => {
         const page = await store.publicPage(match[1]!);
         return page ? json(200, { page }) : notFound();
+      },
+    },
+    {
+      method: "GET",
+      pattern: new RegExp(`^/databases/${ID}/rows$`),
+      access: "session",
+      handle: async ({ match }) => {
+        if ((await store.schemaOf(match[1]!)) === null) return notFound();
+        return json(200, { rows: await store.rows(match[1]!) });
       },
     },
     {

@@ -44,6 +44,17 @@ Links `[[Título]]` são extraídos do texto do corpo ao salvar e casam por tít
 
 `rev` vem de uma sequência global e cresce a cada escrita. Serve para detectar conflito de edição (`baseRev`) e, mais tarde, para sincronização offline.
 
+## Databases
+
+Uma database é uma página com `kind: "database"` e um `schema`. Cada linha é uma página com `kind: "row"` (tem título, corpo e `props`), filha da database, e não aparece na árvore. Apagar a database leva as linhas; restaurar traz de volta.
+
+- **Propriedades** (`schema.properties`): `text`, `number`, `select`, `multiselect`, `date` (AAAA-MM-DD), `checkbox`, `status` (opções com `group`: `todo`, `doing`, `done`), `url` (http/https) e `relation` (lista de ids; `relationDb` aponta a database de destino). O título da linha é a propriedade implícita `title`.
+- **Views** (`schema.views`): `table`, `kanban`, `list`, `calendar`, cada uma com `filters`, `sorts`, `groupBy` (select/status), `dateProp` (date) e `hidden`. Filtros e ordenação rodam no cliente.
+- `POST /pages` com `kind: "database"` cria com Status e Data e as views Tabela e Kanban (ou com o `schema` enviado). Com `kind: "row"`, `parentId` é a database e `props` é validado pelo esquema.
+- `PATCH /pages/:id` aceita `props` (mescla com os valores atuais; `null` apaga) em linhas e `schema` (substitui) em databases. Valores inválidos para o esquema dão 400.
+- `GET /databases/:id/rows` devolve as linhas (`id`, `title`, `icon`, `props`, `createdAt`, `updatedAt`), da mais antiga para a mais nova, até 2000.
+- Linhas não se movem (`POST /pages/:id/move` dá 409 `row_locked`) e não têm filhas.
+
 ## Tarefas
 
 Todas exigem sessão. Datas são `AAAA-MM-DD` (o dia local de quem usa) e horas `HH:MM`. Uma tarefa é `{ id, title, date, time, recurrence, done, goalId, goalTitle, subtasks }`.
