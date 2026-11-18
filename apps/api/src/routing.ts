@@ -1,13 +1,17 @@
 import type { ApiRequest, ApiResponse } from "./http.js";
 
-export type Access = "public" | "session";
+/**
+ * public: sem login. session: cookie de sessão ou token de API (leitura para GET, escrita para o resto).
+ * owner: só o cookie de sessão (senha, tokens e configurações não se mexem por token).
+ */
+export type Access = "public" | "session" | "owner";
 
 export interface Ctx {
   req: ApiRequest;
   match: RegExpMatchArray;
   /** Relógio injetado, em ms. */
   now: number;
-  /** A requisição traz uma sessão válida. */
+  /** A requisição traz uma sessão válida ou um token de API. */
   authenticated: boolean;
 }
 

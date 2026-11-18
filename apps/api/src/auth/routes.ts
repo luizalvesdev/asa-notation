@@ -67,7 +67,7 @@ export function authRoutes({ auth, config }: Deps): Route[] {
     {
       method: "POST",
       pattern: /^\/auth\/password\/change$/,
-      access: "session",
+      access: "owner",
       handle: async ({ req, now }) => {
         const body = isRecord(req.body) ? req.body : {};
         const { currentPassword, newPassword } = body;

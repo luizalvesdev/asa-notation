@@ -13,6 +13,11 @@ import { taskRoutes } from "./tasks/routes.js";
 import { studyRoutes } from "./study/routes.js";
 import { PgStudyStore } from "./study/store.js";
 import { PgTaskStore } from "./tasks/store.js";
+import { exportRoutes } from "./export/routes.js";
+import { settingsRoutes } from "./settings/routes.js";
+import { PgSettingsStore } from "./settings/store.js";
+import { tokenRoutes } from "./tokens/routes.js";
+import { PgTokenStore } from "./tokens/store.js";
 import { forbidden, json, notFound, unauthorized, type Route } from "./routing.js";
 import type { SqlClient } from "./sql.js";
 
@@ -30,6 +35,7 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
+  const tokenStore = new PgTokenStore(sql, now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(pageStore),
@@ -37,6 +43,9 @@ export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
     ...goalRoutes(new PgGoalStore(sql, now), taskStore),
     ...studyRoutes(new PgStudyStore(sql, now)),
     ...captureRoutes(new PgCaptureStore(sql, now), pageStore),
+    ...settingsRoutes(new PgSettingsStore(sql, now)),
+    ...tokenRoutes(tokenStore),
+    ...exportRoutes(sql, now),
   ];
 
   return async function handle(incoming: ApiRequest): Promise<ApiResponse> {
@@ -50,17 +59,27 @@ export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
       pathMatched = true;
       if (route.method !== req.method) continue;
 
+      const nowMs = now();
+
+      // Token de API: não é enviado sozinho pelo navegador, então não precisa de Origin.
+      const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers?.authorization ?? "")?.[1];
+      const token = bearer ? await tokenStore.verify(bearer) : null;
+      if (token) {
+        if (route.access === "owner") return forbidden();
+        if (!SAFE_METHODS.has(req.method) && token.scope !== "write") return json(403, { error: "read_only_token" });
+        return route.handle({ req, match, now: nowMs, authenticated: true });
+      }
+
       // Cookie de sessão é enviado sozinho pelo navegador: toda escrita precisa vir de uma origem conhecida.
       if (!SAFE_METHODS.has(req.method) && !config.origins.includes(req.headers?.origin ?? "")) return forbidden();
 
-      const nowMs = now();
       const session = verifyToken<{ typ?: string; exp: number }>(
         req.cookies?.[SESSION_COOKIE],
         config.sessionSecret,
         Math.floor(nowMs / 1000),
       );
       const authenticated = session?.typ === "session";
-      if (route.access === "session" && !authenticated) return unauthorized();
+      if (route.access !== "public" && !authenticated) return unauthorized();
       return route.handle({ req, match, now: nowMs, authenticated });
     }
     return pathMatched ? json(405, { error: "method_not_allowed" }) : notFound();
