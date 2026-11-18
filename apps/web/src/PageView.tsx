@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, isConflict, pagesApi } from "./api";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
+import { Backlinks } from "./Backlinks";
 import { Editor } from "./Editor";
+import { HistoryPanel } from "./HistoryPanel";
+import { SharePopover } from "./SharePopover";
 import { Icon } from "./icons";
-import type { Page } from "./pages-types";
+import type { Page, TreeNode } from "./pages-types";
 
 interface PageViewProps {
   pageId: string;
+  nodes: TreeNode[];
   onSaved: (page: Page) => void;
   onDelete: (page: Page) => void;
 }
 
 type Load = { status: "carregando" } | { status: "ausente" } | { status: "erro" } | { status: "pronto"; page: Page };
 
-export function PageView({ pageId, onSaved, onDelete }: PageViewProps) {
+export function PageView({ pageId, nodes, onSaved, onDelete }: PageViewProps) {
   const [load, setLoad] = useState<Load>({ status: "carregando" });
   const [attempt, setAttempt] = useState(0);
 
@@ -59,11 +63,12 @@ export function PageView({ pageId, onSaved, onDelete }: PageViewProps) {
       </div>
     );
   }
-  return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} />;
+  return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} />;
 }
 
 interface PageEditorProps {
   initial: Page;
+  nodes: TreeNode[];
   onSaved: (page: Page) => void;
   onDelete: (page: Page) => void;
   onReload: () => void;
@@ -76,12 +81,14 @@ const SAVE_LABEL: Record<SaveState, string> = {
   erro: "Falha ao salvar",
 };
 
-function PageEditor({ initial, onSaved, onDelete, onReload }: PageEditorProps) {
+function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorProps) {
   const [title, setTitle] = useState(initial.title);
   const [favorite, setFavorite] = useState(initial.favorite);
   const [saveState, setSaveState] = useState<SaveState>("salvo");
   const [conflict, setConflict] = useState<Page | null>(null);
   const [focusBody, setFocusBody] = useState(0);
+  const [panel, setPanel] = useState<"history" | "share" | null>(null);
+  const [historyBody, setHistoryBody] = useState<unknown>(null);
   const rev = useRef(initial.rev);
   const latest = useRef({ page: initial, onSaved });
   latest.current.onSaved = onSaved;
@@ -143,6 +150,27 @@ function PageEditor({ initial, onSaved, onDelete, onReload }: PageEditorProps) {
           )}
         </span>
         <span className="spacer" />
+        <span style={{ position: "relative" }}>
+          <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
+            Compartilhar
+          </button>
+          {panel === "share" && <SharePopover pageId={initial.id} onClose={() => setPanel(null)} />}
+        </span>
+        <button
+          className="btn btn-fan btn-sm"
+          type="button"
+          aria-expanded={panel === "history"}
+          onClick={() => {
+            if (panel === "history") return setPanel(null);
+            // Garante que o que foi digitado já está salvo antes de comparar.
+            void saver.current?.flush().catch(() => undefined).then(() => {
+              setHistoryBody(latest.current.page.body);
+              setPanel("history");
+            });
+          }}
+        >
+          Histórico
+        </button>
         <button className={`btn btn-fan btn-sm${favorite ? " on" : ""}`} type="button" aria-pressed={favorite} onClick={toggleFavorite}>
           <Icon name="star" />
           {favorite ? "Favorita" : "Favoritar"}
@@ -182,7 +210,9 @@ function PageEditor({ initial, onSaved, onDelete, onReload }: PageEditorProps) {
           }
         }}
       />
-      <Editor initial={initial.body} focusSignal={focusBody} onChange={(doc) => saver.current?.queue({ body: doc })} />
+      <Editor initial={initial.body} focusSignal={focusBody} pages={nodes} selfId={initial.id} onChange={(doc) => saver.current?.queue({ body: doc })} />
+      <Backlinks pageId={initial.id} />
+      {panel === "history" && <HistoryPanel pageId={initial.id} currentBody={historyBody} onClose={() => setPanel(null)} onRestored={() => { setPanel(null); saver.current?.discard(); onReload(); }} />}
     </div>
   );
 }

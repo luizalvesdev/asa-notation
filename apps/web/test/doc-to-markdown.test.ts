@@ -42,6 +42,25 @@ describe("docToMarkdown", () => {
   });
 });
 
+describe("blocos novos", () => {
+  const cell = (type: string, text: string) => ({ type, content: [p(t(text))] });
+  it("tabela vira tabela GFM, escapando barras", () => {
+    const table = { type: "table", content: [{ type: "tableRow", content: [cell("tableHeader", "A"), cell("tableHeader", "B")] }, { type: "tableRow", content: [cell("tableCell", "1"), cell("tableCell", "x|y")] }] };
+    expect(docToMarkdown(doc(table))).toBe("| A | B |\n| --- | --- |\n| 1 | x\\|y |\n");
+  });
+  it("destaque vira alerta do GitHub", () => {
+    expect(docToMarkdown(doc({ type: "callout", content: [p(t("cuidado"))] }))).toBe("> [!NOTE]\n> cuidado\n");
+  });
+  it("bloco recolhível vira <details>", () => {
+    const d = { type: "details", content: [{ type: "detailsSummary", content: [t("Resumo")] }, { type: "detailsContent", content: [p(t("conteúdo"))] }] };
+    expect(docToMarkdown(doc(d))).toBe("<details>\n<summary>Resumo</summary>\n\nconteúdo\n\n</details>\n");
+  });
+  it("imagem e diagrama", () => {
+    expect(docToMarkdown(doc({ type: "image", attrs: { src: "https://x.dev/a.png", alt: "foto" } }))).toBe("![foto](https://x.dev/a.png)\n");
+    expect(docToMarkdown(doc({ type: "mermaid", attrs: { code: "graph TD\n A-->B" } }))).toBe("```mermaid\ngraph TD\n A-->B\n```\n");
+  });
+});
+
 describe("export em pastas", () => {
   it("safeName tira caracteres de caminho", () => {
     expect(safeName("a/b: c?")).toBe("a b c");

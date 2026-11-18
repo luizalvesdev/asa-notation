@@ -31,6 +31,6 @@ describe("filterSlashItems", () => {
 
   it("todo item tem id único e atalho de grupo válido", () => {
     expect(new Set(SLASH_ITEMS.map((i) => i.id)).size).toBe(SLASH_ITEMS.length);
-    expect(new Set(SLASH_ITEMS.map((i) => i.group))).toEqual(new Set(["Básico", "Listas", "Blocos"]));
+    expect(new Set(SLASH_ITEMS.map((i) => i.group))).toEqual(new Set(["Básico", "Listas", "Blocos", "Mídia"]));
   });
 });

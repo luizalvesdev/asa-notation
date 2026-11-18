@@ -4,6 +4,9 @@ import { CapturePanel } from "./CapturePanel";
 import { InboxView } from "./InboxView";
 import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
+
+/** As rotas de dentro do app (o link público tem tela própria, fora do Shell). */
+export type AppRoute = Exclude<Route, { kind: "publica" }>;
 import { HojeView } from "./HojeView";
 import { MetasView } from "./MetasView";
 import { NotificationsView } from "./NotificationsView";
@@ -28,7 +31,7 @@ import { usePages } from "./use-pages";
 
 interface ShellProps {
   dark: boolean;
-  route: Route;
+  route: AppRoute;
   preference: Preference;
   onPreference: (preference: Preference) => void;
   onToggleTheme: () => void;
@@ -240,7 +243,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         </header>
         <main className="scroll">
           {route.kind === "pagina" ? (
-            <PageView key={route.pageId} pageId={route.pageId} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
+            <PageView key={route.pageId} pageId={route.pageId} nodes={pages.nodes} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
           ) : route.id === "hoje" ? (
             <HojeView onToast={setToast} />
           ) : route.id === "inbox" ? (

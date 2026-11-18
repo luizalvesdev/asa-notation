@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { setUnauthorizedHandler } from "./api";
 import { fetchSession, logout } from "./auth";
 import { Login } from "./Login";
+import { PublicView } from "./PublicView";
 import { Shell } from "./Shell";
 import { useRoute } from "./use-route";
 import { useTheme } from "./use-theme";
@@ -36,6 +37,15 @@ export function App() {
   useEffect(() => {
     document.documentElement.style.colorScheme = theme === "escuro" ? "dark" : "light";
   }, [theme]);
+
+  // Link público: lê sem login, sem Shell.
+  if (route.kind === "publica") {
+    return (
+      <div className={`ds full${theme === "escuro" ? " escuro" : ""}`} style={{ height: "100%" }}>
+        <PublicView slug={route.slug} onToggleTheme={toggleTheme} />
+      </div>
+    );
+  }
 
   return (
     <div className={`ds full${theme === "escuro" ? " escuro" : ""}`} style={{ height: "100%" }}>

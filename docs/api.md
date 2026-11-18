@@ -33,6 +33,11 @@ Uma pessoa só, só senha. A sessão é um cookie assinado (`asa_session`, `Http
 | GET | `/pages/trash` | Raízes da lixeira (o que foi apagado direto) |
 | POST | `/pages/:id/restore` | Restaura a subárvore. Se o pai continua apagado, vai para a raiz |
 | GET | `/pages/search?q=&limit=` | Título e conteúdo, com prefixo e sem diferenciar acento. Trecho com o termo entre U+0001 e U+0002 (nunca HTML) |
+| GET | `/pages/:id/versions` | Histórico (50 mais recentes): `id`, `title`, `createdAt`, `excerpt`. A versão guardada é o estado anterior à edição, no máximo uma a cada 10 minutos, só se o conteúdo mudou; ficam as últimas 100 |
+| GET | `/pages/:id/versions/:versionId` | Versão completa com `body` |
+| POST | `/pages/:id/versions/:versionId/restore` | Volta a página à versão. O estado atual vira uma versão antes |
+| GET, POST, DELETE | `/pages/:id/share` | Estado do link público (`{ slug, views }` ou `null`), publicar (mesmo link se já publicada) e despublicar |
+| GET | `/public/:slug` | **Sem login.** `{ page: { title, icon, body, updatedAt } }`, sem ids nem árvore. Conta visita. 404 se despublicada ou apagada |
 | GET | `/pages/:id/backlinks` | Páginas que citam esta com `[[Título]]` |
 
 Links `[[Título]]` são extraídos do texto do corpo ao salvar e casam por título, sem diferenciar maiúsculas nem espaços repetidos. Renomear a página alvo desfaz o vínculo.

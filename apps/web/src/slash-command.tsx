@@ -1,12 +1,12 @@
 import { Extension } from "@tiptap/react";
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion";
 import { createRoot, type Root } from "react-dom/client";
-import { SlashMenu } from "./SlashMenu";
+import { SlashMenu, type MenuItem } from "./SlashMenu";
 import { filterSlashItems, type SlashItem } from "./slash-items";
 
-type Props = SuggestionProps<SlashItem, SlashItem>;
-
-function renderSlashMenu() {
+/** Menu flutuante de sugestões (blocos, páginas). Posiciona-se junto ao cursor e responde ao teclado. */
+export function renderSlashMenu<T extends MenuItem>(label = "Blocos") {
+  type Props = SuggestionProps<T, T>;
   let root: Root | null = null;
   let unmount: (() => void) | null = null;
   let current: Props | null = null;
@@ -19,6 +19,7 @@ function renderSlashMenu() {
     root.render(
       <SlashMenu
         items={props.items}
+        label={label}
         selected={selected}
         onPick={(item) => props.command(item)}
         onHover={(index) => {

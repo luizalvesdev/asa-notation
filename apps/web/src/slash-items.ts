@@ -1,6 +1,8 @@
 import type { Editor } from "@tiptap/react";
+import { uiOf } from "./editor-nodes";
+import { DEFAULT_DIAGRAM } from "./mermaid-render";
 
-export type SlashGroup = "Básico" | "Listas" | "Blocos";
+export type SlashGroup = "Básico" | "Listas" | "Blocos" | "Mídia";
 
 export interface SlashItem {
   id: string;
@@ -25,6 +27,11 @@ export const SLASH_ITEMS: SlashItem[] = [
   { id: "task", group: "Listas", title: "Lista de tarefas", description: "Itens com caixa de seleção", shortcut: "[ ]", keywords: ["todo", "task", "checkbox", "tarefa", "checklist"], run: (e) => chain(e).toggleTaskList().run() },
   { id: "quote", group: "Blocos", title: "Citação", description: "Trecho destacado", shortcut: ">", keywords: ["quote", "blockquote", "citacao"], run: (e) => chain(e).toggleBlockquote().run() },
   { id: "code", group: "Blocos", title: "Bloco de código", description: "Código em fonte monoespaçada", shortcut: "```", keywords: ["code", "codigo", "pre"], run: (e) => chain(e).toggleCodeBlock().run() },
+  { id: "callout", group: "Blocos", title: "Destaque", description: "Caixa de aviso ou nota", keywords: ["callout", "destaque", "aviso", "nota", "caixa"], run: (e) => chain(e).toggleWrap("callout").run() },
+  { id: "toggle", group: "Blocos", title: "Bloco recolhível", description: "Esconde e mostra conteúdo", keywords: ["toggle", "details", "recolhivel", "expandir", "sanfona"], run: (e) => chain(e).setDetails().run() },
+  { id: "table", group: "Blocos", title: "Tabela", description: "Tabela simples de 3 colunas", keywords: ["table", "tabela", "grade"], run: (e) => chain(e).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { id: "mermaid", group: "Mídia", title: "Diagrama (Mermaid)", description: "Fluxo, sequência e mais, com código", keywords: ["mermaid", "diagrama", "fluxograma", "grafico"], run: (e) => chain(e).insertContent({ type: "mermaid", attrs: { code: DEFAULT_DIAGRAM } }).run() },
+  { id: "image", group: "Mídia", title: "Imagem", description: "Imagem a partir de um endereço", keywords: ["image", "imagem", "foto", "figura"], run: (e) => uiOf(e).askImage?.() },
   { id: "divider", group: "Blocos", title: "Divisor", description: "Linha horizontal", shortcut: "---", keywords: ["divider", "hr", "linha", "separador"], run: (e) => chain(e).setHorizontalRule().run() },
 ];
 

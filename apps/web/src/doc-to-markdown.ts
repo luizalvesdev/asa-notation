@@ -74,9 +74,35 @@ function block(node: Node): string {
     }
     case "horizontalRule":
       return "---";
+    case "callout":
+      return ["> [!NOTE]", ...blocks(node.content).split("\n").map((line) => (line === "" ? ">" : `> ${line}`))].join("\n");
+    case "details": {
+      const summary = (node.content ?? []).find((n) => n.type === "detailsSummary");
+      const content = (node.content ?? []).find((n) => n.type === "detailsContent");
+      return `<details>\n<summary>${inline(summary?.content)}</summary>\n\n${blocks(content?.content)}\n\n</details>`;
+    }
+    case "table":
+      return table(node);
+    case "image": {
+      const src = typeof node.attrs?.src === "string" ? node.attrs.src : "";
+      const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
+      return src ? `![${alt}](${src})` : "";
+    }
+    case "mermaid":
+      return `\`\`\`mermaid\n${String(node.attrs?.code ?? "")}\n\`\`\``;
     default:
       return node.content ? blocks(node.content) : (node.text ?? "");
   }
+}
+
+/** Tabela em Markdown (GFM): a primeira linha vira o cabeçalho. */
+function table(node: Node): string {
+  const rows = (node.content ?? []).map((row) => (row.content ?? []).map((cell) => blocks(cell.content).replace(/\n+/g, " ").replace(/\|/g, "\\|").trim()));
+  if (rows.length === 0) return "";
+  const width = Math.max(...rows.map((r) => r.length));
+  const pad = (r: string[]) => [...r, ...Array(width - r.length).fill("")];
+  const line = (r: string[]) => `| ${pad(r).join(" | ")} |`;
+  return [line(rows[0]!), `| ${Array(width).fill("---").join(" | ")} |`, ...rows.slice(1).map(line)].join("\n");
 }
 
 function blocks(nodes: Node[] = []): string {

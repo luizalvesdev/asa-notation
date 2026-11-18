@@ -1,9 +1,11 @@
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
-import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { contentExtensions } from "./editor-extensions";
+import { uiOf } from "./editor-nodes";
+import { PageMention, WikiLink } from "./page-link";
+import type { TreeNode } from "./pages-types";
 import { SlashCommand } from "./slash-command";
 
 interface EditorProps {
@@ -11,25 +13,49 @@ interface EditorProps {
   onChange: (doc: JSONContent) => void;
   /** Recebe o foco quando o título pede (Enter no título). */
   focusSignal: number;
+  /** Páginas para linkar com `[[` e `@`. */
+  pages: TreeNode[];
+  /** A própria página fica fora da lista de links. */
+  selfId: string;
 }
 
 const GRIP = "M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01";
 
-export function Editor({ initial, onChange, focusSignal }: EditorProps) {
+export function Editor({ initial, onChange, focusSignal, pages, selfId }: EditorProps) {
   const [target, setTarget] = useState<{ pos: number; size: number } | null>(null);
+  const [askingImage, setAskingImage] = useState(false);
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Placeholder.configure({ placeholder: "Escreva algo ou digite / para os blocos…" }),
+      ...contentExtensions(),
+      Placeholder.configure({ placeholder: "Escreva algo, / para os blocos, [[ ou @ para linkar uma página…" }),
       SlashCommand,
+      WikiLink,
+      PageMention,
     ],
     content: (initial as JSONContent | null) ?? undefined,
-    editorProps: { attributes: { "aria-label": "Conteúdo da página" } },
+    editorProps: {
+      attributes: { "aria-label": "Conteúdo da página" },
+      handleClick: (_view, _pos, event) => {
+        // Link para outra página: Ctrl/Cmd+clique abre (um clique simples só põe o cursor, para dar para editar).
+        const href = (event.target as HTMLElement).closest("a")?.getAttribute("href");
+        if (href?.startsWith("#/") && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          location.hash = href;
+          return true;
+        }
+        return false;
+      },
+    },
     onUpdate: ({ editor: instance }) => onChange(instance.getJSON()),
   });
+
+  const linkable = useMemo(() => pages.filter((p) => p.id !== selfId), [pages, selfId]);
+  useEffect(() => {
+    if (!editor) return;
+    uiOf(editor).pages = linkable;
+    uiOf(editor).askImage = () => setAskingImage(true);
+  }, [editor, linkable]);
 
   useEffect(() => {
     if (focusSignal > 0) editor?.commands.focus("start");
@@ -65,6 +91,61 @@ export function Editor({ initial, onChange, focusSignal }: EditorProps) {
         </DragHandle>
       )}
       <EditorContent editor={editor} />
+      {askingImage && editor && (
+        <ImageDialog
+          onCancel={() => setAskingImage(false)}
+          onInsert={(src, alt) => {
+            editor.chain().focus().setImage({ src, alt }).run();
+            setAskingImage(false);
+          }}
+        />
+      )}
     </>
+  );
+}
+
+/** Só endereços http(s): nada de javascript: ou data: dentro da página. */
+export function validImageUrl(value: string): string | null {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function ImageDialog({ onInsert, onCancel }: { onInsert: (src: string, alt: string) => void; onCancel: () => void }) {
+  const [value, setValue] = useState("");
+  const [alt, setAlt] = useState("");
+  const url = validImageUrl(value);
+  return (
+    <div className="overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
+      <form
+        className="modal card ds"
+        role="dialog"
+        aria-label="Inserir imagem"
+        style={{ padding: 18, width: 420, maxWidth: "calc(100% - 24px)", display: "flex", flexDirection: "column", gap: 12 }}
+        onKeyDown={(e) => e.key === "Escape" && onCancel()}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (url) onInsert(url, alt.trim());
+        }}
+      >
+        <b style={{ fontWeight: 600 }}>Inserir imagem</b>
+        <div className="field">
+          <label className="label" htmlFor="img-url">Endereço da imagem</label>
+          <input id="img-url" className={`inp${value && !url ? " err" : ""}`} autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder="https://…" />
+          <span className="help">{value && !url ? "Use um endereço começando com http:// ou https://." : "A imagem continua no site de origem."}</span>
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="img-alt">Descrição (opcional)</label>
+          <input id="img-alt" className="inp" value={alt} onChange={(e) => setAlt(e.target.value)} />
+        </div>
+        <div className="row" style={{ gap: 8, justifyContent: "flex-end" }}>
+          <button className="btn btn-fan btn-sm" type="button" onClick={onCancel}>Cancelar</button>
+          <button className="btn btn-pri btn-sm" type="submit" disabled={!url}>Inserir</button>
+        </div>
+      </form>
+    </div>
   );
 }

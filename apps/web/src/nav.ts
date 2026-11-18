@@ -42,7 +42,7 @@ export const NAV_FOOTER: NavItem[] = [
 
 export const DEFAULT_ROUTE: RouteId = "hoje";
 
-export type Route = { kind: "tela"; id: RouteId; sub?: string } | { kind: "pagina"; pageId: string };
+export type Route = { kind: "tela"; id: RouteId; sub?: string } | { kind: "pagina"; pageId: string } | { kind: "publica"; slug: string };
 
 /** Telas que não aparecem na barra lateral. Pertencem a uma tela principal (a que fica marcada). */
 const HIDDEN: (NavItem & { parent: RouteId; slug: string })[] = [
@@ -51,11 +51,13 @@ const HIDDEN: (NavItem & { parent: RouteId; slug: string })[] = [
 ];
 
 const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER, ...HIDDEN];
+const PUBLIC_SLUG = /^[A-Za-z0-9_-]{8,32}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parseRoute(hash: string): Route {
   const path = hash.replace(/^#\/?/, "");
   const [head, second] = path.split("/");
+  if (head === "s" && second && PUBLIC_SLUG.test(second)) return { kind: "publica", slug: second };
   const hidden = HIDDEN.find((entry) => entry.slug === `${head}/${second}`);
   if (hidden) return { kind: "tela", id: hidden.id };
   if (head === "rotina" && (second === "quinta" || second === "sabado")) return { kind: "tela", id: "rotina", sub: second };
@@ -80,4 +82,8 @@ export function navParent(id: RouteId): RouteId {
 
 export function pageHash(pageId: string): string {
   return `#/p/${pageId}`;
+}
+
+export function publicHash(slug: string): string {
+  return `#/s/${slug}`;
 }

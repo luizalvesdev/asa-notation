@@ -1,14 +1,21 @@
 import { useEffect, useRef } from "react";
-import type { SlashItem } from "./slash-items";
+export interface MenuItem {
+  id: string;
+  group: string;
+  title: string;
+  description: string;
+  shortcut?: string;
+}
 
-interface SlashMenuProps {
-  items: SlashItem[];
+interface SlashMenuProps<T extends MenuItem> {
+  items: T[];
   selected: number;
-  onPick: (item: SlashItem) => void;
+  label?: string;
+  onPick: (item: T) => void;
   onHover: (index: number) => void;
 }
 
-export function SlashMenu({ items, selected, onPick, onHover }: SlashMenuProps) {
+export function SlashMenu<T extends MenuItem>({ items, selected, label = "Blocos", onPick, onHover }: SlashMenuProps<T>) {
   const list = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,7 +31,7 @@ export function SlashMenu({ items, selected, onPick, onHover }: SlashMenuProps) 
   }
 
   return (
-    <div ref={list} className="menu slash-menu-box" role="listbox" aria-label="Blocos">
+    <div ref={list} className="menu slash-menu-box" role="listbox" aria-label={label}>
       {items.map((item, index) => (
         <div key={item.id} style={{ display: "contents" }}>
           {item.group !== items[index - 1]?.group && <div className="mgroup">{item.group}</div>}

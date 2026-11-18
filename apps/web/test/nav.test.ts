@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_ROUTE, navParent, pageHash, parseRoute, routeHash, routeTitle } from "../src/nav";
+import { DEFAULT_ROUTE, navParent, pageHash, publicHash, parseRoute, routeHash, routeTitle } from "../src/nav";
 
 const ID = "462b29f6-0058-4e35-835b-ac4493d059e7";
 
@@ -18,6 +18,13 @@ describe("nav", () => {
   it("lê a página do hash", () => {
     expect(parseRoute(`#/p/${ID}`)).toEqual({ kind: "pagina", pageId: ID });
     expect(parseRoute(pageHash(ID.toUpperCase()))).toEqual({ kind: "pagina", pageId: ID });
+  });
+
+  it("lê o link público do hash", () => {
+    expect(parseRoute("#/s/k3x9Ab_-Qz12")).toEqual({ kind: "publica", slug: "k3x9Ab_-Qz12" });
+    expect(parseRoute(publicHash("abcdefgh12"))).toEqual({ kind: "publica", slug: "abcdefgh12" });
+    expect(parseRoute("#/s/curto")).toEqual({ kind: "tela", id: DEFAULT_ROUTE });
+    expect(parseRoute("#/s/com espaço!!")).toEqual({ kind: "tela", id: DEFAULT_ROUTE });
   });
 
   it("cai em Hoje quando a rota é vazia, desconhecida ou o id da página é inválido", () => {

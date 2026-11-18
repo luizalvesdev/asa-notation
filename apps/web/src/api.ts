@@ -52,7 +52,18 @@ export const pagesApi = {
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/pages/${id}`),
   restore: (id: string) => request<{ page: Page }>("POST", `/pages/${id}/restore`).then((r) => r.page),
   trash: () => request<{ items: TrashItem[] }>("GET", "/pages/trash").then((r) => r.items),
+  backlinks: (id: string) => request<{ pages: { id: string; title: string; icon: string | null }[] }>("GET", `/pages/${id}/backlinks`).then((r) => r.pages),
+  versions: (id: string) => request<{ versions: { id: number; title: string; createdAt: string; excerpt: string }[] }>("GET", `/pages/${id}/versions`).then((r) => r.versions),
+  version: (id: string, versionId: number) => request<{ version: { id: number; title: string; body: unknown; createdAt: string } }>("GET", `/pages/${id}/versions/${versionId}`).then((r) => r.version),
+  restoreVersion: (id: string, versionId: number) => request<{ page: Page }>("POST", `/pages/${id}/versions/${versionId}/restore`).then((r) => r.page),
+  share: (id: string) => request<{ share: { slug: string; views: number } | null }>("GET", `/pages/${id}/share`).then((r) => r.share),
+  enableShare: (id: string) => request<{ share: { slug: string; views: number } }>("POST", `/pages/${id}/share`).then((r) => r.share),
+  disableShare: (id: string) => request<{ unshared: number }>("DELETE", `/pages/${id}/share`),
   search: (q: string) => request<{ hits: SearchHit[] }>("GET", `/pages/search?q=${encodeURIComponent(q)}&limit=20`).then((r) => r.hits),
+};
+
+export const publicApi = {
+  get: (slug: string) => request<{ page: { title: string; icon: string | null; body: unknown; updatedAt: string } }>("GET", `/public/${slug}`).then((r) => r.page),
 };
 
 export const tasksApi = {
