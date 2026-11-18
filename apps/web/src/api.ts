@@ -2,6 +2,7 @@ import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-ty
 import { NetworkError } from "./capture-outbox";
 import type { Capture, Counts, Kind, KindFilter } from "./captures-types";
 import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
+import type { Candidate, Deck, NewCardInput, Overview, QueueCard, ReviewResponse, Stats, StudyCard } from "./study-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
 export class ApiError extends Error {
@@ -82,6 +83,21 @@ export const capturesApi = {
   bulk: (ids: string[], op: { action: "archive" } | { action: "restore" } | { action: "kind"; kind: Kind | null }) =>
     request<{ updated: number }>("POST", "/captures/bulk", { ids, ...op }),
   move: (id: string, parentId: string | null) => request<{ page: Page }>("POST", `/captures/${id}/move`, { parentId }).then((r) => r.page),
+};
+
+export const studyApi = {
+  overview: (dayStart: string) => request<Overview>("GET", `/study/overview?dayStart=${encodeURIComponent(dayStart)}`),
+  queue: (dayStart: string) => request<{ cards: QueueCard[] }>("GET", `/study/queue?dayStart=${encodeURIComponent(dayStart)}`).then((r) => r.cards),
+  stats: (tz: string, days: number) => request<Stats>("GET", `/study/stats?tz=${encodeURIComponent(tz)}&days=${days}`),
+  review: (id: string, rating: number, durationMs: number) => request<ReviewResponse>("POST", `/study/cards/${id}/review`, { rating, durationMs }),
+  cards: (deckId: string | "none") => request<{ cards: StudyCard[] }>("GET", `/study/cards?deckId=${deckId}`).then((r) => r.cards),
+  createCard: (input: NewCardInput) => request<{ created: number }>("POST", "/study/cards", input),
+  createCards: (deckId: string | null, items: NewCardInput[]) => request<{ created: number; skipped: number }>("POST", "/study/cards/bulk", { deckId, items }),
+  deleteCard: (id: string) => request<{ deleted: number }>("DELETE", `/study/cards/${id}`),
+  extract: (pageId: string) => request<{ candidates: Candidate[] }>("POST", "/study/extract", { pageId }).then((r) => r.candidates),
+  createDeck: (title: string, goalId: string | null) => request<{ deck: Deck }>("POST", "/study/decks", { title, goalId }).then((r) => r.deck),
+  updateDeck: (id: string, patch: { title?: string; goalId?: string | null }) => request<{ deck: Deck }>("PATCH", `/study/decks/${id}`, patch).then((r) => r.deck),
+  deleteDeck: (id: string) => request<{ deleted: number }>("DELETE", `/study/decks/${id}`),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {

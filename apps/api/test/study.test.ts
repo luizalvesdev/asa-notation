@@ -123,6 +123,7 @@ describe("fila e revisão", () => {
     expect((await rate(good.id, 3)).status).toBe(200);
     const again = (await rate(bad.id, 1)).body as { dueAt: string; state: number };
     expect(again.state).toBe(1);
+    expect(Object.keys((await rate(bad.id, 3)).body as object)).toContain("preview");
     expect(Date.parse(again.dueAt) - app.clock.ms).toBeLessThan(15 * 60_000);
 
     expect(await queue()).toEqual([]);

@@ -27,7 +27,7 @@ function toCard(row: Row): Card {
 
 const toWeak = (row: Row): WeakCard => ({ id: row.id as string, front: row.front as string, kind: row.kind as CardKind, lapses: Number(row.lapses) });
 
-export type ReviewResult = { kind: "ok"; dueAt: string; state: number } | { kind: "not_found" };
+export type ReviewResult = { kind: "ok"; dueAt: string; state: number; preview: Record<Grade, string> } | { kind: "not_found" };
 export type DeckResult = { kind: "ok"; deck: Deck } | { kind: "not_found" } | { kind: "goal_not_found" };
 
 export class PgStudyStore {
@@ -206,7 +206,7 @@ export class PgStudyStore {
     const next = await fsrs.review(cur.fsrs as StoredCard, grade, now);
     await this.sql.query(`update cards set fsrs = $2::jsonb, due_at = $3, state = $4, updated_at = $5 where id = $1`, [id, JSON.stringify(next), next.dueAt, next.state, now.toISOString()]);
     await this.sql.query(`insert into review_logs (card_id, rating, state_before, reviewed_at, duration_ms) values ($1, $2, $3, $4, $5)`, [id, grade, Number(cur.state), now.toISOString(), durationMs]);
-    return { kind: "ok", dueAt: next.dueAt, state: next.state };
+    return { kind: "ok", dueAt: next.dueAt, state: next.state, preview: await fsrs.preview(next, now) };
   }
 
   // ---- estatísticas ----------------------------------------------------------

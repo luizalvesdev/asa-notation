@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_ROUTE, pageHash, parseRoute, routeHash, routeTitle } from "../src/nav";
+import { DEFAULT_ROUTE, navParent, pageHash, parseRoute, routeHash, routeTitle } from "../src/nav";
 
 const ID = "462b29f6-0058-4e35-835b-ac4493d059e7";
 
 describe("nav", () => {
   it("lê a tela do hash", () => {
     expect(parseRoute("#/semana")).toEqual({ kind: "tela", id: "semana" });
-    expect(parseRoute("#/estudo/revisao")).toEqual({ kind: "tela", id: "estudo" });
+    expect(parseRoute("#/estudo/revisao")).toEqual({ kind: "tela", id: "revisao" });
+    expect(parseRoute("#/estudo/estatisticas")).toEqual({ kind: "tela", id: "estudo-stats" });
+    expect(parseRoute("#/estudo/outra")).toEqual({ kind: "tela", id: "estudo" });
     expect(parseRoute("#semana")).toEqual({ kind: "tela", id: "semana" });
   });
 
@@ -26,5 +28,10 @@ describe("nav", () => {
     expect(routeHash("inbox")).toBe("#/inbox");
     expect(pageHash(ID)).toBe(`#/p/${ID}`);
     expect(routeTitle("rotina")).toBe("Rotina e check-ins");
+    expect(routeHash("revisao")).toBe("#/estudo/revisao");
+    expect(routeHash("estudo-stats")).toBe("#/estudo/estatisticas");
+    expect(routeTitle("revisao")).toBe("Revisão");
+    expect(navParent("revisao")).toBe("estudo");
+    expect(navParent("hoje")).toBe("hoje");
   });
 });

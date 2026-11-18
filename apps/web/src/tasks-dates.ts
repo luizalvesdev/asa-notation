@@ -84,3 +84,16 @@ export function formatDate(date: string): string {
 export function daysBetween(from: string, to: string): number {
   return Math.round((utc(to).getTime() - utc(from).getTime()) / DAY_MS);
 }
+
+/** Início do dia local (meia-noite) como ISO, para o servidor contar "hoje" no fuso de quem usa. */
+export function localDayStartIso(now: Date = new Date()): string {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+}
+
+export function localTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}

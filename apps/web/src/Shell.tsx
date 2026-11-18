@@ -6,6 +6,9 @@ import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
 import { HojeView } from "./HojeView";
 import { MetasView } from "./MetasView";
+import { ReviewView } from "./ReviewView";
+import { StatsView } from "./StatsView";
+import { StudyView } from "./StudyView";
 import { PageView } from "./PageView";
 import { SearchPalette } from "./SearchPalette";
 import { SemanaView } from "./SemanaView";
@@ -240,6 +243,12 @@ export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
                 setToast({ text: "Movida para uma página", action: { label: "Abrir", run: () => { setToast(null); location.hash = pageHash(page.id); } } });
               }}
             />
+          ) : route.id === "estudo" ? (
+            <StudyView nodes={pages.nodes} onToast={setToast} />
+          ) : route.id === "revisao" ? (
+            <ReviewView />
+          ) : route.id === "estudo-stats" ? (
+            <StatsView />
           ) : route.id === "metas" ? (
             <MetasView onToast={setToast} />
           ) : route.id === "semana" ? (

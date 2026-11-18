@@ -1,5 +1,5 @@
 import { Icon, isIconName } from "./icons";
-import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, routeHash, type NavItem, type Route } from "./nav";
+import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, navParent, routeHash, type NavItem, type Route } from "./nav";
 import { PageTree } from "./PageTree";
 import type { TreeItem } from "./pages-tree";
 
@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 function NavLink({ item, route, onNavigate, onOpenSearch }: { item: NavItem; route: Route; onNavigate?: () => void; onOpenSearch: () => void }) {
-  const selected = route.kind === "tela" && item.id === route.id;
+  const selected = route.kind === "tela" && item.id === navParent(route.id);
   if (item.id === "busca") {
     return (
       <button

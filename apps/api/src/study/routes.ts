@@ -183,7 +183,7 @@ export function studyRoutes(store: PgStudyStore): Route[] {
           return badRequest("invalid_duration");
         }
         const result = await store.review(match[1]!, grade as Grade, (duration as number | undefined) ?? null);
-        return result.kind === "ok" ? json(200, { dueAt: result.dueAt, state: result.state }) : notFound();
+        return result.kind === "ok" ? json(200, { dueAt: result.dueAt, state: result.state, preview: result.preview }) : notFound();
       },
     },
     {

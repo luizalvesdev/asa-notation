@@ -78,6 +78,25 @@ Todas exigem sessão. Captura: `{ id, text, kind, tags, createdAt }`. `kind` é 
 | POST | `/captures/bulk` | `{ ids, action }`: `archive`, `restore` ou `kind` (com `kind`). Até 200 ids |
 | POST | `/captures/:id/move` | `{ parentId }`. Cria uma página (1ª linha vira o título) e tira a captura da Inbox. 409 se já foi movida |
 
+## Estudo
+
+Todas exigem sessão. Cards são `basic` (frente e verso) ou `cloze` (`front` com `{{lacunas}}`, sem verso). O agendamento usa FSRS (`ts-fsrs`). Estado do card: `0` novo, `1` aprendendo, `2` revisão, `3` reaprendendo. Notas: `1` De novo, `2` Difícil, `3` Bom, `4` Fácil. No máximo 10 cards novos por dia.
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/study/overview?dayStart=` | `dayStart` (ISO) é a meia-noite local. Devolve `dueReview`, `newAvailable`, `avgSeconds`, `decks` e `weak` (errados 2+ vezes em 7 dias) |
+| GET | `/study/queue?dayStart=` | Vencidos e novos do dia (até 100), cada um com `preview`: quando volta para cada nota |
+| POST | `/study/cards/:id/review` | `{ rating, durationMs? }`. Devolve `dueAt`, `state` e o novo `preview` |
+| GET | `/study/cards?deckId=` | `deckId` é um id ou `none`. Até 500 |
+| POST | `/study/cards` | `{ kind, front, back?, deckId? }` |
+| POST | `/study/cards/bulk` | `{ deckId?, items }`. Itens com `sourcePageId` e `sourceKey` não duplicam: `{ created, skipped }` |
+| DELETE | `/study/cards/:id` | Apaga (soft delete) |
+| POST | `/study/extract` | `{ pageId }`. Procura `Pergunta :: resposta` (básico) e `texto {{lacuna}}` (lacuna) nos parágrafos e títulos. `exists` marca o que já virou card |
+| POST | `/study/decks` | `{ title, goalId? }`. Trilha ligada a uma meta |
+| PATCH | `/study/decks/:id` | `title` e/ou `goalId` |
+| DELETE | `/study/decks/:id` | Os cards ficam sem trilha |
+| GET | `/study/stats?tz=&days=` | Revisões por dia no fuso `tz`, retenção (cards em revisão lembrados), tempo, cards por estado, mais errados e vencimentos dos próximos 7 dias |
+
 ## Limites conhecidos
 
 - O destaque do trecho na busca só marca o termo quando ele é digitado com o mesmo acento do texto.

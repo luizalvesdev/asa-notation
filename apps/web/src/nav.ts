@@ -9,7 +9,9 @@ export type RouteId =
   | "progresso"
   | "notificacoes"
   | "lixeira"
-  | "configuracoes";
+  | "configuracoes"
+  | "revisao"
+  | "estudo-stats";
 
 export interface NavItem {
   id: RouteId;
@@ -42,11 +44,20 @@ export const DEFAULT_ROUTE: RouteId = "hoje";
 
 export type Route = { kind: "tela"; id: RouteId } | { kind: "pagina"; pageId: string };
 
-const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER];
+/** Telas que não aparecem na barra lateral. Pertencem a uma tela principal (a que fica marcada). */
+const HIDDEN: (NavItem & { parent: RouteId; slug: string })[] = [
+  { id: "revisao", label: "Revisão", icon: "study", parent: "estudo", slug: "estudo/revisao" },
+  { id: "estudo-stats", label: "Estatísticas de estudo", icon: "chart", parent: "estudo", slug: "estudo/estatisticas" },
+];
+
+const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER, ...HIDDEN];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parseRoute(hash: string): Route {
-  const [head, second] = hash.replace(/^#\/?/, "").split("/");
+  const path = hash.replace(/^#\/?/, "");
+  const [head, second] = path.split("/");
+  const hidden = HIDDEN.find((entry) => entry.slug === `${head}/${second}`);
+  if (hidden) return { kind: "tela", id: hidden.id };
   if (head === "p" && second && UUID.test(second)) return { kind: "pagina", pageId: second.toLowerCase() };
   const item = ALL.find((entry) => entry.id === head);
   return { kind: "tela", id: item ? item.id : DEFAULT_ROUTE };
@@ -57,7 +68,13 @@ export function routeTitle(id: RouteId): string {
 }
 
 export function routeHash(id: RouteId): string {
-  return `#/${id}`;
+  const hidden = HIDDEN.find((entry) => entry.id === id);
+  return `#/${hidden ? hidden.slug : id}`;
+}
+
+/** A tela da barra lateral que fica marcada quando `id` está aberta. */
+export function navParent(id: RouteId): RouteId {
+  return HIDDEN.find((entry) => entry.id === id)?.parent ?? id;
 }
 
 export function pageHash(pageId: string): string {
