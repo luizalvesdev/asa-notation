@@ -100,3 +100,42 @@ body,
   background: var(--accent);
   color: var(--on-accent);
 }
+
+/* Espaço do chat: a largura anima junto com o painel, então o conteúdo encolhe aos poucos (sem salto). */
+.chat-wrap {
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  transition: width var(--medio) var(--padrao);
+}
+
+.chat-wrap.open {
+  width: 380px;
+}
+
+.chat-wrap .chat {
+  animation: none;
+  width: 380px;
+}
+
+@container app (max-width: 720px) {
+  .chat-wrap {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    z-index: 80;
+    display: none;
+    overflow: visible;
+    transition: none;
+  }
+
+  .chat-wrap.open {
+    display: block;
+    width: auto;
+  }
+
+  .chat-wrap .chat {
+    width: auto;
+    animation: slideup var(--medio) var(--entrada) both;
+  }
+}

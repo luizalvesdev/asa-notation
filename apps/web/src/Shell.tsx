@@ -66,6 +66,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const [searchOpen, setSearchOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  // Depois da primeira vez o painel fica montado (só escondido): abre na hora e não perde a conversa.
+  const [chatMounted, setChatMounted] = useState(false);
   const [chatRequest, setChatRequest] = useState<{ agent: Agent; prompt?: string; id: number } | null>(null);
   const [captureTick, setCaptureTick] = useState(0);
   const [online, setOnline] = useState(() => navigator.onLine);
@@ -119,6 +121,16 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     const timer = setTimeout(() => setToast(null), 6000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (chatOpen) setChatMounted(true);
+  }, [chatOpen]);
+
+  // Baixa o código do chat em segundo plano, para o primeiro clique não travar a tela.
+  useEffect(() => {
+    const timer = setTimeout(() => void import("./ChatPanel"), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Outras telas pedem o chat (ex.: "Sessão guiada com tutor" em Estudo).
   useEffect(() => {
@@ -335,7 +347,13 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         </main>
         <BottomNav route={route} onCapture={() => setCaptureOpen(true)} onMenu={() => setDrawer(true)} />
       </div>
-      {chatOpen && <Suspense fallback={null}><ChatPanel request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} /></Suspense>}
+      <div className={`chat-wrap${chatOpen ? " open" : ""}`} inert={!chatOpen} aria-hidden={!chatOpen}>
+        {chatMounted && (
+          <Suspense fallback={null}>
+            <ChatPanel active={chatOpen} request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />
+          </Suspense>
+        )}
+      </div>
       <div className={`drawer${drawer ? " on" : ""}`} aria-hidden={!drawer}>
         <div className="scr" onClick={() => setDrawer(false)} />
         <div className="pane">

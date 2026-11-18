@@ -8,6 +8,8 @@ import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
 
 interface ChatPanelProps {
+  /** Falso enquanto o painel está escondido (ele continua montado): não captura Esc nem foco. */
+  active?: boolean;
   /** Agente e pergunta pedidos de fora (ex.: "Sessão guiada" em Estudo). A pergunta é enviada uma vez. */
   request?: { agent: Agent; prompt?: string; id: number } | null;
   onClose: () => void;
@@ -77,7 +79,7 @@ function DraftCard({ draft, agent, onChange, onDataChanged, onToast }: { draft: 
   );
 }
 
-export function ChatPanel({ request, onClose, onToast, onDataChanged }: ChatPanelProps) {
+export function ChatPanel({ active = true, request, onClose, onToast, onDataChanged }: ChatPanelProps) {
   const [agent, setAgent] = useState<Agent>(() => request?.agent ?? loadAgent());
   const handled = useRef<number | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
@@ -101,18 +103,19 @@ export function ChatPanel({ request, onClose, onToast, onDataChanged }: ChatPane
   }, []);
 
   useEffect(() => {
-    field.current?.focus();
-  }, [agent, showHistory]);
+    if (active) field.current?.focus();
+  }, [agent, showHistory, active]);
 
   useEffect(() => {
     body.current?.scrollTo({ top: body.current.scrollHeight });
   }, [messages, sending]);
 
   useEffect(() => {
+    if (!active) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !showHistory && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, showHistory]);
+  }, [onClose, showHistory, active]);
 
   const switchAgent = (next: Agent) => {
     if (next === agent) return;
