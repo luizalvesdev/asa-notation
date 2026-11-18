@@ -10,6 +10,8 @@ import type { ApiRequest, ApiResponse } from "./http.js";
 import { pageRoutes } from "./pages/routes.js";
 import { PgPageStore } from "./pages/store.js";
 import { taskRoutes } from "./tasks/routes.js";
+import { studyRoutes } from "./study/routes.js";
+import { PgStudyStore } from "./study/store.js";
 import { PgTaskStore } from "./tasks/store.js";
 import { forbidden, json, notFound, unauthorized, type Route } from "./routing.js";
 import type { SqlClient } from "./sql.js";
@@ -33,6 +35,7 @@ export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
     ...pageRoutes(pageStore),
     ...taskRoutes(taskStore),
     ...goalRoutes(new PgGoalStore(sql, now), taskStore),
+    ...studyRoutes(new PgStudyStore(sql, now)),
     ...captureRoutes(new PgCaptureStore(sql, now), pageStore),
   ];
 
