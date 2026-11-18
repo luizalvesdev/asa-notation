@@ -2,6 +2,7 @@ import { GetParametersCommand, SSMClient } from "@aws-sdk/client-ssm";
 import { neon } from "@neondatabase/serverless";
 import { createApp, type Api } from "./app.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "./auth/config.js";
+import { aiConfigFromEnv } from "./ai/provider.js";
 import { createLambdaHandler } from "./lambda.js";
 
 let cached: Promise<Api> | undefined;
@@ -41,6 +42,7 @@ async function buildApi(): Promise<Api> {
   return createApp({
     sql: { query: async (text, params) => (await sql.query(text, params)) as Record<string, unknown>[] },
     config,
+    ai: aiConfigFromEnv(process.env),
   });
 }
 

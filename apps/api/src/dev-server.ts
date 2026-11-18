@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
 import { createApp } from "./app.js";
+import { aiConfigFromEnv } from "./ai/provider.js";
 import { mockProvider } from "./dev-ai-mock.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "./auth/config.js";
 import { hashPassword } from "./auth/password.js";
@@ -74,7 +75,7 @@ if (!(await auth.getPassword())) {
 }
 
 // ASA_AI_MOCK=1 troca o provedor de IA por uma versão de mentira (sem chave nem internet).
-const handle = createApp({ sql, config, ...(process.env.ASA_AI_MOCK ? { fetchImpl: mockProvider } : {}) });
+const handle = createApp({ sql, config, ai: aiConfigFromEnv(process.env), ...(process.env.ASA_AI_MOCK ? { fetchImpl: mockProvider } : {}) });
 
 const server = createServer(async (incoming, outgoing) => {
   const send = (status: number, body: unknown, cookies?: string[]) => {

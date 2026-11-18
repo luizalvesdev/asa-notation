@@ -147,12 +147,12 @@ Avaliação da semana: 60% taxa de tarefas concluídas + 40% dias com atividade.
 
 ## Assistentes (Hermes e Renato)
 
-Usam a API do Claude (Anthropic) com a chave do próprio dono. A chave fica cifrada no banco (AES-256-GCM, derivada do segredo do servidor) e nunca volta inteira. **O assistente nunca escreve sozinho**: as ferramentas `propose_*` só criam rascunhos, e nada vira tarefa, captura ou página antes de `approve`.
+Usam o Claude por um de dois provedores, escolhido no servidor por `AI_PROVIDER`: **Anthropic** (padrão; a chave do dono fica cifrada no banco) ou **Bedrock** (`AI_PROVIDER=bedrock`, `BEDROCK_MODEL_ID` e `BEDROCK_REGION` ou `AWS_REGION`; o acesso vem do papel IAM da Lambda, com `bedrock:InvokeModel`, e não há chave). A chave fica cifrada no banco (AES-256-GCM, derivada do segredo do servidor) e nunca volta inteira. **O assistente nunca escreve sozinho**: as ferramentas `propose_*` só criam rascunhos, e nada vira tarefa, captura ou página antes de `approve`.
 
 | Método | Rota | Acesso | Descrição |
 | --- | --- | --- | --- |
-| GET | `/ai/status` | sessão ou token | `{ configured, last4, model }` |
-| PUT | `/ai/key` | só sessão | `{ key }`. Testa com uma chamada mínima antes de guardar: 400 `key_rejected` se o provedor recusar |
+| GET | `/ai/status` | sessão ou token | `{ provider, configured, last4, model }`. No Bedrock, `configured` é sempre verdadeiro e `last4` é nulo |
+| PUT | `/ai/key` | só sessão | `{ key }`. Testa com uma chamada mínima antes de guardar: 400 `key_rejected` se o provedor recusar. No Bedrock: 409 `managed_by_server` |
 | DELETE | `/ai/key` | só sessão | Remove a chave |
 | GET | `/chat/conversations?agent=` | sessão ou token | `hermes` ou `renato` |
 | GET | `/chat/conversations/:id` | sessão ou token | Mensagens visíveis, cada uma com seus `drafts` |

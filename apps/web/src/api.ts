@@ -147,7 +147,7 @@ export const routineApi = {
 };
 
 export const aiApi = {
-  status: () => request<{ configured: boolean; last4: string | null; model: string }>("GET", "/ai/status"),
+  status: () => request<{ provider: "anthropic" | "bedrock"; configured: boolean; last4: string | null; model: string }>("GET", "/ai/status"),
   setKey: (key: string) => request<{ configured: boolean; last4: string }>("PUT", "/ai/key", { key }),
   removeKey: () => request<{ removed: number }>("DELETE", "/ai/key"),
 };

@@ -1,4 +1,5 @@
-import { DEFAULT_MODEL, ProviderError, createBudgetedModel, createModel, type FetchLike } from "../ai/anthropic.js";
+import { DEFAULT_MODEL, ProviderError, createModel, type FetchLike } from "../ai/anthropic.js";
+import type { AiProvider } from "../ai/provider.js";
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
 import type { PgPageStore } from "../pages/store.js";
@@ -27,6 +28,7 @@ interface Deps {
   captures: PgCaptureStore;
   study: PgStudyStore;
   fetchImpl: FetchLike;
+  provider: AiProvider;
   now: () => number;
 }
 
@@ -48,13 +50,19 @@ export function chatRoutes(deps: Deps): Route[] {
       method: "GET",
       pattern: /^\/ai\/status$/,
       access: "session",
-      handle: async () => json(200, { configured: (await secrets.last4(KEY_NAME)) !== null, last4: await secrets.last4(KEY_NAME), model: DEFAULT_MODEL }),
+      handle: async () => {
+        const managed = deps.provider.name === "bedrock";
+        const last4 = managed ? null : await secrets.last4(KEY_NAME);
+        // No Bedrock não há chave: o acesso vem do papel IAM do servidor.
+        return json(200, { provider: deps.provider.name, configured: managed || last4 !== null, last4, model: deps.provider.model });
+      },
     },
     {
       method: "PUT",
       pattern: /^\/ai\/key$/,
       access: "owner",
       handle: async ({ req }) => {
+        if (deps.provider.name === "bedrock") return json(409, { error: "managed_by_server" });
         const key = isRecord(req.body) && typeof req.body.key === "string" ? req.body.key.trim() : "";
         if (key.length < 20 || key.length > 300 || /\s/.test(key)) return badRequest("invalid_key");
         // Testa com uma chamada mínima antes de guardar.
@@ -74,7 +82,7 @@ export function chatRoutes(deps: Deps): Route[] {
       method: "DELETE",
       pattern: /^\/ai\/key$/,
       access: "owner",
-      handle: async () => ((await secrets.remove(KEY_NAME)) ? json(200, { removed: 1 }) : notFound()),
+      handle: async () => (deps.provider.name === "bedrock" ? json(409, { error: "managed_by_server" }) : (await secrets.remove(KEY_NAME)) ? json(200, { removed: 1 }) : notFound()),
     },
     {
       method: "GET",
@@ -113,8 +121,8 @@ export function chatRoutes(deps: Deps): Route[] {
         if (body.conversationId !== undefined && typeof body.conversationId !== "string") return badRequest("invalid_conversation");
         const agent = body.agent;
 
-        const apiKey = await secrets.get(KEY_NAME);
-        if (!apiKey) return json(412, { error: "no_key" });
+        const model = await deps.provider.forTurn();
+        if (!model) return json(412, { error: "no_key" });
 
         let conversation = body.conversationId ? await chat.get(body.conversationId as string) : null;
         if (body.conversationId && (!conversation || conversation.agent !== agent)) return notFound();
@@ -141,7 +149,7 @@ export function chatRoutes(deps: Deps): Route[] {
         const history = trimHistory(await chat.replay(conversationId));
         let turn;
         try {
-          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone), specs, handlers, model: createBudgetedModel(apiKey, DEFAULT_MODEL, fetchImpl) });
+          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone), specs, handlers, model });
         } catch (err) {
           if (err instanceof ProviderError) {
             // Rascunhos criados antes da falha não servem a ninguém.

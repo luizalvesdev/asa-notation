@@ -49,7 +49,7 @@ Decisões que valem lembrar:
 
 ### Assistentes
 
-Hermes (rotina, tarefas, metas), Renato (capturas e notas) e Tutor (professor socrático) usam o Claude com a chave do dono. Cada turno é um laço de até 6 idas ao modelo com ferramentas; ferramentas de leitura executam, ferramentas `propose_*` só criam **rascunhos**, e nada vira dado antes de `approve`. Um orçamento de 24 s por turno evita estourar o limite de 30 s do API Gateway. O conteúdo das notas é tratado como dado, não como instrução.
+Hermes (rotina, tarefas, metas), Renato (capturas e notas) e Tutor (professor socrático) usam o Claude, pela API da Anthropic (chave do dono, cifrada no banco) ou pelo Amazon Bedrock (papel IAM da Lambda, sem chave), conforme `AI_PROVIDER`. Cada turno é um laço de até 6 idas ao modelo com ferramentas; ferramentas de leitura executam, ferramentas `propose_*` só criam **rascunhos**, e nada vira dado antes de `approve`. Um orçamento de 24 s por turno evita estourar o limite de 30 s do API Gateway. O conteúdo das notas é tratado como dado, não como instrução.
 
 ## Segurança
 

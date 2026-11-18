@@ -1,6 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
 import type { FetchLike } from "../src/ai/anthropic.js";
+import type { AiConfig, BedrockInvoke } from "../src/ai/bedrock.js";
 import { createApp } from "../src/app.js";
 import type { AuthConfig } from "../src/auth/config.js";
 import { hashPassword } from "../src/auth/password.js";
@@ -36,13 +37,13 @@ export interface CallInit {
   origin?: string | null;
 }
 
-export async function createTestApp(options: { withPassword?: boolean; fetchImpl?: FetchLike } = {}) {
+export async function createTestApp(options: { withPassword?: boolean; fetchImpl?: FetchLike; ai?: AiConfig; bedrockInvoke?: BedrockInvoke } = {}) {
   const db = await openDb();
   const sql: SqlClient = { query: async (text, params) => (await db.query(text, params)).rows as Record<string, unknown>[] };
   const clock = { ms: Date.UTC(2026, 10, 18, 12, 0, 0) };
   const auth = new PgAuthStore(sql);
   if (options.withPassword !== false) await auth.setPassword(await hashPassword(PASSWORD), new Date(clock.ms).toISOString());
-  const handle = createApp({ sql, config: CONFIG, now: () => clock.ms, ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}) });
+  const handle = createApp({ sql, config: CONFIG, now: () => clock.ms, ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}), ...(options.ai ? { ai: options.ai } : {}), ...(options.bedrockInvoke ? { bedrockInvoke: options.bedrockInvoke } : {}) });
 
   async function call(method: string, path: string, init: CallInit = {}): Promise<ApiResponse> {
     const headers: Record<string, string> = { ...(init.headers ?? {}) };

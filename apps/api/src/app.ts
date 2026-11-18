@@ -14,6 +14,8 @@ import { studyRoutes } from "./study/routes.js";
 import { PgStudyStore } from "./study/store.js";
 import { PgTaskStore } from "./tasks/store.js";
 import type { FetchLike } from "./ai/anthropic.js";
+import type { AiConfig, BedrockInvoke } from "./ai/bedrock.js";
+import { createProvider } from "./ai/provider.js";
 import { chatRoutes } from "./chat/routes.js";
 import { PgChatStore } from "./chat/store.js";
 import { secretsKey } from "./secrets/crypto.js";
@@ -40,11 +42,15 @@ export interface AppDeps {
   now?: () => number;
   /** Para chamar o provedor de IA. Os testes trocam por uma versão falsa. */
   fetchImpl?: FetchLike;
+  /** Provedor de IA: Anthropic (com chave guardada no app) ou Bedrock (credenciais IAM do servidor). */
+  ai?: AiConfig;
+  /** Troca a chamada ao Bedrock nos testes. */
+  bedrockInvoke?: BedrockInvoke;
 }
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike }: AppDeps): Api {
+export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
   const tokenStore = new PgTokenStore(sql, now);
@@ -52,6 +58,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
   const goalStore = new PgGoalStore(sql, now);
   const studyStore = new PgStudyStore(sql, now);
   const captureStore = new PgCaptureStore(sql, now);
+  const secretStore = new PgSecretStore(sql, secretsKey(config.sessionSecret), now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(pageStore),
@@ -65,7 +72,8 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     ...progressRoutes(sql),
     ...chatRoutes({
       chat: new PgChatStore(sql, now),
-      secrets: new PgSecretStore(sql, secretsKey(config.sessionSecret), now),
+      secrets: secretStore,
+      provider: createProvider({ config: ai, secrets: secretStore, fetchImpl, ...(bedrockInvoke ? { bedrockInvoke } : {}) }),
       settings: settingsStore,
       tasks: taskStore,
       goals: goalStore,

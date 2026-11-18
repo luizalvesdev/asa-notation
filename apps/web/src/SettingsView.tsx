@@ -146,7 +146,7 @@ function Routine({ settings, save }: { settings: Settings; save: ReturnType<type
 }
 
 function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
-  const [status, setStatus] = useState<{ configured: boolean; last4: string | null; model: string } | null>(null);
+  const [status, setStatus] = useState<{ provider: "anthropic" | "bedrock"; configured: boolean; last4: string | null; model: string } | null>(null);
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +154,7 @@ function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
 
   useEffect(() => {
     let live = true;
-    aiApi.status().then((s) => live && setStatus(s)).catch(() => live && setStatus({ configured: false, last4: null, model: "" }));
+    aiApi.status().then((s) => live && setStatus(s)).catch(() => live && setStatus({ provider: "anthropic", configured: false, last4: null, model: "" }));
     return () => {
       live = false;
     };
@@ -166,7 +166,7 @@ function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
     setError(null);
     try {
       const res = await aiApi.setKey(key.trim());
-      setStatus((s) => ({ configured: true, last4: res.last4, model: s?.model ?? "" }));
+      setStatus((s) => ({ provider: "anthropic", configured: true, last4: res.last4, model: s?.model ?? "" }));
       setKey("");
       onToast({ text: "Chave testada e salva" });
     } catch (err) {
@@ -176,6 +176,21 @@ function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
       setBusy(false);
     }
   };
+
+  if (status?.provider === "bedrock") {
+    return (
+      <div className="col enter" style={{ gap: 14 }}>
+        <p className="muted" style={{ fontSize: 14 }}>Os assistentes usam o Claude pelo Amazon Bedrock. O acesso é do servidor (papel IAM), então não há chave para cadastrar aqui.</p>
+        <div className="card" style={{ padding: "14px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <span className="col grow1" style={{ minWidth: 200 }}>
+            <b style={{ fontWeight: 600, fontSize: 14 }}>Amazon Bedrock</b>
+            <span className="mono" style={{ fontSize: 12, color: "var(--text-2)", overflowWrap: "anywhere" }}>{status.model}</span>
+          </span>
+          <span className="badge ok">gerenciado pelo servidor</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="col enter" style={{ gap: 14 }}>
@@ -188,7 +203,7 @@ function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
           </span>
           <span className="badge ok">ativa</span>
           {confirm ? (
-            <button className="btn btn-sec btn-sm" type="button" onClick={() => void aiApi.removeKey().then(() => { setStatus({ configured: false, last4: null, model: status.model }); setConfirm(false); }).catch(() => onToast({ text: "Não foi possível remover." }))}>Confirmar remoção</button>
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => void aiApi.removeKey().then(() => { setStatus({ provider: "anthropic", configured: false, last4: null, model: status.model }); setConfirm(false); }).catch(() => onToast({ text: "Não foi possível remover." }))}>Confirmar remoção</button>
           ) : (
             <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => setConfirm(true)}>Remover</button>
           )}
