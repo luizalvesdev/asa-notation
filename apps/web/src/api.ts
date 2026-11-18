@@ -45,7 +45,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const pagesApi = {
   tree: () => request<{ pages: TreeNode[] }>("GET", "/pages/tree").then((r) => r.pages),
   get: (id: string) => request<{ page: Page }>("GET", `/pages/${id}`).then((r) => r.page),
-  create: (input: { parentId?: string | null; title?: string }) =>
+  create: (input: { parentId?: string | null; title?: string; body?: unknown }) =>
     request<{ page: Page }>("POST", "/pages", input).then((r) => r.page),
   update: (id: string, patch: PagePatch, baseRev?: number) =>
     request<{ page: Page }>("PATCH", `/pages/${id}`, baseRev === undefined ? patch : { ...patch, baseRev }).then((r) => r.page),

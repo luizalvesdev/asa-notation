@@ -11,7 +11,8 @@ export type RouteId =
   | "lixeira"
   | "configuracoes"
   | "revisao"
-  | "estudo-stats";
+  | "estudo-stats"
+  | "importar";
 
 export interface NavItem {
   id: RouteId;
@@ -48,6 +49,7 @@ export type Route = { kind: "tela"; id: RouteId; sub?: string } | { kind: "pagin
 const HIDDEN: (NavItem & { parent: RouteId; slug: string })[] = [
   { id: "revisao", label: "Revisão", icon: "study", parent: "estudo", slug: "estudo/revisao" },
   { id: "estudo-stats", label: "Estatísticas de estudo", icon: "chart", parent: "estudo", slug: "estudo/estatisticas" },
+  { id: "importar", label: "Importar", icon: "doc", parent: "configuracoes", slug: "configuracoes/importar" },
 ];
 
 const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER, ...HIDDEN];

@@ -17,11 +17,13 @@
     "@tiptap/extension-list": "^3.34.0",
     "@tiptap/extension-table": "^3.34.0",
     "@tiptap/extensions": "^3.34.0",
+    "@tiptap/html": "^3.34.0",
     "@tiptap/pm": "^3.34.0",
     "@tiptap/react": "^3.34.0",
     "@tiptap/starter-kit": "^3.34.0",
     "@tiptap/suggestion": "^3.34.0",
     "fflate": "^0.8.3",
+    "marked": "^16.4.2",
     "mermaid": "^12.3.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

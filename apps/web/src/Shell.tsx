@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, capturesApi } from "./api";
 import { CapturePanel } from "./CapturePanel";
+import { ImportView } from "./ImportView";
 import { InboxView } from "./InboxView";
 import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
@@ -262,6 +263,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             <RotinaView sub={route.sub} onToast={setToast} />
           ) : route.id === "progresso" ? (
             <ProgressoView />
+          ) : route.id === "importar" ? (
+            <ImportView onImported={pages.reload} />
           ) : route.id === "configuracoes" ? (
             <SettingsView preference={preference} onPreference={onPreference} onLogout={onLogout} onToast={setToast} />
           ) : route.id === "estudo" ? (

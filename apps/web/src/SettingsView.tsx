@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ApiError, accountApi, settingsApi, tokensApi } from "./api";
 import { downloadFile } from "./download";
 import { buildMarkdownZip } from "./export-zip";
+import { routeHash } from "./nav";
 import { removePending, usePending } from "./outbox";
 import { canInstall, isStandalone, onInstallChange, promptInstall } from "./pwa";
 import { DEFAULT_SETTINGS, type ApiToken, type Settings } from "./settings-types";
@@ -241,6 +242,13 @@ function Data({ onToast }: { onToast: (t: Toast) => void }) {
           <button className="btn btn-pri" type="button" disabled={busy !== null} onClick={() => void run("md")}>{busy === "md" ? "Gerando…" : "Exportar Markdown (.zip)"}</button>
           <button className="btn btn-sec" type="button" disabled={busy !== null} onClick={() => void run("json")}>{busy === "json" ? "Gerando…" : "Exportar JSON"}</button>
         </div>
+      </div>
+      <div className="card" style={{ padding: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <span className="col grow1">
+          <b style={{ fontWeight: 600 }}>Importar</b>
+          <span style={{ fontSize: 13, color: "var(--text-2)" }}>Notion (export .zip) ou um vault de Markdown, em passos.</span>
+        </span>
+        <a className="btn btn-sec" href={routeHash("importar")}>Abrir assistente</a>
       </div>
     </div>
   );
