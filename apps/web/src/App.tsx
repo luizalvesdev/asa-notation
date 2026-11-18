@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { setUnauthorizedHandler } from "./api";
 import { fetchSession, logout } from "./auth";
 import { Login } from "./Login";
 import { Shell } from "./Shell";
@@ -20,6 +21,11 @@ export function App() {
     return () => {
       live = false;
     };
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setSession("anonimo"));
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   const onAuthenticated = useCallback(() => setSession("autenticado"), []);

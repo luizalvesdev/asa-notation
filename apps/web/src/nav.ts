@@ -40,11 +40,16 @@ export const NAV_FOOTER: NavItem[] = [
 
 export const DEFAULT_ROUTE: RouteId = "hoje";
 
-const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER];
+export type Route = { kind: "tela"; id: RouteId } | { kind: "pagina"; pageId: string };
 
-export function parseRoute(hash: string): RouteId {
-  const id = hash.replace(/^#\/?/, "").split("/")[0];
-  return ALL.some((item) => item.id === id) ? (id as RouteId) : DEFAULT_ROUTE;
+const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function parseRoute(hash: string): Route {
+  const [head, second] = hash.replace(/^#\/?/, "").split("/");
+  if (head === "p" && second && UUID.test(second)) return { kind: "pagina", pageId: second.toLowerCase() };
+  const item = ALL.find((entry) => entry.id === head);
+  return { kind: "tela", id: item ? item.id : DEFAULT_ROUTE };
 }
 
 export function routeTitle(id: RouteId): string {
@@ -53,4 +58,8 @@ export function routeTitle(id: RouteId): string {
 
 export function routeHash(id: RouteId): string {
   return `#/${id}`;
+}
+
+export function pageHash(pageId: string): string {
+  return `#/p/${pageId}`;
 }

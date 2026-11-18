@@ -17,6 +17,10 @@ const ICONS = {
   menu: ["M4 6h16M4 12h16M4 18h16"],
   feather: ["M3 18c6 0 11-3.5 14-11 1.6 4.2.6 8.6-2.6 11.6", "M7.5 19.5c3.6-.6 6.6-2.6 8.6-6"],
   check: ["M5 12.5l4.5 4.5L19 7"],
+  doc: ["M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z", "M14 3v5h5"],
+  chevron: ["M9 6l6 6-6 6"],
+  star: ["M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9z"],
+  more: ["M5 12h.01M12 12h.01M19 12h.01"],
 } satisfies Record<string, Shape[]>;
 
 export type IconName = keyof typeof ICONS;
