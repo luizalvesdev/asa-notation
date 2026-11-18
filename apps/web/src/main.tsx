@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./pwa";
+import { registerServiceWorker } from "./sw-register";
 import { applyReduceMotion, loadReduceMotion } from "./theme";
 import "./styles/base.css";
 import "./styles/telas.css";
@@ -11,6 +12,7 @@ import "./styles/tasks.css";
 import "./styles/overrides.css";
 
 applyReduceMotion(loadReduceMotion());
+registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

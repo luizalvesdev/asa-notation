@@ -1,4 +1,5 @@
 import type { LoginResult } from "./login-state";
+import { clearOfflineData } from "./sw-register";
 
 async function postJson(path: string, body: unknown): Promise<Response> {
   return fetch(path, {
@@ -38,6 +39,8 @@ export async function loginWithPassword(password: string): Promise<LoginResult> 
 }
 
 export async function logout(): Promise<void> {
+  // Páginas guardadas para leitura offline não podem sobreviver ao logout.
+  clearOfflineData();
   try {
     await postJson("/api/auth/logout", {});
   } catch {
