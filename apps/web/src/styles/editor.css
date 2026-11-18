@@ -137,6 +137,33 @@ input.p-title::placeholder {
   padding: 0;
 }
 
+/* Destaque de sintaxe (lowlight/highlight.js): cores do design, claro e escuro. */
+.ProseMirror pre .hljs-comment,
+.ProseMirror pre .hljs-quote { color: var(--text-3); font-style: italic; }
+.ProseMirror pre .hljs-keyword,
+.ProseMirror pre .hljs-selector-tag,
+.ProseMirror pre .hljs-literal,
+.ProseMirror pre .hljs-doctag { color: var(--note); }
+.ProseMirror pre .hljs-string,
+.ProseMirror pre .hljs-regexp,
+.ProseMirror pre .hljs-addition { color: var(--success); }
+.ProseMirror pre .hljs-number,
+.ProseMirror pre .hljs-symbol,
+.ProseMirror pre .hljs-bullet { color: var(--hermes); }
+.ProseMirror pre .hljs-title,
+.ProseMirror pre .hljs-section { color: var(--accent); }
+.ProseMirror pre .hljs-built_in,
+.ProseMirror pre .hljs-type,
+.ProseMirror pre .hljs-class .hljs-title { color: var(--renato); }
+.ProseMirror pre .hljs-attr,
+.ProseMirror pre .hljs-attribute,
+.ProseMirror pre .hljs-variable,
+.ProseMirror pre .hljs-template-variable { color: var(--warning); }
+.ProseMirror pre .hljs-meta { color: var(--text-2); }
+.ProseMirror pre .hljs-deletion { color: var(--danger); }
+.ProseMirror pre .hljs-emphasis { font-style: italic; }
+.ProseMirror pre .hljs-strong { font-weight: 600; }
+
 .ProseMirror hr {
   border: 0;
   height: 1px;
