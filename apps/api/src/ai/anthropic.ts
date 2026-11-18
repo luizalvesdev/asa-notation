@@ -55,11 +55,15 @@ export const DEFAULT_MODEL = "claude-sonnet-5-5";
 const URL = "https://api.anthropic.com/v1/messages";
 const TIMEOUT_MS = 60_000;
 
+/** O API Gateway corta a requisição em 30 s: um turno de chat precisa terminar antes disso. */
+export const TURN_BUDGET_MS = 24_000;
+const MIN_CALL_MS = 3_000;
+
 /** Chama a API de Mensagens do Claude. `fetchImpl` existe para os testes não saírem para a internet. */
-export function createModel(apiKey: string, model: string, fetchImpl: FetchLike): (req: ModelRequest) => Promise<ModelResponse> {
+export function createModel(apiKey: string, model: string, fetchImpl: FetchLike, timeoutMs: number = TIMEOUT_MS): (req: ModelRequest) => Promise<ModelResponse> {
   return async (req) => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetchImpl(URL, {
         method: "POST",
@@ -76,5 +80,18 @@ export function createModel(apiKey: string, model: string, fetchImpl: FetchLike)
     } finally {
       clearTimeout(timer);
     }
+  };
+}
+
+/**
+ * Modelo com orçamento de tempo para o turno inteiro: cada chamada usa só o que sobrou,
+ * e sem tempo útil falha como "timeout" em vez de estourar o limite do API Gateway.
+ */
+export function createBudgetedModel(apiKey: string, model: string, fetchImpl: FetchLike, budgetMs: number = TURN_BUDGET_MS, clock: () => number = Date.now): (req: ModelRequest) => Promise<ModelResponse> {
+  const deadline = clock() + budgetMs;
+  return (req) => {
+    const remaining = deadline - clock();
+    if (remaining < MIN_CALL_MS) return Promise.reject(new ProviderError(0, "timeout"));
+    return createModel(apiKey, model, fetchImpl, Math.min(TIMEOUT_MS, remaining))(req);
   };
 }

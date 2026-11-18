@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Block, ModelMessage, ModelRequest, ModelResponse } from "../src/ai/anthropic.js";
+import { ProviderError, createBudgetedModel, createModel } from "../src/ai/anthropic.js";
 import { MAX_STEPS, runTurn, trimHistory } from "../src/chat/agent.js";
 import { markdownToDoc } from "../src/chat/markdown.js";
 import { decryptSecret, encryptSecret, secretsKey } from "../src/secrets/crypto.js";
@@ -34,6 +35,31 @@ describe("markdownToDoc", () => {
   });
   it("vazio vira um parágrafo vazio", () => {
     expect(markdownToDoc("").content).toEqual([{ type: "paragraph", content: [] }]);
+  });
+});
+
+describe("tempo do provedor", () => {
+  const req = { system: "s", messages: [{ role: "user" as const, content: "oi" }], tools: [] };
+  const hang = (_url: string, init: { signal?: AbortSignal }) => new Promise<never>((_, reject) => init.signal?.addEventListener("abort", () => reject(Object.assign(new Error("abort"), { name: "AbortError" }))));
+
+  it("estourou o tempo da chamada: erro de timeout", async () => {
+    await expect(createModel("k", "m", hang as never, 20)(req)).rejects.toMatchObject({ status: 0, message: "timeout" });
+  });
+
+  it("rede caída vira erro de rede", async () => {
+    const down = async () => { throw new TypeError("fetch failed"); };
+    await expect(createModel("k", "m", down as never)(req)).rejects.toMatchObject({ status: 0, message: "network" });
+  });
+
+  it("sem tempo sobrando no orçamento, nem chama o provedor", async () => {
+    let calls = 0;
+    const counting = async () => { calls++; return { ok: true, status: 200, json: async () => ({ content: [], stop_reason: "end_turn" }) }; };
+    let now = 0;
+    const model = createBudgetedModel("k", "m", counting as never, 10_000, () => now);
+    await model(req);
+    now = 8_000; // sobram 2 s, menos que o mínimo útil
+    await expect(model(req)).rejects.toBeInstanceOf(ProviderError);
+    expect(calls).toBe(1);
   });
 });
 

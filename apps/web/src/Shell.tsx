@@ -1,23 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, capturesApi } from "./api";
 import { BottomNav } from "./BottomNav";
-import { ChatPanel } from "./ChatPanel";
 import { OPEN_CHAT_EVENT, type Agent, type OpenChatRequest } from "./chat-types";
 import { CapturePanel } from "./CapturePanel";
-import { ImportView } from "./ImportView";
-import { InboxView } from "./InboxView";
 import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
 
 /** As rotas de dentro do app (o link público tem tela própria, fora do Shell). */
 export type AppRoute = Exclude<Route, { kind: "publica" }>;
 import { HojeView } from "./HojeView";
-import { MetasView } from "./MetasView";
-import { NotificationsView } from "./NotificationsView";
-import { ProgressoView } from "./ProgressoView";
-import { ReviewView } from "./ReviewView";
-import { StatsView } from "./StatsView";
-import { StudyView } from "./StudyView";
 import { PageView } from "./PageView";
 import { SearchPalette } from "./SearchPalette";
 import { SemanaView } from "./SemanaView";
@@ -25,14 +16,37 @@ import { TrashView } from "./TrashView";
 import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
 import type { Page } from "./pages-types";
 import { Sidebar } from "./Sidebar";
-import { RotinaView } from "./RotinaView";
-import { SettingsView } from "./SettingsView";
 import type { Preference } from "./theme";
 import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
 import { useUnread } from "./use-notifications";
 import { useRecents } from "./recents";
 import { usePages, type CreateExtra } from "./use-pages";
+
+const ImportView = lazy(() => import("./ImportView").then((m) => ({ default: m.ImportView })));
+const SettingsView = lazy(() => import("./SettingsView").then((m) => ({ default: m.SettingsView })));
+const ChatPanel = lazy(() => import("./ChatPanel").then((m) => ({ default: m.ChatPanel })));
+const StatsView = lazy(() => import("./StatsView").then((m) => ({ default: m.StatsView })));
+const ReviewView = lazy(() => import("./ReviewView").then((m) => ({ default: m.ReviewView })));
+const ProgressoView = lazy(() => import("./ProgressoView").then((m) => ({ default: m.ProgressoView })));
+const RotinaView = lazy(() => import("./RotinaView").then((m) => ({ default: m.RotinaView })));
+const MetasView = lazy(() => import("./MetasView").then((m) => ({ default: m.MetasView })));
+const NotificationsView = lazy(() => import("./NotificationsView").then((m) => ({ default: m.NotificationsView })));
+const StudyView = lazy(() => import("./StudyView").then((m) => ({ default: m.StudyView })));
+const InboxView = lazy(() => import("./InboxView").then((m) => ({ default: m.InboxView })));
+
+/** Aparece enquanto o código de uma tela carrega. */
+function ScreenFallback() {
+  return (
+    <div className="page" style={{ paddingTop: 56 }} aria-busy="true" aria-label="Carregando a tela">
+      <span className="sk" style={{ height: 36, width: "40%", display: "block" }} />
+      <div className="col" style={{ gap: 10, marginTop: 24 }}>
+        <span className="sk" style={{ height: 14, width: "85%" }} />
+        <span className="sk" style={{ height: 14, width: "70%" }} />
+      </div>
+    </div>
+  );
+}
 
 interface ShellProps {
   dark: boolean;
@@ -272,6 +286,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           </div>
         </header>
         <main className="scroll">
+          <Suspense fallback={<ScreenFallback />}>
           {route.kind === "pagina" ? (
             <PageView key={route.pageId} pageId={route.pageId} nodes={pages.nodes} onToast={setToast} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
           ) : route.id === "hoje" ? (
@@ -316,10 +331,11 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
               </p>
             </div>
           )}
+          </Suspense>
         </main>
         <BottomNav route={route} onCapture={() => setCaptureOpen(true)} onMenu={() => setDrawer(true)} />
       </div>
-      {chatOpen && <ChatPanel request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />}
+      {chatOpen && <Suspense fallback={null}><ChatPanel request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} /></Suspense>}
       <div className={`drawer${drawer ? " on" : ""}`} aria-hidden={!drawer}>
         <div className="scr" onClick={() => setDrawer(false)} />
         <div className="pane">

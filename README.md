@@ -1,27 +1,38 @@
 # asa-notation
 
-Hub único de anotações, estudo e assistentes (Hermes e Renato). Planejamento em [docs/features.md](docs/features.md), design em [docs/design/](docs/design/README.md).
+Hub pessoal de anotações, estudo e assistentes (Hermes, Renato e Tutor), de uso individual, em português do Brasil. Substitui Notion, Obsidian e Telegram.
 
-O projeto recomeçou do zero. O código anterior (API, web com Tiptap, migrações, SAM) está em `legacy/`, só como referência. O rascunho de arquitetura em [docs/design.md](docs/design.md) ainda precisa ser revisado nas etapas de modelo de dados e backend.
+- Planejamento e prioridades: [docs/features.md](docs/features.md)
+- Arquitetura: [docs/design.md](docs/design.md)
+- API (rotas, regras e limites): [docs/api.md](docs/api.md)
+- Design (exportado do Claude Design): [docs/design/](docs/design/README.md)
+
+O código de uma tentativa anterior está em `legacy/`, só como referência.
 
 ## Estrutura
 
 ```
-apps/web    App web (Vite + React + TypeScript), baseado no design do Claude Design
-apps/api    API (Lambda + Postgres): login por senha e páginas. Ver docs/api.md
-docs/       Funcionalidades, arquitetura e design exportado
-legacy/     Código anterior, não mantido
+apps/web    App web (Vite + React 19 + TypeScript + Tiptap), PWA instalável
+apps/api    API (AWS Lambda ou servidor local) sobre Postgres (Neon em produção, PGlite em dev)
+docs/       Funcionalidades, arquitetura, API e o design exportado
+template.yaml / samconfig.toml   Infraestrutura (AWS SAM): Lambda, HTTP API, S3 e CloudFront
 ```
 
-`apps/web/src/styles/` guarda o CSS do design system exportado (`base.css`, `telas.css`, `captura.css`). `overrides.css` tem os ajustes da implementação.
+## O que já existe
 
-## Estado
+**Escrever e organizar**: páginas aninhadas com editor de blocos (títulos, listas, tarefas, citação, código, tabela, destaque, bloco recolhível, imagem por URL, diagrama Mermaid com exportação SVG/PNG, divisor), menu `/`, alça de arrastar, barra de formatação, links `[[` e `@` com backlinks, ícone e capa, favoritas e recentes, modelos, histórico de versões com comparação e restauração, lixeira, busca global (⌘K) e link público de leitura. Páginas **canvas** (quadro livre) e **databases** (propriedades tipadas, views de tabela, kanban, lista e calendário, filtros, ordenação, agrupamento e linhas que são páginas).
 
-- Design system (tokens, tema claro e escuro, movimento) portado.
-- Login só com senha, com erro, carregando, bloqueio com contagem e offline.
-- Shell: barra lateral (recolhível com ⌘\), barra superior, gaveta no celular, troca de tema.
-- Backend: login por senha (sessão em cookie, bloqueio por falhas), árvore de páginas, edição com detecção de conflito, mover, lixeira, busca e backlinks. Detalhes em [docs/api.md](docs/api.md).
-- As telas do web ainda são placeholders; só o login fala com a API.
+**Tarefas e rotina**: Hoje, Semana (arrastar entre dias), tarefas com hora, recorrência e subtarefas, Metas ligadas às tarefas, Rotina (métricas da quinta, revisão do sábado e foco da semana), notificações e Progresso.
+
+**Captura**: captura rápida (⌘⇧K) com fila offline e Inbox com classificação, tags e mover para uma página.
+
+**Estudo**: trilhas ligadas às metas, cards básicos e de lacuna extraídos das páginas (`Pergunta :: resposta`, `{{lacuna}}`), revisão com FSRS, estatísticas.
+
+**Assistentes** (Claude, com a sua chave): painel de chat (⌘J) com Hermes, Renato e Tutor. A saída é sempre rascunho a aprovar.
+
+**Plataforma**: login só com senha, PWA com leitura offline, importação de Notion e vaults de Markdown, exportação em Markdown e JSON, tokens de API e configurações.
+
+O que ficou de fora está em [docs/features.md](docs/features.md#status-da-implementação).
 
 ## Comandos
 
@@ -33,3 +44,9 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+Variáveis úteis no desenvolvimento: `DEV_PASSWORD` define a senha do dono; `ASA_AI_MOCK=1` troca o provedor de IA por uma versão de mentira (sem chave nem internet) para testar o chat.
+
+## Segurança em resumo
+
+Sessão em cookie `HttpOnly` + `SameSite=Strict`, senha com scrypt e bloqueio por falhas, checagem de `Origin` em toda escrita feita com cookie, tokens de API (somente o hash é guardado; não mexem em senha, configurações nem tokens), chave de IA cifrada (AES-256-GCM) e link público com identificador aleatório que só expõe título, ícone, capa e conteúdo. O CloudFront aplica CSP e demais cabeçalhos de segurança (`template.yaml`). O service worker nunca guarda login, configurações, tokens nem export, e limpa os dados em cache no logout.

@@ -12,6 +12,23 @@ Prioridades:
 - **[2]** logo depois
 - **[3]** talvez
 
+## Status da implementação
+
+Atualizado depois do primeiro ciclo completo de telas.
+
+**Feito**: todo o bloco A (workspace e editor, exceto embed e colunas), B (databases), D (tarefas e metas, com subtarefas e recorrência), E (rotina e acompanhamento, com avisos do app aberto), F (captura e organização), G (assistentes, sem streaming), H (estudo: trilhas, cards, revisão FSRS, estatísticas, quiz e sessão guiada pelo Tutor) e I (login por senha, PWA, importação, backup, tokens e configurações), mais Mermaid, canvas e exportação SVG/PNG do bloco C.
+
+**Ficou de fora**:
+
+- Blocos de embed e colunas.
+- Mapa mental como tela própria: o Renato gera um diagrama `mindmap` em Mermaid como rascunho de página.
+- Pesquisa com citações (Perplexity) e resumo e quiz com Gemini: o quiz e a sessão guiada rodam no Tutor, com o Claude.
+- Web Push com o app fechado (exige servidor de push e chaves VAPID): hoje há avisos do sistema quando a aba está aberta em segundo plano.
+- Streaming das respostas dos assistentes e servidor MCP.
+- Captura por e-mail ou compartilhamento do Android.
+- Importação direta por token do Notion ou do GitHub: a importação lê o `.zip` exportado ou uma pasta de Markdown.
+- Edição de um card depois de criado, tabela CSV do Notion e imagens locais na importação.
+
 ## A. Workspace
 
 - Páginas aninhadas com árvore lateral [1]

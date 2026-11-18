@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, isConflict, pagesApi } from "./api";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
 import { Backlinks } from "./Backlinks";
-import { CanvasView } from "./CanvasView";
 import { Cover, CoverPicker } from "./Cover";
-import { DatabaseView } from "./DatabaseView";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { normalizeSchema } from "./use-database";
 import type { PropValue, Schema } from "./db-types";
@@ -23,6 +21,11 @@ interface PageViewProps {
   onDelete: (page: Page) => void;
   onToast: (toast: Toast) => void;
 }
+
+const CanvasView = lazy(() => import("./CanvasView").then((m) => ({ default: m.CanvasView })));
+const DatabaseView = lazy(() => import("./DatabaseView").then((m) => ({ default: m.DatabaseView })));
+
+const Loading = () => <div className="page" style={{ paddingTop: 56 }} aria-busy="true" aria-label="Carregando"><span className="sk" style={{ height: 36, width: "40%", display: "block" }} /></div>;
 
 type Load = { status: "carregando" } | { status: "ausente" } | { status: "erro" } | { status: "pronto"; page: Page };
 
@@ -73,10 +76,10 @@ export function PageView({ pageId, nodes, onSaved, onDelete, onToast }: PageView
     );
   }
   if (load.page.kind === "canvas") {
-    return <CanvasView key={load.page.id} page={load.page} onSaved={onSaved} onDelete={onDelete} />;
+    return <Suspense fallback={<Loading />}><CanvasView key={load.page.id} page={load.page} onSaved={onSaved} onDelete={onDelete} /></Suspense>;
   }
   if (load.page.kind === "database") {
-    return <DatabaseView key={load.page.id} page={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onToast={onToast} />;
+    return <Suspense fallback={<Loading />}><DatabaseView key={load.page.id} page={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onToast={onToast} /></Suspense>;
   }
   return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} />;
 }

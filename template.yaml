@@ -100,7 +100,36 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
-  # App e API no mesmo domínio: o cookie de sessão fica first-party e a passkey usa este endereço como RP ID.
+  # Cabeçalhos de segurança do app (a API usa a política gerenciada). A CSP libera só o que o app usa:
+  # scripts do próprio domínio, fontes do Google Fonts, imagens https (capas e imagens por URL) e a API no mesmo domínio.
+  WebHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub "${AWS::StackName}-web-headers"
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            Override: true
+            ContentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Override: true
+        CustomHeadersConfig:
+          Items:
+            - Header: Permissions-Policy
+              Value: "camera=(), microphone=(), geolocation=(), payment=()"
+              Override: true
+
+  # App e API no mesmo domínio: o cookie de sessão fica first-party.
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -126,8 +155,15 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
-          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          ResponseHeadersPolicyId: !Ref WebHeadersPolicy
         CacheBehaviors:
+          # O service worker não pode ficar em cache no CDN: uma versão nova precisa chegar logo.
+          - PathPattern: /sw.js
+            TargetOriginId: web
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            ResponseHeadersPolicyId: !Ref WebHeadersPolicy
           - PathPattern: /api/*
             TargetOriginId: api
             ViewerProtocolPolicy: https-only

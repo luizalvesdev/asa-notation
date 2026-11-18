@@ -1,4 +1,4 @@
-import { DEFAULT_MODEL, ProviderError, createModel, type FetchLike } from "../ai/anthropic.js";
+import { DEFAULT_MODEL, ProviderError, createBudgetedModel, createModel, type FetchLike } from "../ai/anthropic.js";
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
 import type { PgPageStore } from "../pages/store.js";
@@ -141,7 +141,7 @@ export function chatRoutes(deps: Deps): Route[] {
         const history = trimHistory(await chat.replay(conversationId));
         let turn;
         try {
-          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone), specs, handlers, model: createModel(apiKey, DEFAULT_MODEL, fetchImpl) });
+          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone), specs, handlers, model: createBudgetedModel(apiKey, DEFAULT_MODEL, fetchImpl) });
         } catch (err) {
           if (err instanceof ProviderError) {
             // Rascunhos criados antes da falha não servem a ninguém.
