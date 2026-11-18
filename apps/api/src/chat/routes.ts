@@ -39,7 +39,8 @@ function providerFailure(err: ProviderError) {
   if (err.status === 401 || err.status === 403) return json(502, { error: "invalid_key" });
   if (err.status === 429) return json(429, { error: "rate_limited" });
   if (err.status === 0) return json(504, { error: err.message === "timeout" ? "provider_timeout" : "provider_unreachable" });
-  return json(502, { error: "provider_error" });
+  // Status e mensagem do provedor ajudam a achar o problema (modelo inexistente, pedido inválido...). Nunca incluem a chave.
+  return json(502, { error: "provider_error", status: err.status, detail: err.message.slice(0, 300) });
 }
 
 export function chatRoutes(deps: Deps): Route[] {

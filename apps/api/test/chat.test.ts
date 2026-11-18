@@ -351,7 +351,7 @@ describe("conversa com os assistentes", () => {
     replies.push({ status: 429, body: {} });
     expect((await send({ agent: "hermes", text: "oi" })).status).toBe(429);
     replies.push({ status: 500, body: {} });
-    expect((await send({ agent: "hermes", text: "oi" })).body).toEqual({ error: "provider_error" });
+    expect((await send({ agent: "hermes", text: "oi" })).body).toMatchObject({ error: "provider_error", status: 500 });
   });
 
   it("lista, abre e apaga conversas (levando os rascunhos)", async () => {

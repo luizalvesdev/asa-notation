@@ -48,7 +48,8 @@ export function classifyChatError(err: unknown): { kind: ChatErrorKind; message:
     if (code === "invalid_key") return { kind: "invalid_key", message: "O provedor recusou a chave. Confira em Configurações > Assistentes." };
     if (err.status === 429) return { kind: "rate_limited", message: "Muitas mensagens em pouco tempo. Aguarde um instante e tente de novo." };
     if (err.status === 504) return { kind: "other", message: "O provedor demorou para responder. Tente de novo." };
-    return { kind: "other", message: "Não foi possível falar com o assistente. Tente de novo." };
+    const detail = typeof err.body === "object" && err.body !== null ? (err.body as { detail?: unknown }).detail : undefined;
+    return { kind: "other", message: `Não foi possível falar com o assistente.${typeof detail === "string" && detail ? ` (${detail})` : " Tente de novo."}` };
   }
   return { kind: "offline", message: "Sem conexão. A mensagem não foi enviada." };
 }
