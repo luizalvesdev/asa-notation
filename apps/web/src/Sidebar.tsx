@@ -68,7 +68,7 @@ function NavLink({ item, route, onNavigate, onOpenSearch, badge }: { item: NavIt
 function ShortcutLink({ node, current, onNavigate }: { node: TreeNode; current: string | null; onNavigate?: () => void }) {
   const selected = node.id === current;
   return (
-    <a className={`tr${selected ? " s" : ""}`} href={pageHash(node.id)} aria-current={selected ? "page" : undefined} onClick={onNavigate}>
+    <a className={`tr${selected ? " s" : ""}`} href={pageHash(node.id)} data-page-id={node.id} aria-current={selected ? "page" : undefined} onClick={onNavigate}>
       {node.icon ? <span className="page-emoji" aria-hidden="true">{node.icon}</span> : <Icon name={node.kind === "database" ? "table" : node.kind === "canvas" ? "canvas" : "doc"} />}
       <span className="lab">{displayTitle(node.title)}</span>
     </a>

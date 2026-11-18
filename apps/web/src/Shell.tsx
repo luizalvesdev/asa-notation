@@ -1,6 +1,8 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
-import { ApiError, capturesApi } from "./api";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ApiError, capturesApi, pagesApi } from "./api";
 import { BottomNav } from "./BottomNav";
+import { ContextMenu, type OpenMenu } from "./ContextMenu";
+import { keepsNativeMenu, type ContextTarget, type MenuAction } from "./context-menu";
 import { OPEN_CHAT_EVENT, type Agent, type OpenChatRequest } from "./chat-types";
 import { CapturePanel } from "./CapturePanel";
 import { Icon, ThemeIcon } from "./icons";
@@ -66,6 +68,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const [searchOpen, setSearchOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [ctxMenu, setCtxMenu] = useState<OpenMenu | null>(null);
   // Depois da primeira vez o painel fica montado (só escondido): abre na hora e não perde a conversa.
   const [chatMounted, setChatMounted] = useState(false);
   const [chatRequest, setChatRequest] = useState<{ agent: Agent; prompt?: string; id: number } | null>(null);
@@ -203,7 +206,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   );
 
   const deletePage = useCallback(
-    async (page: Page) => {
+    async (page: Pick<Page, "id">) => {
       try {
         const count = await pages.remove(page.id);
         location.hash = routeHash("hoje");
@@ -224,6 +227,62 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       }
     },
     [pages],
+  );
+
+  // Botão direito: menu do app no lugar do menu do navegador (exceto em campos de texto e no editor).
+  const nodesRef = useRef(pages.nodes);
+  nodesRef.current = pages.nodes;
+  useEffect(() => {
+    const onContext = (event: MouseEvent) => {
+      const el = event.target instanceof Element ? event.target : null;
+      if (!el || keepsNativeMenu(el)) return;
+      event.preventDefault();
+      const pageEl = el.closest("[data-page-id]");
+      const link = el.closest("a[href]");
+      let target: ContextTarget;
+      if (pageEl) {
+        const id = pageEl.getAttribute("data-page-id")!;
+        target = { kind: "page", id, favorite: !!nodesRef.current.find((n) => n.id === id)?.favorite };
+      } else if (link) {
+        const href = link.getAttribute("href") ?? "";
+        target = { kind: "link", href, internal: href.startsWith("#/") };
+      } else {
+        target = { kind: "none", hasSelection: (window.getSelection()?.toString() ?? "") !== "" };
+      }
+      setCtxMenu({ x: event.clientX, y: event.clientY, target });
+    };
+    document.addEventListener("contextmenu", onContext);
+    return () => document.removeEventListener("contextmenu", onContext);
+  }, []);
+
+  const runMenuAction = useCallback(
+    (action: MenuAction, target: ContextTarget) => {
+      setCtxMenu(null);
+      const copy = (text: string, done: string) =>
+        void navigator.clipboard.writeText(text).then(() => setToast({ text: done })).catch(() => setToast({ text: "Não foi possível copiar." }));
+      if (target.kind === "page") {
+        const node = pages.nodes.find((n) => n.id === target.id);
+        if (action === "open") location.hash = pageHash(target.id);
+        else if (action === "new-child") void createPage(target.id);
+        else if (action === "copy-link") copy(`${location.origin}/${pageHash(target.id)}`, "Link copiado");
+        else if (action === "delete") void deletePage({ id: target.id });
+        else if (action === "favorite" && node) {
+          void pagesApi.update(target.id, { favorite: !node.favorite }).then(pages.applySaved).catch(() => setToast({ text: "Não foi possível atualizar a favorita." }));
+        }
+      } else if (target.kind === "link") {
+        if (action === "open-link") {
+          if (target.internal) location.hash = target.href;
+          else window.open(target.href, "_blank", "noopener,noreferrer");
+        } else if (action === "copy-href") copy(target.internal ? `${location.origin}/${target.href}` : target.href, "Endereço copiado");
+      } else if (action === "copy-text") copy(window.getSelection()?.toString() ?? "", "Copiado");
+      else if (action === "new-page") void createPage(null);
+      else if (action === "capture") setCaptureOpen(true);
+      else if (action === "search") setSearchOpen(true);
+      else if (action === "chat") setChatOpen(true);
+      else if (action === "theme") onToggleTheme();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pages.nodes, pages.applySaved, createPage, deletePage, onToggleTheme],
   );
 
   const crumbs = useMemo(() => {
@@ -379,6 +438,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         />
       )}
       {captureOpen && <CapturePanel dark={dark} offline={!online} queued={pending.length} onClose={() => setCaptureOpen(false)} onSave={saveCapture} />}
+      {ctxMenu && <ContextMenu menu={ctxMenu} dark={dark} onAction={runMenuAction} onClose={() => setCtxMenu(null)} />}
       <div className="toasts">
         <div className={`toast${toast ? " on" : ""}`} role="status">
           {toast?.text}

@@ -21,7 +21,7 @@ export function PageTree({ items, currentId, expanded, onToggle, onCreateChild, 
         const selected = item.id === currentId;
         return (
           <div key={item.id} className="col">
-            <div className={`tr page-row${selected ? " s" : ""}`} style={{ paddingLeft: 4 + depth * 14 }}>
+            <div className={`tr page-row${selected ? " s" : ""}`} data-page-id={item.id} style={{ paddingLeft: 4 + depth * 14 }}>
               <button
                 className="plain chev-btn"
                 type="button"
