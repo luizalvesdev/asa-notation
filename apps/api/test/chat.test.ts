@@ -250,6 +250,7 @@ describe("conversa com os assistentes", () => {
     const call = provider.calls[0]!;
     expect(call.body.system).toContain("2026-11-18");
     expect(call.body.system).toContain("NUNCA cria");
+    expect(call.body.system).toContain("texto simples");
     expect(call.body.tools!.map((t) => t.name)).toEqual(["list_tasks", "list_goals", "propose_tasks"]);
     replies.push(ok(text("ok")));
     await send({ agent: "renato", text: "oi" });

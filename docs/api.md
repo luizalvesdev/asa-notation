@@ -161,6 +161,8 @@ Usam o Claude por um de dois provedores, escolhido no servidor por `AI_PROVIDER`
 | POST | `/chat/drafts/:id/approve` | sessão ou token | Cria de verdade (tarefas, captura ou página). 409 se já foi decidido |
 | POST | `/chat/drafts/:id/discard` | sessão ou token | Descarta |
 
+**Testado de verdade** no Bedrock com `global.anthropic.claude-sonnet-4-6` (perfil de inferência), 3 a 9 s por turno, ferramentas e rascunhos funcionando (`npm run smoke:chat -w @asa/api` com `SMOKE_PROVIDER=bedrock`). O ID do modelo depende do que a conta liberou: `aws bedrock-runtime invoke-model` mostra rápido se um modelo está disponível.
+
 **Agentes**: `hermes`, `renato` e `tutor` (professor socrático: lê pontos fracos e notas, só conversa, não escreve).
 
 **Ferramentas.** Hermes: `list_tasks`, `list_goals`, `propose_tasks`. Tutor: `list_weak_cards`, `search_notes`, `read_note`. Renato: `search_notes`, `read_note`, `list_inbox`, `propose_capture`, `propose_page`, `propose_diagram` (Mermaid, inclusive `mindmap`). O texto das notas é tratado como dado, não como instrução. As respostas não usam streaming.

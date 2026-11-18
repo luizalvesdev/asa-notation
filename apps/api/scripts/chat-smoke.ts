@@ -1,8 +1,12 @@
 /**
  * Teste de fumaça dos assistentes contra o modelo de verdade.
  *
- *   read -s ANTHROPIC_API_KEY; export ANTHROPIC_API_KEY
+ * Anthropic (chave só no ambiente):
+ *   read -rs "ANTHROPIC_API_KEY?Chave: "; echo; export ANTHROPIC_API_KEY
  *   npm run smoke:chat -w @asa/api
+ *
+ * Bedrock (credenciais do `aws configure` ou variáveis AWS_*; sem chave):
+ *   SMOKE_PROVIDER=bedrock BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-5-5 npm run smoke:chat -w @asa/api
  *
  * Usa um banco em memória (não toca no seu .dev), lê a chave só do ambiente, guarda no cofre desse banco
  * temporário e nunca a imprime. `SMOKE_MOCK=1` roda o mesmo roteiro com o provedor de mentira (para conferir o script).
@@ -10,6 +14,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
 import { createApp } from "../src/app.js";
+import { aiConfigFromEnv } from "../src/ai/provider.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "../src/auth/config.js";
 import { hashPassword } from "../src/auth/password.js";
 import { PgAuthStore } from "../src/auth/store.js";
@@ -22,9 +27,10 @@ import type { SqlClient } from "../src/sql.js";
 const ORIGIN = "http://localhost:5173";
 const PASSWORD = "senha-de-teste-do-smoke-1234";
 const mock = !!process.env.SMOKE_MOCK;
+const bedrock = process.env.SMOKE_PROVIDER === "bedrock";
 const key = process.env.ANTHROPIC_API_KEY ?? (mock ? "sk-ant-mock-0000000000000000" : "");
 
-if (!key) {
+if (!key && !bedrock) {
   console.error("Defina ANTHROPIC_API_KEY no ambiente (ex.: read -s ANTHROPIC_API_KEY; export ANTHROPIC_API_KEY).");
   process.exit(2);
 }
@@ -34,10 +40,12 @@ const config: AuthConfig = { origins: [ORIGIN], sessionSecret: "smoke-session-se
 const db = new PGlite({ extensions: { unaccent } });
 for (const m of readMigrations(new URL("../apps/api/migrations/", import.meta.url))) await db.exec(m.sql);
 const sql: SqlClient = { query: async (text, params) => (await db.query(text, params)).rows as Record<string, unknown>[] };
-const api = createApp({ sql, config, ...(mock ? { fetchImpl: mockProvider } : {}) });
+const ai = bedrock ? aiConfigFromEnv({ AI_PROVIDER: "bedrock", BEDROCK_MODEL_ID: process.env.BEDROCK_MODEL_ID, BEDROCK_REGION: process.env.BEDROCK_REGION, AWS_REGION: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "sa-east-1" }) : ({ provider: "anthropic" } as const);
+const api = createApp({ sql, config, ai, ...(mock ? { fetchImpl: mockProvider } : {}) });
 
 await new PgAuthStore(sql).setPassword(await hashPassword(PASSWORD), new Date().toISOString());
-await new PgSecretStore(sql, secretsKey(config.sessionSecret)).set("anthropic", key);
+if (!bedrock) await new PgSecretStore(sql, secretsKey(config.sessionSecret)).set("anthropic", key);
+console.log(bedrock ? `Provedor: Bedrock (${(ai as { modelId: string }).modelId}, ${(ai as { region: string }).region})` : "Provedor: Anthropic");
 
 const login = await api({ method: "POST", path: "/auth/password/login", query: {}, headers: { origin: ORIGIN }, body: { password: PASSWORD } });
 const session = login.cookies?.[0]?.split(";")[0]?.split("=").slice(1).join("=") ?? "";
