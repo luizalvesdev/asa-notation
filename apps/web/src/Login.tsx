@@ -4,11 +4,12 @@ import { Icon, ThemeIcon } from "./icons";
 import { initialLogin, isFieldInvalid, loginMessage, reduceLogin } from "./login-state";
 
 interface LoginProps {
+  dark: boolean;
   onAuthenticated: () => void;
   onToggleTheme: () => void;
 }
 
-export function Login({ onAuthenticated, onToggleTheme }: LoginProps) {
+export function Login({ dark, onAuthenticated, onToggleTheme }: LoginProps) {
   const [state, dispatch] = useReducer(reduceLogin, initialLogin);
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -44,7 +45,7 @@ export function Login({ onAuthenticated, onToggleTheme }: LoginProps) {
   const invalid = isFieldInvalid(state.status);
 
   return (
-    <div className="ds app" style={{ display: "flex" }}>
+    <div className={`ds app${dark ? " escuro" : ""}`} style={{ display: "flex" }}>
       <div className="main" style={{ alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div className="row" style={{ position: "absolute", top: 12, right: 12, gap: 2 }}>
           <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick={onToggleTheme}>

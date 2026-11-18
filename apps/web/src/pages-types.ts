@@ -38,3 +38,20 @@ export function toTreeNode(page: Page): TreeNode {
     position: page.position,
   };
 }
+
+export interface TrashItem {
+  id: string;
+  title: string;
+  icon: string | null;
+  deletedAt: string;
+  parentTitle: string | null;
+}
+
+export interface SearchHit {
+  id: string;
+  title: string;
+  icon: string | null;
+  matchIn: "title" | "content";
+  /** Trecho do corpo. O termo vem entre U+0001 (início) e U+0002 (fim). */
+  snippet: string;
+}

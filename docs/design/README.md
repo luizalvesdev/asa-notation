@@ -23,5 +23,3 @@ Exportado do canvas do Claude Design em 2026-11-18. Cada tela é um arquivo `.dc
 ## Como ler
 
 Os arquivos dependem do runtime do Claude Design (`support.js`, `<x-dc>`, `<sc-for>`, `<sc-if>`), que não está aqui. Eles servem como especificação (estrutura, classes, estados, textos e anotações), não para abrir direto no navegador. Para ver o protótipo rodando, use o link do canvas no Claude Design.
-
-`asa-notation.html` nesta pasta é um export antigo, com só 6 pranchas do passo 2. Está desatualizado em relação aos arquivos de `project/`.

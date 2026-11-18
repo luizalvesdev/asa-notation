@@ -11,14 +11,31 @@ interface SidebarProps {
   onToggleExpanded: (id: string) => void;
   onCreatePage: (parentId: string | null) => void;
   onRetryTree: () => void;
+  onOpenSearch: () => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   onNavigate?: () => void;
   inDrawer?: boolean;
 }
 
-function NavLink({ item, route, onNavigate }: { item: NavItem; route: Route; onNavigate?: () => void }) {
+function NavLink({ item, route, onNavigate, onOpenSearch }: { item: NavItem; route: Route; onNavigate?: () => void; onOpenSearch: () => void }) {
   const selected = route.kind === "tela" && item.id === route.id;
+  if (item.id === "busca") {
+    return (
+      <button
+        className="plain tr"
+        type="button"
+        onClick={() => {
+          onNavigate?.();
+          onOpenSearch();
+        }}
+      >
+        {isIconName(item.icon) && <Icon name={item.icon} />}
+        <span className="lab">{item.label}</span>
+        {item.shortcut && <span className="k">{item.shortcut}</span>}
+      </button>
+    );
+  }
   return (
     <a
       className={`tr${selected ? " s" : ""}`}
@@ -33,7 +50,7 @@ function NavLink({ item, route, onNavigate }: { item: NavItem; route: Route; onN
   );
 }
 
-export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onRetryTree, collapsed, onToggleCollapsed, onNavigate, inDrawer }: SidebarProps) {
+export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
@@ -57,13 +74,13 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
       </div>
       <div className="side-in">
         {NAV_MAIN.map((item) => (
-          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} />
+          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
         ))}
         <div className="sgroup">
           <span>Hermes</span>
         </div>
         {NAV_HERMES.map((item) => (
-          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} />
+          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
         ))}
         <div className="sgroup">
           <span>Páginas</span>
@@ -96,7 +113,7 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
       </div>
       <div style={{ flex: "none", padding: 8, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 1 }}>
         {NAV_FOOTER.map((item) => (
-          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} />
+          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
         ))}
       </div>
     </nav>

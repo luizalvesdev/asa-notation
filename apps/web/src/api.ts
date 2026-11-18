@@ -1,4 +1,4 @@
-import type { Page, PagePatch, TreeNode } from "./pages-types";
+import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-types";
 
 export class ApiError extends Error {
   constructor(
@@ -38,6 +38,8 @@ export const pagesApi = {
     request<{ page: Page }>("PATCH", `/pages/${id}`, baseRev === undefined ? patch : { ...patch, baseRev }).then((r) => r.page),
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/pages/${id}`),
   restore: (id: string) => request<{ page: Page }>("POST", `/pages/${id}/restore`).then((r) => r.page),
+  trash: () => request<{ items: TrashItem[] }>("GET", "/pages/trash").then((r) => r.items),
+  search: (q: string) => request<{ hits: SearchHit[] }>("GET", `/pages/search?q=${encodeURIComponent(q)}&limit=20`).then((r) => r.hits),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {

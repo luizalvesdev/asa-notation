@@ -40,8 +40,8 @@ export function App() {
   return (
     <div className={`ds full${theme === "escuro" ? " escuro" : ""}`} style={{ height: "100%" }}>
       {session === "checando" && null}
-      {session === "anonimo" && <Login onAuthenticated={onAuthenticated} onToggleTheme={toggleTheme} />}
-      {session === "autenticado" && <Shell route={route} onToggleTheme={toggleTheme} onLogout={onLogout} />}
+      {session === "anonimo" && <Login dark={theme === "escuro"} onAuthenticated={onAuthenticated} onToggleTheme={toggleTheme} />}
+      {session === "autenticado" && <Shell dark={theme === "escuro"} route={route} onToggleTheme={toggleTheme} onLogout={onLogout} />}
     </div>
   );
 }

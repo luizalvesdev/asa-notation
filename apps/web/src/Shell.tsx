@@ -3,12 +3,15 @@ import { ApiError } from "./api";
 import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
 import { PageView } from "./PageView";
+import { SearchPalette } from "./SearchPalette";
+import { TrashView } from "./TrashView";
 import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
 import type { Page } from "./pages-types";
 import { Sidebar } from "./Sidebar";
 import { usePages } from "./use-pages";
 
 interface ShellProps {
+  dark: boolean;
   route: Route;
   onToggleTheme: () => void;
   onLogout: () => void;
@@ -16,15 +19,16 @@ interface ShellProps {
 
 interface Toast {
   text: string;
-  undo?: () => void;
+  action?: { label: string; run: () => void };
 }
 
-export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
+export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
   const pages = usePages();
   const [collapsed, setCollapsed] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<Toast | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const tree = useMemo(() => buildTree(pages.nodes), [pages.nodes]);
   const pageId = route.kind === "pagina" ? route.pageId : null;
@@ -43,6 +47,9 @@ export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
       if ((event.metaKey || event.ctrlKey) && event.key === "\\") {
         event.preventDefault();
         setCollapsed((v) => !v);
+      } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -72,9 +79,9 @@ export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
   }, []);
 
   const createPage = useCallback(
-    async (parentId: string | null) => {
+    async (parentId: string | null, title?: string) => {
       try {
-        const page = await pages.create(parentId);
+        const page = await pages.create(parentId, title);
         if (parentId) setExpanded((current) => new Set([...current, parentId]));
         setDrawer(false);
         location.hash = pageHash(page.id);
@@ -92,11 +99,14 @@ export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
         location.hash = routeHash("hoje");
         setToast({
           text: count > 1 ? `${count} páginas movidas para a lixeira` : "Página movida para a lixeira",
-          undo: () => {
-            setToast(null);
-            void pages.restore(page.id).then(() => {
-              location.hash = pageHash(page.id);
-            });
+          action: {
+            label: "Desfazer",
+            run: () => {
+              setToast(null);
+              void pages.restore(page.id).then(() => {
+                location.hash = pageHash(page.id);
+              });
+            },
           },
         });
       } catch {
@@ -120,10 +130,19 @@ export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
     onToggleExpanded: toggleExpanded,
     onCreatePage: (parentId: string | null) => void createPage(parentId),
     onRetryTree: pages.reload,
+    onOpenSearch: () => setSearchOpen(true),
   };
 
+  const onRestored = useCallback(
+    (page: Page) => {
+      pages.reload();
+      setToast({ text: "Página restaurada", action: { label: "Abrir", run: () => { setToast(null); location.hash = pageHash(page.id); } } });
+    },
+    [pages],
+  );
+
   return (
-    <div className="ds app">
+    <div className={`ds app${dark ? " escuro" : ""}`}>
       <Sidebar {...sidebarProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((v) => !v)} />
       <div className="main">
         <header className="tb">
@@ -157,6 +176,8 @@ export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
         <main className="scroll">
           {route.kind === "pagina" ? (
             <PageView key={route.pageId} pageId={route.pageId} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
+          ) : route.id === "lixeira" ? (
+            <TrashView onRestored={onRestored} />
           ) : (
             <div style={{ padding: "40px 40px 120px", maxWidth: 1180 }}>
               <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>{routeTitle(route.id)}</h1>
@@ -173,12 +194,30 @@ export function Shell({ route, onToggleTheme, onLogout }: ShellProps) {
           <Sidebar {...sidebarProps} collapsed={false} inDrawer onToggleCollapsed={() => undefined} onNavigate={() => setDrawer(false)} />
         </div>
       </div>
+      {searchOpen && (
+        <SearchPalette
+          nodes={pages.nodes}
+          onClose={() => setSearchOpen(false)}
+          onOpenPage={(id) => {
+            setSearchOpen(false);
+            location.hash = pageHash(id);
+          }}
+          onCreatePage={(title) => {
+            setSearchOpen(false);
+            void createPage(null, title);
+          }}
+          onOpenTrash={() => {
+            setSearchOpen(false);
+            location.hash = routeHash("lixeira");
+          }}
+        />
+      )}
       <div className="toasts">
         <div className={`toast${toast ? " on" : ""}`} role="status">
           {toast?.text}
-          {toast?.undo && (
-            <button className="btn" type="button" onClick={toast.undo}>
-              Desfazer
+          {toast?.action && (
+            <button className="btn" type="button" onClick={toast.action.run}>
+              {toast.action.label}
             </button>
           )}
         </div>
