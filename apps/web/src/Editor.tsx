@@ -3,6 +3,7 @@ import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
 import { useEffect, useMemo, useState } from "react";
 import { contentExtensions } from "./editor-extensions";
+import { FormatMenu } from "./FormatMenu";
 import { uiOf } from "./editor-nodes";
 import { PageMention, WikiLink } from "./page-link";
 import type { TreeNode } from "./pages-types";
@@ -90,6 +91,7 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
           </div>
         </DragHandle>
       )}
+      {editor && <FormatMenu editor={editor} />}
       <EditorContent editor={editor} />
       {askingImage && editor && (
         <ImageDialog

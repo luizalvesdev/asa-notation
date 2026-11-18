@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, capturesApi } from "./api";
+import { BottomNav } from "./BottomNav";
 import { ChatPanel } from "./ChatPanel";
 import { CapturePanel } from "./CapturePanel";
 import { ImportView } from "./ImportView";
@@ -299,6 +300,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             </div>
           )}
         </main>
+        <BottomNav route={route} onCapture={() => setCaptureOpen(true)} onMenu={() => setDrawer(true)} />
       </div>
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />}
       <div className={`drawer${drawer ? " on" : ""}`} aria-hidden={!drawer}>

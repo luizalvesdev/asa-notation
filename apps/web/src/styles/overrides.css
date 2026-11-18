@@ -84,3 +84,14 @@ body,
 .chat-body {
   overflow-x: hidden;
 }
+
+/* Celular: a navegação inferior ocupa a base; o conteúdo e os avisos sobem para não ficar embaixo dela. */
+@container app (max-width: 720px) {
+  .main .scroll {
+    padding-bottom: 72px;
+  }
+
+  .toasts {
+    bottom: 76px;
+  }
+}

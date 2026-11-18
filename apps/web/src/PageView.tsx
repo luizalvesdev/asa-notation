@@ -9,6 +9,7 @@ import type { PropValue, Schema } from "./db-types";
 import type { Toast } from "./toast";
 import { Editor } from "./Editor";
 import { HistoryPanel } from "./HistoryPanel";
+import { IconPicker } from "./IconPicker";
 import { SharePopover } from "./SharePopover";
 import { Icon } from "./icons";
 import type { Page, TreeNode } from "./pages-types";
@@ -93,6 +94,7 @@ const SAVE_LABEL: Record<SaveState, string> = {
 function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorProps) {
   const [title, setTitle] = useState(initial.title);
   const [favorite, setFavorite] = useState(initial.favorite);
+  const [icon, setIcon] = useState(initial.icon);
   const [saveState, setSaveState] = useState<SaveState>("salvo");
   const [conflict, setConflict] = useState<Page | null>(null);
   const [focusBody, setFocusBody] = useState(0);
@@ -171,6 +173,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
           )}
         </span>
         <span className="spacer" />
+        <IconPicker icon={icon} onChange={(next) => { setIcon(next); saver.current?.queue({ icon: next }); }} />
         <span style={{ position: "relative" }}>
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
             Compartilhar

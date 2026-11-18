@@ -1,6 +1,8 @@
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { useEffect, useState } from "react";
+import { downloadFile } from "./download";
 import { renderDiagram } from "./mermaid-render";
+import { standaloneSvg, svgToPng } from "./svg-export";
 
 /** Bloco de diagrama: o código fica num campo ao lado e o desenho se atualiza enquanto se digita. */
 export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeViewProps) {
@@ -36,6 +38,22 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
           <button className="btn btn-fan btn-sm" type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
             {open ? "Fechar código" : "Editar código"}
           </button>
+        )}
+        {svg && !error && (
+          <span className="row" style={{ marginLeft: "auto", gap: 2 }}>
+            <button className="btn btn-fan btn-sm" type="button" title="Salvar como SVG" onClick={() => downloadFile("diagrama.svg", standaloneSvg(svg), "image/svg+xml")}>SVG</button>
+            <button
+              className="btn btn-fan btn-sm"
+              type="button"
+              title="Salvar como PNG"
+              onClick={() => {
+                const css = getComputedStyle(document.querySelector(".ds") ?? document.body).getPropertyValue("--surface").trim() || "#ffffff";
+                void svgToPng(svg, css).then((blob) => downloadFile("diagrama.png", blob, "image/png")).catch(() => undefined);
+              }}
+            >
+              PNG
+            </button>
+          </span>
         )}
       </div>
       {editable && open && (
