@@ -1,5 +1,6 @@
 import { Icon, isIconName } from "./icons";
 import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, navParent, routeHash, type NavItem, type Route, type RouteId } from "./nav";
+import { NewMenu } from "./NewMenu";
 import { PageTree } from "./PageTree";
 import type { TreeItem } from "./pages-tree";
 
@@ -10,6 +11,8 @@ interface SidebarProps {
   expanded: ReadonlySet<string>;
   onToggleExpanded: (id: string) => void;
   onCreatePage: (parentId: string | null) => void;
+  /** Cria uma página na raiz já com título, modelo ou como database. */
+  onCreateFrom: (extra: { title?: string; body?: unknown; icon?: string; kind?: "page" | "database" }) => void;
   onRetryTree: () => void;
   onOpenSearch: () => void;
   collapsed: boolean;
@@ -57,7 +60,7 @@ function NavLink({ item, route, onNavigate, onOpenSearch, badge }: { item: NavIt
   );
 }
 
-export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges }: SidebarProps) {
+export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
@@ -91,9 +94,12 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
         ))}
         <div className="sgroup">
           <span>Páginas</span>
-          <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova página" onClick={() => onCreatePage(null)} style={{ width: 22, height: 22 }}>
-            <Icon name="plus" />
-          </button>
+          <span className="row" style={{ gap: 0 }}>
+            <NewMenu onCreate={(extra) => { onNavigate?.(); onCreateFrom(extra); }} />
+            <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova página" onClick={() => onCreatePage(null)} style={{ width: 22, height: 22 }}>
+              <Icon name="plus" />
+            </button>
+          </span>
         </div>
         {treeStatus === "carregando" && tree.length === 0 && (
           <div className="col" style={{ gap: 6, padding: "4px 8px" }} aria-label="Carregando páginas">

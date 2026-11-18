@@ -35,7 +35,7 @@ export function PageTree({ items, currentId, expanded, onToggle, onCreateChild, 
                 </svg>
               </button>
               <a className="page-link" href={pageHash(item.id)} aria-current={selected ? "page" : undefined} onClick={onNavigate}>
-                {item.icon ? <span className="page-emoji" aria-hidden="true">{item.icon}</span> : <Icon name="doc" />}
+                {item.icon ? <span className="page-emoji" aria-hidden="true">{item.icon}</span> : <Icon name={item.kind === "database" ? "table" : "doc"} />}
                 <span className="lab">{displayTitle(item.title)}</span>
               </a>
               <button className="btn btn-fan btn-ico btn-sm add" type="button" aria-label={`Nova subpágina em ${displayTitle(item.title)}`} onClick={() => onCreateChild(item.id)}>

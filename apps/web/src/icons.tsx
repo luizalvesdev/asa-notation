@@ -21,6 +21,12 @@ const ICONS = {
   chevron: ["M9 6l6 6-6 6"],
   star: ["M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9z"],
   more: ["M5 12h.01M12 12h.01M19 12h.01"],
+  table: ["M4 5h16v14H4z", "M4 10h16M4 15h16M10 5v14"],
+  filter: ["M4 6h16l-6 7v5l-4 2v-7z"],
+  sort: ["M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"],
+  kanban: ["M4 5h5v14H4z", "M10 5h5v9h-5z", "M16 5h4v6h-4z"],
+  list: ["M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"],
+  calendar: ["M4 6h16v14H4z", "M4 10h16M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01"],
   close: ["M6 6l12 12M18 6L6 18"],
   repeat: ["M17 2l3 3-3 3", "M4 11V9a4 4 0 0 1 4-4h12", "M7 22l-3-3 3-3", "M20 13v2a4 4 0 0 1-4 4H4"],
 } satisfies Record<string, Shape[]>;

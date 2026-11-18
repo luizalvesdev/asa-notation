@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, isConflict, pagesApi } from "./api";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
 import { Backlinks } from "./Backlinks";
+import { DatabaseView } from "./DatabaseView";
+import { PropertiesPanel } from "./PropertiesPanel";
+import { normalizeSchema } from "./use-database";
+import type { PropValue, Schema } from "./db-types";
+import type { Toast } from "./toast";
 import { Editor } from "./Editor";
 import { HistoryPanel } from "./HistoryPanel";
 import { SharePopover } from "./SharePopover";
@@ -13,11 +18,12 @@ interface PageViewProps {
   nodes: TreeNode[];
   onSaved: (page: Page) => void;
   onDelete: (page: Page) => void;
+  onToast: (toast: Toast) => void;
 }
 
 type Load = { status: "carregando" } | { status: "ausente" } | { status: "erro" } | { status: "pronto"; page: Page };
 
-export function PageView({ pageId, nodes, onSaved, onDelete }: PageViewProps) {
+export function PageView({ pageId, nodes, onSaved, onDelete, onToast }: PageViewProps) {
   const [load, setLoad] = useState<Load>({ status: "carregando" });
   const [attempt, setAttempt] = useState(0);
 
@@ -63,6 +69,9 @@ export function PageView({ pageId, nodes, onSaved, onDelete }: PageViewProps) {
       </div>
     );
   }
+  if (load.page.kind === "database") {
+    return <DatabaseView key={load.page.id} page={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onToast={onToast} />;
+  }
   return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} />;
 }
 
@@ -88,6 +97,18 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
   const [conflict, setConflict] = useState<Page | null>(null);
   const [focusBody, setFocusBody] = useState(0);
   const [panel, setPanel] = useState<"history" | "share" | null>(null);
+  const [schema, setSchema] = useState<Schema | null>(null);
+  const [rowProps, setRowProps] = useState<Record<string, PropValue>>((initial.props ?? {}) as Record<string, PropValue>);
+
+  // Linha de database: busca o esquema da database para mostrar as propriedades.
+  useEffect(() => {
+    if (initial.kind !== "row" || !initial.parentId) return;
+    let live = true;
+    pagesApi.get(initial.parentId).then((db) => live && setSchema(normalizeSchema(db.schema))).catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [initial.kind, initial.parentId]);
   const [historyBody, setHistoryBody] = useState<unknown>(null);
   const rev = useRef(initial.rev);
   const latest = useRef({ page: initial, onSaved });
@@ -210,6 +231,18 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
           }
         }}
       />
+      {schema && (
+        <PropertiesPanel
+          schema={schema}
+          values={rowProps}
+          onChange={(values) => {
+            setRowProps(values);
+            // O servidor mescla; enviamos todos os valores atuais (null apaga os que sumiram).
+            const cleared = Object.fromEntries(schema.properties.filter((p) => values[p.id] === undefined).map((p) => [p.id, null]));
+            saver.current?.queue({ props: { ...cleared, ...values } });
+          }}
+        />
+      )}
       <Editor initial={initial.body} focusSignal={focusBody} pages={nodes} selfId={initial.id} onChange={(doc) => saver.current?.queue({ body: doc })} />
       <Backlinks pageId={initial.id} />
       {panel === "history" && <HistoryPanel pageId={initial.id} currentBody={historyBody} onClose={() => setPanel(null)} onRestored={() => { setPanel(null); saver.current?.discard(); onReload(); }} />}

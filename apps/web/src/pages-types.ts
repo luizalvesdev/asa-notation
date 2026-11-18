@@ -6,11 +6,16 @@ export interface Page {
   favorite: boolean;
   position: string;
   body: unknown | null;
+  kind: PageKind;
+  props: Record<string, unknown>;
+  schema: unknown | null;
   rev: number;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
+
+export type PageKind = "page" | "database" | "row";
 
 export interface TreeNode {
   id: string;
@@ -19,9 +24,12 @@ export interface TreeNode {
   icon: string | null;
   favorite: boolean;
   position: string;
+  kind: PageKind;
 }
 
 export interface PagePatch {
+  props?: Record<string, unknown>;
+  schema?: unknown;
   title?: string;
   icon?: string | null;
   favorite?: boolean;
@@ -36,6 +44,7 @@ export function toTreeNode(page: Page): TreeNode {
     icon: page.icon,
     favorite: page.favorite,
     position: page.position,
+    kind: page.kind,
   };
 }
 

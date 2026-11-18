@@ -45,13 +45,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const pagesApi = {
   tree: () => request<{ pages: TreeNode[] }>("GET", "/pages/tree").then((r) => r.pages),
   get: (id: string) => request<{ page: Page }>("GET", `/pages/${id}`).then((r) => r.page),
-  create: (input: { parentId?: string | null; title?: string; body?: unknown }) =>
+  create: (input: { parentId?: string | null; title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "row"; props?: Record<string, unknown> }) =>
     request<{ page: Page }>("POST", "/pages", input).then((r) => r.page),
   update: (id: string, patch: PagePatch, baseRev?: number) =>
     request<{ page: Page }>("PATCH", `/pages/${id}`, baseRev === undefined ? patch : { ...patch, baseRev }).then((r) => r.page),
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/pages/${id}`),
   restore: (id: string) => request<{ page: Page }>("POST", `/pages/${id}/restore`).then((r) => r.page),
   trash: () => request<{ items: TrashItem[] }>("GET", "/pages/trash").then((r) => r.items),
+  rows: (databaseId: string) => request<{ rows: import("./db-types").Row[] }>("GET", `/databases/${databaseId}/rows`).then((r) => r.rows),
   backlinks: (id: string) => request<{ pages: { id: string; title: string; icon: string | null }[] }>("GET", `/pages/${id}/backlinks`).then((r) => r.pages),
   versions: (id: string) => request<{ versions: { id: number; title: string; createdAt: string; excerpt: string }[] }>("GET", `/pages/${id}/versions`).then((r) => r.versions),
   version: (id: string, versionId: number) => request<{ version: { id: number; title: string; body: unknown; createdAt: string } }>("GET", `/pages/${id}/versions/${versionId}`).then((r) => r.version),

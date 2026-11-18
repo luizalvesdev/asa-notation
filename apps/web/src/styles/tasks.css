@@ -175,3 +175,25 @@ button.badge {
   cursor: pointer;
   border: 0;
 }
+
+/* Databases */
+.db-row .row-open,
+.cal-day .row-open {
+  opacity: 0;
+  transition: opacity var(--instante) var(--padrao);
+}
+
+.db-row:hover .row-open,
+.db-row:focus-within .row-open,
+.cal-day:hover .row-open,
+.cal-day:focus-within .row-open {
+  opacity: 1;
+}
+
+.db-row:hover {
+  background: var(--hover);
+}
+
+.db-row input:focus {
+  background: var(--accent-soft);
+}

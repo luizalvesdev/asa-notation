@@ -28,7 +28,7 @@ import type { Preference } from "./theme";
 import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
 import { useUnread } from "./use-notifications";
-import { usePages } from "./use-pages";
+import { usePages, type CreateExtra } from "./use-pages";
 
 interface ShellProps {
   dark: boolean;
@@ -142,9 +142,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   }, []);
 
   const createPage = useCallback(
-    async (parentId: string | null, title?: string) => {
+    async (parentId: string | null, title?: string, extra?: CreateExtra) => {
       try {
-        const page = await pages.create(parentId, title);
+        const page = await pages.create(parentId, title, extra);
         if (parentId) setExpanded((current) => new Set([...current, parentId]));
         setDrawer(false);
         location.hash = pageHash(page.id);
@@ -192,6 +192,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     expanded,
     onToggleExpanded: toggleExpanded,
     onCreatePage: (parentId: string | null) => void createPage(parentId),
+    onCreateFrom: (extra: CreateExtra & { title?: string }) => void createPage(null, extra.title, extra),
     onRetryTree: pages.reload,
     onOpenSearch: () => setSearchOpen(true),
     badges: { notificacoes: unread },
@@ -244,7 +245,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         </header>
         <main className="scroll">
           {route.kind === "pagina" ? (
-            <PageView key={route.pageId} pageId={route.pageId} nodes={pages.nodes} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
+            <PageView key={route.pageId} pageId={route.pageId} nodes={pages.nodes} onToast={setToast} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
           ) : route.id === "hoje" ? (
             <HojeView onToast={setToast} />
           ) : route.id === "inbox" ? (

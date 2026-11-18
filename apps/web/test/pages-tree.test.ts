@@ -8,6 +8,7 @@ const node = (id: string, parentId: string | null, title = id): TreeNode => ({
   title,
   icon: null,
   favorite: false,
+  kind: "page",
   position: "a0",
 });
 
