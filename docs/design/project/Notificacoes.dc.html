@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Central de notificações</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="notif" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Notificações</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="max-width: 760px; margin: 0 auto; padding: 36px 32px 120px; display: flex; flex-direction: column; gap: 16px">
+<div class="row" style="flex-wrap: wrap; gap: 10px"><h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Notificações</h1>
+<div class="seg" role="tablist" aria-label="Filtro" style="margin-left: auto"><span class="seg-ind" style="width: calc((100% - 4px) / 2); transform: translateX({{segX}})"></span><button class="{{tA}}" type="button" role="tab" aria-selected="{{aSel}}" onClick="{{pickA}}">Todas</button><button class="{{tU}}" type="button" role="tab" aria-selected="{{uSel}}" onClick="{{pickU}}">Não lidas · {{unread}}</button></div>
+<button class="btn btn-fan btn-sm" type="button" onClick="{{readAll}}">Marcar todas como lidas</button>
+</div>
+
+<div class="rel">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-if value="{{pNao}}" hint-placeholder-val="{{ true }}">
+<div class="card enter" style="padding: 14px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap"><span style="width: 32px; height: 32px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path><path d="M10 21h4"></path></svg></span><span class="col grow1" style="min-width: 220px"><b style="font-weight: 600; font-size: 14px">Receber check-ins fora do app?</b><span style="font-size: 13px; color: var(--text-2)">Ative as notificações deste dispositivo para o Hermes avisar na hora certa.</span></span><button class="btn btn-pri btn-sm" type="button" onClick="{{ask}}">Ativar notificações</button><button class="btn btn-fan btn-sm" type="button">Agora não</button></div>
+</sc-if>
+<sc-if value="{{pPedindo}}" hint-placeholder-val="{{ false }}">
+<div class="card rise" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--e2); max-width: 380px"><span style="font-size: 12px; color: var(--text-3)">Pedido do navegador (aparece por cima)</span><b style="font-weight: 600; font-size: 14px">asa.app quer mostrar notificações</b><div class="row" style="gap: 6px; justify-content: flex-end"><button class="btn btn-sec btn-sm" type="button" onClick="{{deny}}">Bloquear</button><button class="btn btn-pri btn-sm" type="button" onClick="{{allow}}">Permitir</button></div></div>
+</sc-if>
+<sc-if value="{{pOk}}" hint-placeholder-val="{{ false }}">
+<div class="draft-ok enter"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Notificações ativas neste dispositivo.<button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{testar}}">Enviar teste</button><button class="btn btn-fan btn-sm" type="button" onClick="{{reset}}">Reiniciar demo</button></div>
+</sc-if>
+<sc-if value="{{pNeg}}" hint-placeholder-val="{{ false }}">
+<div class="draft-ok enter" style="background: var(--warning-soft); border-color: transparent; color: var(--warning)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><span>Bloqueadas no navegador. Libere em Configurações do site para receber check-ins.</span><button class="btn btn-fan btn-sm" type="button" style="margin-left: auto; color: inherit" onClick="{{reset}}">Reiniciar demo</button></div>
+</sc-if>
+</div>
+
+<div class="col rel" style="gap: 2px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div class="eyebrow" style="padding: 14px 4px 6px">{{g.nome}}</div>
+<sc-for list="{{g.items}}" as="n" hint-placeholder-count="3">
+<div class="enter" style="display: flex; gap: 12px; padding: 12px; border-radius: 10px; background: {{n.bg}}">
+<span class="{{n.av}}">{{n.ini}}</span>
+<div class="col grow1" style="gap: 4px; min-width: 0"><span class="row" style="gap: 8px"><b style="font-weight: 600; font-size: 14px" class="trunc">{{n.t}}</b><sc-if value="{{n.unread}}" hint-placeholder-val="{{ false }}"><span class="dot" style="background: var(--accent)" aria-label="não lida"></span></sc-if><span style="margin-left: auto; font-size: 12px; color: var(--text-3); white-space: nowrap">{{n.h}}</span></span><span style="font-size: 13px; line-height: 19px; color: var(--text-2)">{{n.d}}</span>
+<span class="row" style="gap: 4px; margin-top: 2px"><a class="btn btn-sec btn-sm" href="{{n.href}}">{{n.cta}}</a><button class="btn btn-fan btn-sm" type="button" onClick="{{n.read}}" style="color: var(--text-2)">{{n.readLabel}}</button></span></div>
+</div>
+</sc-for>
+</sc-for>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><div class="col enter" style="align-items: center; gap: 6px; padding: 40px; text-align: center; color: var(--text-2)"><b style="font-weight: 600; color: var(--text)">Tudo lido</b><span style="font-size: 13px">Novos check-ins e avisos aparecem aqui.</span></div></sc-if>
+</div>
+</div>
+<div class="toasts"><div class="{{toastCls}}" role="status"><span class="av h" style="width: 18px; height: 18px; font-size: 11px">H</span>Notificação de teste enviada</div></div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Notificações</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Permissão de Web Push</span><span class="prio">P1</span></div><p>Nunca pedir no primeiro acesso: o cartão explica o motivo antes e só então dispara o pedido do navegador. Estados: não pedido, pedindo, permitido (com “Enviar teste”) e bloqueado (instrução para liberar). Clique em “Ativar notificações” para percorrer.</p><p><span class="lbl">Movimento</span> Troca de estado em opacidade + 6 px (médio).</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Lista</span><span class="prio">P1</span></div><p>Agrupada por Hoje e Esta semana, autor por avatar (Hermes, Renato, sistema). Não lida: fundo tinta-suave e ponto. Cada item leva direto ao contexto. No topo da barra lateral, um ponto indica não lidas.</p><p><span class="lbl">Movimento</span> Notificação nova entra no topo (médio · entrada); marcar como lida troca o fundo em médio.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="notif" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, tab: 0, read: {}, perm: 'nao', toast: false };
+    this.items = [
+      { id: 1, g: 'Hoje', who: 'h', t: 'Plano do dia pronto', d: '4 tarefas hoje e 2 atrasadas. Sugeri começar pela proposta.', h: '08:30', cta: 'Abrir Hoje', href: 'Hoje.dc.html' },
+      { id: 2, g: 'Hoje', who: 'r', t: '4 capturas classificadas', d: 'Sugeri classificação e projeto para tudo que chegou ontem. Revise na Inbox.', h: '07:55', cta: 'Revisar', href: 'Inbox.dc.html' },
+      { id: 3, g: 'Hoje', who: 's', t: 'Lembrete: Esvaziar a Inbox', d: 'Lembrete semanal de quarta às 21:00.', h: 'agendado', cta: 'Abrir Inbox', href: 'Inbox.dc.html' },
+      { id: 4, g: 'Esta semana', who: 'h', t: 'Revisão do sábado', d: 'Você avaliou a semana com 4. Três focos viraram tarefas.', h: 'sáb, 10:20', cta: 'Ver revisão', href: 'Rotina.dc.html' },
+      { id: 5, g: 'Esta semana', who: 's', t: 'Backup concluído', d: 'Export em Markdown e JSON salvo · 214 páginas.', h: 'sex, 17:02', cta: 'Configurações', href: 'Configuracoes.dc.html' }
+    ];
+    this.t = null;
+  }
+  componentWillUnmount() { if (this.t) clearTimeout(this.t); }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const initialRead = { 4: true, 5: true };
+    const isRead = (id) => !!(s.read[id] || initialRead[id]);
+    const vis = this.items.filter((n) => s.tab === 0 || !isRead(n.id));
+    const groups = ['Hoje', 'Esta semana'].map((g) => ({ nome: g, items: vis.filter((n) => n.g === g).map((n) => {
+      const r = isRead(n.id);
+      return Object.assign({}, n, { unread: !r, bg: r ? 'transparent' : 'var(--accent-soft)', av: 'av ' + (n.who === 's' ? 'u' : n.who), ini: n.who === 'h' ? 'H' : (n.who === 'r' ? 'R' : 'A'), readLabel: r ? 'Lida' : 'Marcar como lida', read: () => this.setState({ read: Object.assign({}, s.read, { [n.id]: true }) }) });
+    }) })).filter((g) => g.items.length);
+    const unread = this.items.filter((n) => !isRead(n.id)).length;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      segX: (s.tab * 100) + '%', tA: 'seg-b' + (s.tab === 0 ? ' on' : ''), tU: 'seg-b' + (s.tab === 1 ? ' on' : ''),
+      aSel: s.tab === 0 ? 'true' : 'false', uSel: s.tab === 1 ? 'true' : 'false',
+      pickA: () => this.setState({ tab: 0 }), pickU: () => this.setState({ tab: 1 }),
+      unread: unread, groups: groups, empty: groups.length === 0,
+      readAll: () => this.setState({ read: { 1: true, 2: true, 3: true } }),
+      pNao: s.perm === 'nao', pPedindo: s.perm === 'pedindo', pOk: s.perm === 'ok', pNeg: s.perm === 'negado',
+      ask: () => this.setState({ perm: 'pedindo' }), allow: () => this.setState({ perm: 'ok' }), deny: () => this.setState({ perm: 'negado' }), reset: () => this.setState({ perm: 'nao' }),
+      toastCls: 'toast' + (s.toast ? ' on' : ''),
+      testar: () => { this.setState({ toast: true }); if (this.t) clearTimeout(this.t); this.t = setTimeout(() => this.setState({ toast: false }), 3000); }
+    };
+  }
+}
+</script>
+</body>
+</html>

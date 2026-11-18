@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>asa-notation · Movimento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F4AD0}a:hover{color:#2740BA}
+.ds{--bg:#FBFAF7;--bg-2:#F3F2EE;--surface:#FFFFFF;--hover:#F1F0EC;--press:#E9E7E1;--border:#E6E4DE;--border-2:#D3D0C8;--text:#1A1A17;--text-2:#64625B;--text-3:#706E66;--accent:#2F4AD0;--accent-hover:#2740BA;--accent-soft:#E9ECFB;--on-accent:#FFFFFF;--hermes:#A14D06;--hermes-soft:#FBEEDD;--renato:#0E6B5E;--renato-soft:#E0F0EC;--success:#1F7A3A;--success-soft:#E4F3E8;--danger:#B42318;--danger-soft:#FCEBE9;--warning:#8A5A00;--warning-soft:#FBF1DA;--note:#6B2BD9;--note-soft:#F4EFFE;--note-border:#C9B5F5;--shine:rgba(255,255,255,.6);--e1:0 1px 2px rgba(26,26,23,.05),0 4px 12px rgba(26,26,23,.06);--e2:0 2px 6px rgba(26,26,23,.08),0 12px 28px rgba(26,26,23,.14);--e3:0 4px 12px rgba(26,26,23,.08),0 24px 64px rgba(26,26,23,.18);--instante:80ms;--rapido:140ms;--medio:220ms;--lento:300ms;--mola-d:280ms;--padrao:cubic-bezier(.2,0,0,1);--entrada:cubic-bezier(0,0,.2,1);--saida:cubic-bezier(.4,0,1,1);--mola:cubic-bezier(.34,1.56,.64,1);--sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--serif:'Newsreader',Georgia,'Times New Roman',serif;--mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:20px;min-height:100vh;transition:background-color var(--medio) var(--padrao),color var(--medio) var(--padrao);-webkit-font-smoothing:antialiased}
+.ds.escuro{--bg:#121211;--bg-2:#0C0C0B;--surface:#1A1A18;--hover:#232321;--press:#2B2B28;--border:#2A2A27;--border-2:#3A3A36;--text:#ECEAE4;--text-2:#A3A198;--text-3:#8A887F;--accent:#8EA1FF;--accent-hover:#A7B5FF;--accent-soft:#1E2340;--on-accent:#0D1030;--hermes:#F0A75E;--hermes-soft:#2B2015;--renato:#5FC9B5;--renato-soft:#13261F;--success:#6FD08C;--success-soft:#14261A;--danger:#FF8A7A;--danger-soft:#2E1714;--warning:#E8B54A;--warning-soft:#2A2110;--note:#C4B0FF;--note-soft:#1D1730;--note-border:#4A3A78;--shine:rgba(255,255,255,.07);--e1:0 1px 2px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.35);--e2:0 2px 6px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.5);--e3:0 4px 12px rgba(0,0,0,.4),0 24px 64px rgba(0,0,0,.6)}
+.ds.lenta{--instante:240ms;--rapido:420ms;--medio:660ms;--lento:900ms;--mola-d:840ms}
+.ds.rm{--instante:80ms;--rapido:80ms;--medio:80ms;--lento:120ms;--mola-d:80ms;--mola:linear}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;min-height:52px;padding:8px 24px;box-sizing:border-box;border-bottom:1px solid var(--border);background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+.mark{width:24px;height:24px;border-radius:6px;background:var(--text);color:var(--bg);display:flex;align-items:center;justify-content:center}
+.ver{font:500 12px/16px var(--mono);color:var(--text-3)}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.navl{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:6px;font:500 13px/20px var(--sans);color:var(--text-2) !important;text-decoration:none;transition:background-color var(--instante) var(--padrao)}
+.navl:hover{background:var(--hover);color:var(--text) !important}
+.navl.on{background:var(--surface);color:var(--text) !important;box-shadow:inset 0 0 0 1px var(--border)}
+.navl:focus-visible,.btn:focus-visible,.tog:focus-visible,.plain:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tools{display:flex;align-items:center;gap:4px;margin-left:auto;flex-wrap:wrap}
+.tog{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:6px;border:0;background:transparent;color:var(--text-2);font:500 13px/20px var(--sans);cursor:pointer;transition:background-color var(--instante) var(--padrao)}
+.tog:hover{background:var(--hover);color:var(--text)}
+.sw{width:28px;height:16px;border-radius:999px;background:var(--border-2);position:relative;flex:none;transition:background-color var(--rapido) var(--padrao)}
+.sw .knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform var(--mola-d) var(--mola)}
+.sw.on{background:var(--accent)}
+.sw.on .knob{transform:translateX(12px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid transparent;font:500 13px/20px var(--sans);cursor:pointer;color:var(--text);background:transparent;white-space:nowrap;transition:background-color var(--instante) var(--padrao),border-color var(--instante) var(--padrao),transform var(--instante) var(--padrao)}
+.btn:active{transform:scale(.97)}
+.btn-fan:hover{background:var(--hover)}
+.btn-pri{background:var(--accent);color:var(--on-accent)}
+.btn-pri:hover{background:var(--accent-hover)}
+.btn-sec{background:var(--surface);border-color:var(--border-2)}
+.btn-sec:hover{background:var(--hover)}
+.plain{border:0;background:transparent;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.wrap{max-width:1360px;margin:0 auto;padding:0 40px;box-sizing:border-box}
+.eyebrow{font:600 11px/16px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:0}
+.h-display{font-family:var(--serif);font-weight:500;font-size:60px;line-height:62px;letter-spacing:-.025em;margin:0;text-wrap:balance}
+.h-sec{font-family:var(--serif);font-weight:500;font-size:34px;line-height:40px;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.h3{font:600 15px/22px var(--sans);margin:0}
+.lead{font-size:17px;line-height:27px;color:var(--text-2);margin:0;text-wrap:pretty}
+.p{font-size:14px;line-height:22px;color:var(--text-2);margin:0;text-wrap:pretty}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.sec{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:40px;padding:72px 0;border-top:1px solid var(--border)}
+.sec-l{display:flex;flex-direction:column;gap:14px;max-width:440px}
+.sec-r{grid-column:span 2;min-width:0}
+.mono{font-family:var(--mono)}
+.spec{font:500 12px/18px var(--mono);color:var(--text-3)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border:1px solid var(--border-2);border-bottom-width:2px;border-radius:4px;background:var(--surface);color:var(--text-2);font:500 11px/16px var(--mono)}
+.anota{border:1px dashed var(--note-border);background:var(--note-soft);border-radius:10px;padding:12px 14px;font-size:13px;line-height:20px;color:var(--text);display:flex;flex-direction:column;gap:6px}
+.anota-h{display:flex;align-items:center;gap:8px;color:var(--note);font:600 12px/16px var(--sans)}
+.anota-n{display:inline-flex;align-items:center;justify-content:center;height:18px;padding:0 6px;border-radius:4px;background:var(--note);color:var(--bg);font:600 11px/16px var(--mono)}
+.prio{margin-left:auto;border:1px solid var(--note-border);border-radius:4px;padding:0 5px;font:600 11px/16px var(--mono)}
+.anota p{margin:0}
+.anota b{font-weight:600;color:var(--note)}
+.rail{position:relative;height:28px;border-radius:999px;background:var(--bg-2);overflow:hidden;box-shadow:inset 0 0 0 1px var(--border)}
+.slider{position:absolute;top:0;left:0;width:100%;height:100%}
+.dot{position:absolute;left:4px;top:4px;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+.ds.run .slider{transform:translateX(calc(100% - 28px))}
+.ds.rm .slider{transition:none !important}
+.drow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 20px;align-items:center;padding:16px 0;border-top:1px solid var(--border)}
+.demo{display:flex;flex-direction:column;overflow:hidden}
+.demo-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 18px}
+.stage{position:relative;height:260px;margin:0 18px 18px;border-radius:10px;background:var(--bg-2);overflow:hidden;box-shadow:inset 0 0 0 1px var(--border)}
+.demo .anota{margin:0 18px 18px}
+.pop{position:absolute;left:146px;top:70px;width:236px;padding:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--e1);opacity:0;transform:scale(.96) translateY(-4px);transform-origin:8px 0;transition:opacity var(--rapido) var(--saida),transform var(--rapido) var(--saida);pointer-events:none}
+.pop.on{opacity:1;transform:none;transition:opacity var(--rapido) var(--entrada),transform var(--rapido) var(--entrada)}
+.ds.rm .pop{transform:none}
+.mi{display:flex;align-items:center;gap:10px;height:32px;padding:0 8px;border-radius:6px;font-size:13px}
+.mi.sel{background:var(--hover)}
+.mi .ic{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:600 11px/1 var(--mono);color:var(--text-2);background:var(--bg)}
+.mi .k{margin-left:auto;font:500 11px/16px var(--mono);color:var(--text-3)}
+.caret{display:inline-block;width:1.5px;height:18px;background:var(--text);vertical-align:-4px;margin-left:1px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.trow{display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px;font-size:13px;width:100%;box-sizing:border-box}
+.trow:hover{background:var(--hover)}
+.chev{transition:transform var(--rapido) var(--padrao);color:var(--text-3)}
+.chev.on{transform:rotate(90deg)}
+.kids{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--medio) var(--padrao)}
+.kids.on{grid-template-rows:1fr}
+.kids-in{overflow:hidden;min-height:0}
+.kid{opacity:0;transform:translateY(-4px);transition:opacity var(--rapido) var(--entrada),transform var(--medio) var(--padrao)}
+.kids.on .kid{opacity:1;transform:none}
+.ds.rm .kids{transition:none}
+.ds.rm .kid{transform:none}
+.cap{position:absolute;left:50%;top:40px;width:340px;margin-left:-170px;padding:12px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--e3);display:flex;flex-direction:column;gap:10px;opacity:0;transform:scale(.98) translateY(-4px);transition:opacity var(--rapido) var(--saida),transform var(--rapido) var(--saida);pointer-events:none}
+.cap.on{opacity:1;transform:none;pointer-events:auto;transition:opacity var(--rapido) var(--entrada),transform var(--rapido) var(--entrada)}
+.ds.rm .cap{transform:none}
+.toast{position:absolute;left:50%;bottom:16px;display:flex;align-items:center;gap:10px;height:40px;padding:0 8px 0 14px;background:var(--text);color:var(--bg);border-radius:10px;box-shadow:var(--e1);font-size:13px;white-space:nowrap;opacity:0;transform:translate(-50%,8px);transition:opacity var(--rapido) var(--saida),transform var(--rapido) var(--saida);pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0);transition:opacity var(--medio) var(--entrada),transform var(--medio) var(--entrada)}
+.ds.rm .toast{transform:translate(-50%,0)}
+.task{display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:8px;width:100%;box-sizing:border-box;font-size:15px}
+.task:hover{background:var(--hover)}
+.cb{width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--border-2);display:flex;align-items:center;justify-content:center;color:var(--on-accent);flex:none;transition:background-color var(--rapido) var(--padrao),box-shadow var(--rapido) var(--padrao)}
+.cb.on{background:var(--accent);box-shadow:none;animation:pop var(--mola-d) var(--mola)}
+.tick{width:12px;height:12px;stroke-width:2.6;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset var(--rapido) var(--entrada) 40ms}
+.cb.on .tick{stroke-dashoffset:0}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.tl{position:relative;transition:color var(--medio) var(--padrao)}
+.tl.on{color:var(--text-3)}
+.strike{position:absolute;left:0;right:0;top:52%;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:left center;transition:transform var(--medio) var(--padrao)}
+.tl.on .strike{transform:scaleX(1)}
+.ds.rm .cb.on{animation:none}
+.ds.rm .strike{transition:none}
+.flipwrap{perspective:900px;width:300px;height:132px;margin:0 auto}
+.inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform var(--lento) var(--padrao)}
+.flipon .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--e1);padding:16px 18px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:6px;transition:opacity var(--lento) var(--padrao)}
+.back{transform:rotateY(180deg)}
+.ds.rm .inner{transform:none !important}
+.ds.rm .back{transform:none;opacity:0}
+.ds.rm .flipon .back{opacity:1}
+.ds.rm .flipon .front{opacity:0}
+.rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:300px;margin:14px auto 0}
+.rate{display:flex;flex-direction:column;align-items:center;gap:0;height:44px;justify-content:center;border:1px solid var(--border-2);border-radius:8px;background:var(--surface);font:500 12px/16px var(--sans);color:var(--text);cursor:pointer;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity var(--rapido) var(--entrada),transform var(--mola-d) var(--mola)}
+.rate span{font:500 11px/14px var(--mono);color:var(--text-3)}
+.flipon .rate{opacity:1;transform:none;pointer-events:auto}
+.ds.rm .rate{transform:none}
+.blk{position:absolute;left:0;right:0;top:0;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:14px;transition:transform var(--mola-d) var(--mola)}
+.blk::after{content:'';position:absolute;inset:-1px;border-radius:8px;box-shadow:var(--e2);opacity:0;transition:opacity var(--rapido) var(--padrao);pointer-events:none}
+.blk.lift::after{opacity:1}
+.blk .grip{color:var(--text-3);opacity:.35;transition:opacity var(--instante) var(--padrao)}
+.blk.lift .grip{opacity:1;color:var(--accent)}
+.dropline{position:absolute;left:0;right:0;top:43px;height:2px;border-radius:2px;background:var(--accent);opacity:0;transform:scaleX(.4);transition:opacity var(--rapido) var(--padrao),transform var(--medio) var(--padrao)}
+.dropline.on{opacity:1;transform:none}
+.ds.rm .blk{transition:none}
+.ds.rm .dropline{transform:none}
+.layer{position:absolute;inset:20px;display:flex;flex-direction:column;gap:10px;transition:opacity var(--medio) var(--padrao)}
+.sk{position:relative;overflow:hidden;background:var(--hover);border-radius:4px}
+.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--shine),transparent);transform:translateX(-100%);animation:shimmer 1.4s var(--padrao) infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.ds.rm .sk::after{animation:none;opacity:0}
+.inbox-row{display:flex;align-items:center;gap:12px;height:52px;padding:0 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px}
+.panel{position:absolute;top:0;right:0;bottom:0;width:330px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--e2);display:flex;flex-direction:column;transform:translateX(100%);transition:transform var(--rapido) var(--saida)}
+.panel.on{transform:none;transition:transform var(--medio) var(--entrada)}
+.ds.rm .panel{transform:none;opacity:0;transition:opacity 80ms linear}
+.ds.rm .panel.on{opacity:1}
+.w{animation:wIn var(--instante) var(--entrada) both}
+@keyframes wIn{from{opacity:0}to{opacity:1}}
+.hcaret{display:inline-block;width:1.5px;height:15px;background:var(--hermes);vertical-align:-3px;animation:blink 1s steps(2) infinite}
+.act{border:1px dashed var(--hermes);background:var(--hermes-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;opacity:0;transform:scale(.96) translateY(6px);transform-origin:50% 0;transition:opacity var(--rapido) var(--entrada),transform var(--mola-d) var(--mola)}
+.act.on{opacity:1;transform:none}
+.ds.rm .act{transform:none}
+.cat{width:100%;border-collapse:collapse;font-size:13px;line-height:19px}
+.cat th{text-align:left;font:600 11px/16px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);padding:10px 12px;border-bottom:1px solid var(--border-2)}
+.cat td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.cat td:first-child{font-weight:600;white-space:nowrap}
+.cat td.t{font-family:var(--mono);font-size:12px;color:var(--text-2);white-space:nowrap}
+.cat td.r{color:var(--text-2)}
+@media (max-width:760px){.wrap{padding:0 20px}.h-display{font-size:40px;line-height:44px}.sec-r{grid-column:auto}.drow{grid-template-columns:1fr}.tools{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.ds{--instante:80ms;--rapido:80ms;--medio:80ms;--lento:120ms;--mola-d:80ms;--mola:linear}.sk::after{animation:none}.cb.on{animation:none}}
+</style>
+</helmet>
+<div class="{{rootCls}}">
+<header class="topbar">
+<div class="brand">
+<span class="mark"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c6 0 11-3.5 14-11 1.6 4.2.6 8.6-2.6 11.6"></path><path d="M7.5 19.5c3.6-.6 6.6-2.6 8.6-6"></path></svg></span>
+<span>asa-notation</span>
+<span class="ver">design system · v0.1</span>
+</div>
+<nav class="nav" aria-label="Seções do design system">
+<a class="navl" href="Main.dc.html">Fundamentos</a>
+<a class="navl on" href="Movimento.dc.html" aria-current="page">Movimento</a>
+<a class="navl" href="Componentes.dc.html">Componentes</a>
+</nav>
+<div class="tools">
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+<button class="btn btn-fan" type="button" onClick="{{toggleTheme}}">
+<sc-if value="{{light}}" hint-placeholder-val="{{ true }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Tema escuro</sc-if>
+<sc-if value="{{dark}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Tema claro</sc-if>
+</button>
+</div>
+</header>
+
+<main class="wrap">
+<section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 56px; align-items: end; padding: 88px 0 56px">
+<div style="display: flex; flex-direction: column; gap: 22px">
+<p class="eyebrow">Passo 1 de 8 · Movimento</p>
+<h1 class="h-display">Rápido para agir, lento só para explicar.</h1>
+<p class="lead">Cinco durações e quatro curvas com nome. Cada animação do produto é uma combinação delas, escrita no catálogo abaixo. Teste tudo nesta tela: as coreografias funcionam de verdade.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<div class="card" style="padding: 14px 16px"><div style="font-weight: 600; font-size: 13px">Só transformação e opacidade</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">nas animações principais, para 60 fps</div></div>
+<div class="card" style="padding: 14px 16px"><div style="font-weight: 600; font-size: 13px">Sair é mais rápido que entrar</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">entra em médio, sai em rápido</div></div>
+<div class="card" style="padding: 14px 16px"><div style="font-weight: 600; font-size: 13px">Teto de 300 ms</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">em qualquer interação frequente</div></div>
+<div class="card" style="padding: 14px 16px"><div style="font-weight: 600; font-size: 13px">Versão reduzida para tudo</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">opacidade em até 120 ms, sem deslocamento</div></div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">M1</span><span>Movimento · implementação</span><span class="prio">P0</span></div><p>Tokens como variáveis CSS (<span class="mono">--rapido</span>, <span class="mono">--entrada</span>…) e espelhados no código JS para animações com mola. Com <span class="mono">prefers-reduced-motion: reduce</span>, os tokens são reescritos na raiz e cada coreografia troca deslocamento por opacidade. Interrompível: uma nova interação cancela a animação em curso a partir do estado atual, nunca espera terminar.</p></aside>
+</sc-if>
+</div>
+</section>
+
+<div class="card" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--e1)">
+<span style="font-weight: 600; font-size: 13px; padding-left: 4px">Controles da demonstração</span>
+<button class="btn btn-pri" type="button" onClick="{{toggleRun}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"></path></svg>Reproduzir trilhas</button>
+<button class="tog" type="button" aria-pressed="{{slowPressed}}" onClick="{{toggleSlow}}"><span class="{{swSlow}}"><span class="knob"></span></span>Câmera lenta 3×</button>
+<button class="tog" type="button" aria-pressed="{{rmPressed}}" onClick="{{toggleRm}}"><span class="{{swRm}}"><span class="knob"></span></span>Movimento reduzido</button>
+<span style="margin-left: auto; font-size: 12px; color: var(--text-3)">Câmera lenta é só para estudar a curva; não existe no produto.</span>
+</div>
+
+<section class="sec" aria-labelledby="dur">
+<div class="sec-l">
+<p class="eyebrow">01</p>
+<h2 class="h-sec" id="dur">Durações</h2>
+<p class="p">Cinco tempos. Quanto maior a distância percorrida ou a mudança de contexto, maior o tempo. Hover e pressionar nunca passam de instante.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">M2</span><span>Durações · regra</span><span class="prio">P0</span></div><p><b>Lento</b> (300 ms) é o teto absoluto e fica reservado a mudanças de contexto: transição de página, elemento compartilhado, virar cartão. <b>Mola</b> é física, não tempo: rigidez 420, amortecimento 34, massa 1; o fallback CSS assenta em ~280 ms.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r">
+<div class="drow"><div><div style="font-weight: 600">instante <span class="spec">80 ms</span></div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">hover, pressionar, troca de cor</div></div><div class="rail"><div class="slider" style="transition: transform var(--instante) var(--padrao)"><span class="dot"></span></div></div></div>
+<div class="drow"><div><div style="font-weight: 600">rápido <span class="spec">140 ms</span></div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">menus, tooltips, check, toda saída</div></div><div class="rail"><div class="slider" style="transition: transform var(--rapido) var(--padrao)"><span class="dot"></span></div></div></div>
+<div class="drow"><div><div style="font-weight: 600">médio <span class="spec">220 ms</span></div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">painéis, árvore, troca de view, toasts</div></div><div class="rail"><div class="slider" style="transition: transform var(--medio) var(--padrao)"><span class="dot"></span></div></div></div>
+<div class="drow"><div><div style="font-weight: 600">lento <span class="spec">300 ms</span></div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">página, elemento compartilhado, flip</div></div><div class="rail"><div class="slider" style="transition: transform var(--lento) var(--padrao)"><span class="dot"></span></div></div></div>
+<div class="drow"><div><div style="font-weight: 600">mola <span class="spec">≈280 ms</span></div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">soltar, levantar, materializar</div></div><div class="rail"><div class="slider" style="transition: transform var(--mola-d) var(--mola)"><span class="dot" style="background: var(--hermes)"></span></div></div></div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="cur">
+<div class="sec-l">
+<p class="eyebrow">02</p>
+<h2 class="h-sec" id="cur">Curvas</h2>
+<p class="p">Quatro curvas. O que aparece desacelera ao chegar; o que sai acelera ao partir; o que se move dentro da tela usa a padrão. A mola tem um leve excesso, usado só onde há sensação física.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">M3</span><span>Curvas · onde usar</span><span class="prio">P0</span></div><p>Trilhas desta seção rodam em <b>lento</b> para a diferença ficar visível. Nunca usar <span class="mono">ease</span>, <span class="mono">linear</span> ou <span class="mono">ease-in-out</span> padrão do navegador em componentes; linear só no brilho do skeleton e em progresso.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 16px">
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 16px; align-items: center"><svg viewBox="-6 -64 112 176" style="width: 72px; height: 112px; flex: none" role="img" aria-label="Curva padrão"><path d="M0 0H100M0 100H100" stroke="var(--border-2)" stroke-dasharray="3 3" fill="none"></path><path d="M0 100C20 100 0 0 100 0" stroke="var(--accent)" stroke-width="3" fill="none" stroke-linecap="round"></path></svg><div><div style="font-weight: 600">padrão</div><div class="spec">cubic-bezier(.2, 0, 0, 1)</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2); margin-top: 4px">movimento dentro da tela, reordenar, girar seta</div></div></div>
+<div class="rail"><div class="slider" style="transition: transform var(--lento) var(--padrao)"><span class="dot"></span></div></div>
+</div>
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 16px; align-items: center"><svg viewBox="-6 -64 112 176" style="width: 72px; height: 112px; flex: none" role="img" aria-label="Curva de entrada"><path d="M0 0H100M0 100H100" stroke="var(--border-2)" stroke-dasharray="3 3" fill="none"></path><path d="M0 100C0 100 20 0 100 0" stroke="var(--accent)" stroke-width="3" fill="none" stroke-linecap="round"></path></svg><div><div style="font-weight: 600">entrada</div><div class="spec">cubic-bezier(0, 0, .2, 1)</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2); margin-top: 4px">o que aparece: menus, painéis, toasts</div></div></div>
+<div class="rail"><div class="slider" style="transition: transform var(--lento) var(--entrada)"><span class="dot"></span></div></div>
+</div>
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 16px; align-items: center"><svg viewBox="-6 -64 112 176" style="width: 72px; height: 112px; flex: none" role="img" aria-label="Curva de saída"><path d="M0 0H100M0 100H100" stroke="var(--border-2)" stroke-dasharray="3 3" fill="none"></path><path d="M0 100C40 100 100 0 100 0" stroke="var(--accent)" stroke-width="3" fill="none" stroke-linecap="round"></path></svg><div><div style="font-weight: 600">saída</div><div class="spec">cubic-bezier(.4, 0, 1, 1)</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2); margin-top: 4px">o que sai: fechar menus, dispensar toast</div></div></div>
+<div class="rail"><div class="slider" style="transition: transform var(--lento) var(--saida)"><span class="dot"></span></div></div>
+</div>
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 16px; align-items: center"><svg viewBox="-6 -64 112 176" style="width: 72px; height: 112px; flex: none" role="img" aria-label="Curva de mola"><path d="M0 0H100M0 100H100" stroke="var(--border-2)" stroke-dasharray="3 3" fill="none"></path><path d="M0 100C34 -56 64 0 100 0" stroke="var(--hermes)" stroke-width="3" fill="none" stroke-linecap="round"></path></svg><div><div style="font-weight: 600">mola</div><div class="spec">cubic-bezier(.34, 1.56, .64, 1)</div><div style="font-size: 12px; line-height: 18px; color: var(--text-2); margin-top: 4px">soltar ao arrastar, pop do check, cartão de ação</div></div></div>
+<div class="rail"><div class="slider" style="transition: transform var(--lento) var(--mola)"><span class="dot" style="background: var(--hermes)"></span></div></div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="coreo" style="padding: 72px 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 10px; max-width: 640px"><p class="eyebrow">03</p><h2 class="h-sec" id="coreo">Coreografias ao vivo</h2><p class="p">Oito momentos que definem a sensação do produto. Clique para reproduzir; ligue “Movimento reduzido” para ver a versão alternativa de cada um.</p></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(560px, 100%), 1fr)); gap: 16px">
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Menu de blocos “/”</h3><div class="spec">abre: rápido · entrada · scale .96→1 + opacidade, origem no cursor<br>fecha: rápido · saída</div></div><button class="btn btn-sec" type="button" onClick="{{toggleMenu}}">{{menuLabel}}</button></div>
+<div class="stage">
+<div style="position: absolute; left: 32px; top: 36px; font-size: 15px; line-height: 24px; color: var(--text-3)">Reunião de sexta</div>
+<div style="position: absolute; left: 32px; top: 64px; font-size: 15px; line-height: 24px">Próximos passos <span style="color: var(--text-2)">/</span><span class="caret"></span></div>
+<div class="{{menuCls}}">
+<div style="padding: 6px 8px 4px; font: 600 11px/16px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--text-3)">Blocos básicos</div>
+<div class="mi sel"><span class="ic">T</span>Texto<span class="k">⌘⌥0</span></div>
+<div class="mi"><span class="ic">H1</span>Título 1<span class="k">#</span></div>
+<div class="mi"><span class="ic">☐</span>Checklist<span class="k">[]</span></div>
+<div class="mi"><span class="ic">{}</span>Código<span class="k">```</span></div>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M4</span><span>Menu “/” · comportamento</span><span class="prio">P0</span></div><p>Abre na posição do cursor, com <span class="mono">transform-origin</span> no canto mais próximo do caret. Filtrar enquanto digita não reanima o menu; só a altura da lista muda, sem transição. Esc fecha com saída rápida e devolve o foco ao texto.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Árvore: expandir e recolher</h3><div class="spec">altura: médio · padrão · seta 0→90°: rápido<br>filhos: opacidade + 4 px, defasagem de 20 ms</div></div><button class="btn btn-sec" type="button" onClick="{{toggleTree}}">{{treeLabel}}</button></div>
+<div class="stage" style="padding: 20px; box-sizing: border-box">
+<div style="width: 260px; background: var(--bg-2); display: flex; flex-direction: column; gap: 1px">
+<div class="trow" style="color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; opacity: 0"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>Hoje</div>
+<button class="plain trow" type="button" aria-expanded="{{treeExpanded}}" onClick="{{toggleTree}}"><svg class="{{chevCls}}" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span style="font-weight: 500">Projetos</span><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">3</span></button>
+<div class="{{kidsCls}}"><div class="kids-in">
+<div class="kid trow" style="padding-left: 36px; transition-delay: 0ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>Loja v2</div>
+<div class="kid trow" style="padding-left: 36px; transition-delay: 20ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>Site pessoal</div>
+<div class="kid trow" style="padding-left: 36px; transition-delay: 40ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>App de finanças</div>
+</div></div>
+<div class="trow" style="color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; opacity: 0"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg>Estudo</div>
+<div class="trow" style="color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; opacity: 0"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Lixeira</div>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M5</span><span>Árvore · exceção consciente</span><span class="prio">P0</span></div><p>A altura anima por <span class="mono">grid-template-rows: 0fr → 1fr</span> (layout, não transform), aceito porque afeta só a subárvore. Acima de 40 filhos visíveis, a altura não anima; só a seta gira. Teclado: → expande, ← recolhe, ↑↓ navega.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Captura rápida + confirmação</h3><div class="spec">painel: rápido · entrada · scale .98 + opacidade, foco imediato<br>salvar: painel sai rápido, toast entra médio e some em 4 s</div></div><button class="btn btn-sec" type="button" onClick="{{openCap}}"><span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">K</span></button></div>
+<div class="stage">
+<div style="position: absolute; inset: 24px; display: flex; flex-direction: column; gap: 10px; opacity: .55"><div style="height: 12px; width: 40%; background: var(--border); border-radius: 3px"></div><div style="height: 10px; width: 80%; background: var(--border); border-radius: 3px"></div><div style="height: 10px; width: 70%; background: var(--border); border-radius: 3px"></div><div style="height: 10px; width: 75%; background: var(--border); border-radius: 3px"></div></div>
+<div class="{{capCls}}">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3)"><span style="width: 18px; height: 18px; border-radius: 5px; background: var(--renato); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600">R</span>Captura para a Inbox</div>
+<div style="min-height: 44px; border-radius: 8px; box-shadow: inset 0 0 0 2px var(--accent); padding: 10px 12px; box-sizing: border-box; font-size: 15px">Ideia: cache por tenant no checkout<span class="caret"></span></div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 12px; color: var(--text-3)">Renato classifica depois</span><button class="btn btn-fan" type="button" style="margin-left: auto; height: 28px" onClick="{{closeCap}}">Cancelar <span class="kbd">esc</span></button><button class="btn btn-pri" type="button" style="height: 28px" onClick="{{saveCap}}">Salvar <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">⌘↵</span></button></div>
+</div>
+<div class="{{toastCls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Salvo na Inbox<button class="btn" type="button" style="height: 28px; color: inherit; text-decoration: underline">Desfazer</button></div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M6</span><span>Captura · fluxo</span><span class="prio">P0</span></div><p>Atalho global em qualquer tela. Foco vai para o campo <b>no mesmo quadro</b> em que o painel começa a aparecer; dá para digitar durante a animação. ⌘↵ salva, Esc cancela. Offline: o toast vira “Na fila · enviaremos ao reconectar”.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Concluir tarefa</h3><div class="spec">caixa: mola (pop .8→1.12→1) · traço desenhado: rápido +40 ms<br>risco no texto: médio · padrão, da esquerda para a direita</div></div><button class="btn btn-sec" type="button" onClick="{{toggleCheck}}">Alternar</button></div>
+<div class="stage" style="display: flex; flex-direction: column; justify-content: center; padding: 0 28px; gap: 2px">
+<button class="plain task" type="button" aria-pressed="{{checkPressed}}" onClick="{{toggleCheck}}"><span class="{{cbCls}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{tlCls}}">Revisar 20 cards de Raft<span class="strike"></span></span><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">Estudo</span></button>
+<div class="task" style="color: var(--text-2)"><span class="cb"></span><span>Enviar proposta revisada</span><span style="margin-left: auto; font-size: 12px; color: var(--danger)">Atrasada · ontem</span></div>
+<div class="task" style="color: var(--text-2)"><span class="cb"></span><span>Check-in de quinta com Hermes</span><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">18:00</span></div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M7</span><span>Check · microinteração</span><span class="prio">P0</span></div><p>A linha concluída fica 1,2 s no lugar e só então desce para “Concluídas” com reordenação animada (médio). Desfazer reverte na mesma linha. Barra de progresso do dia avança junto, em médio.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Cartão de estudo + avaliação FSRS</h3><div class="spec">virar: lento · padrão · rotateY 180° com perspectiva<br>avaliações: mola, defasagem de 30 ms</div></div><button class="btn btn-sec" type="button" onClick="{{toggleFlip}}">{{flipLabel}} <span class="kbd">espaço</span></button></div>
+<div class="{{flipCls}}" style="margin: 0 18px 18px; height: 260px; border-radius: 10px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--border); display: flex; flex-direction: column; justify-content: center">
+<div class="flipwrap"><div class="inner">
+<div class="face front"><div style="font-size: 12px; color: var(--text-3)">Sistemas distribuídos · básico</div><div style="font-family: var(--serif); font-size: 20px; line-height: 26px">O que o Raft garante sobre líderes em um mesmo termo?</div></div>
+<div class="face back"><div style="font-size: 12px; color: var(--text-3)">Resposta</div><div style="font-family: var(--serif); font-size: 20px; line-height: 26px">No máximo um líder eleito por termo.</div></div>
+</div></div>
+<div class="rates">
+<button class="rate" type="button" style="transition-delay: 0ms">De novo<span>&lt;1 min</span></button>
+<button class="rate" type="button" style="transition-delay: 30ms">Difícil<span>8 min</span></button>
+<button class="rate" type="button" style="transition-delay: 60ms">Bom<span>1 d</span></button>
+<button class="rate" type="button" style="transition-delay: 90ms">Fácil<span>4 d</span></button>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M8</span><span>Revisão · teclado</span><span class="prio">P0</span></div><p>Espaço vira; 1 a 4 avaliam. Ao avaliar, o cartão sai para a esquerda (rápido · saída, −24 px + opacidade) e o próximo entra pela direita (médio · entrada). Intervalos abaixo de cada botão vêm do FSRS; os valores aqui são exemplo.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Arrastar bloco pela alça</h3><div class="spec">levantar: scale 1.02, −0,6°, sombra e2 por opacidade<br>vizinhos: +8 px · linha de destino: scaleX · soltar: mola</div></div><button class="btn btn-sec" type="button" onClick="{{stepDrag}}">{{dragLabel}}</button></div>
+<div class="stage" style="padding: 40px 48px; box-sizing: border-box">
+<div style="position: relative; height: 136px">
+<sc-for list="{{blocks}}" as="b" hint-placeholder-count="3">
+<div class="{{b.cls}}" style="transform: {{b.tf}}"><svg class="ico grip" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>{{b.t}}</div>
+</sc-for>
+<div class="{{dropCls}}"></div>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M9</span><span>Arrastar · regra geral</span><span class="prio">P0</span></div><p>O mesmo padrão vale para blocos, itens da árvore e cartões do Kanban (no Kanban, rotação −1° e a coluna de destino ganha fundo hover). Reordenação dos vizinhos com FLIP: mede antes e depois, anima só <span class="mono">translateY</span>. Teclado: alça focada + espaço pega, ↑↓ move, espaço solta.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Skeleton → conteúdo</h3><div class="spec">brilho: translateX em 1,4 s, contínuo<br>troca: cross-fade médio · nunca spinner solto</div></div><button class="btn btn-sec" type="button" onClick="{{toggleLoaded}}">{{loadLabel}}</button></div>
+<div class="stage">
+<div class="layer" style="opacity: {{skOpacity}}">
+<div style="display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px"><span class="sk" style="width: 18px; height: 18px; border-radius: 5px"></span><span style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="sk" style="height: 10px; width: 55%"></span><span class="sk" style="height: 8px; width: 30%"></span></span></div>
+<div style="display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px"><span class="sk" style="width: 18px; height: 18px; border-radius: 5px"></span><span style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="sk" style="height: 10px; width: 70%"></span><span class="sk" style="height: 8px; width: 25%"></span></span></div>
+<div style="display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px"><span class="sk" style="width: 18px; height: 18px; border-radius: 5px"></span><span style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="sk" style="height: 10px; width: 45%"></span><span class="sk" style="height: 8px; width: 35%"></span></span></div>
+</div>
+<div class="layer" style="opacity: {{ctOpacity}}">
+<div class="inbox-row"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent)"></span><span style="flex: 1"><span style="display: block; font-weight: 500">Ideia: cache por tenant no checkout</span><span style="display: block; font-size: 12px; color: var(--text-3)">ideia · há 4 min</span></span></div>
+<div class="inbox-row"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent)"></span><span style="flex: 1"><span style="display: block; font-weight: 500">Link: guia de índices no Postgres</span><span style="display: block; font-size: 12px; color: var(--text-3)">referência · há 1 h</span></span></div>
+<div class="inbox-row"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--border-2)"></span><span style="flex: 1"><span style="display: block; font-weight: 500">Dúvida sobre filas e retry idempotente</span><span style="display: block; font-size: 12px; color: var(--text-3)">estudo · ontem</span></span></div>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M10</span><span>Carregamento · regra</span><span class="prio">P0</span></div><p>Skeleton com a <b>forma exata</b> do conteúdo final (mesmas alturas). Só aparece se o carregamento passar de 150 ms; antes disso, nada. Mínimo de 300 ms na tela quando aparece, para não piscar.</p></aside></sc-if>
+</div>
+
+<div class="card demo">
+<div class="demo-h"><div><h3 class="h3">Painel do assistente + ação</h3><div class="spec">painel: médio · entrada · translateX 100%→0 (fecha rápido)<br>streaming: palavra a palavra, opacidade em instante<br>cartão de ação: mola · scale .96 + 6 px</div></div><button class="btn btn-sec" type="button" onClick="{{togglePanel}}">{{panelLabel}} <span class="kbd">⌘J</span></button></div>
+<div class="stage">
+<div style="position: absolute; inset: 24px; display: flex; flex-direction: column; gap: 10px; opacity: .55"><div style="height: 14px; width: 30%; background: var(--border); border-radius: 3px"></div><div style="height: 10px; width: 60%; background: var(--border); border-radius: 3px"></div><div style="height: 10px; width: 52%; background: var(--border); border-radius: 3px"></div><div style="height: 10px; width: 58%; background: var(--border); border-radius: 3px"></div></div>
+<div class="{{panelCls}}">
+<div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border)"><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--hermes); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 600; font-size: 13px">H</span><span style="font-weight: 600; font-size: 13px">Hermes</span><span style="margin-left: auto; display: flex; padding: 2px; border-radius: 6px; background: var(--bg-2); font-size: 12px"><span style="padding: 1px 8px; border-radius: 4px; background: var(--surface); box-shadow: var(--e1)">Hermes</span><span style="padding: 1px 8px; color: var(--text-2)">Renato</span></span></div>
+<div style="flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+<div style="align-self: flex-end; max-width: 80%; padding: 6px 10px; border-radius: 10px; background: var(--bg-2); font-size: 13px">O que está atrasado?</div>
+<div style="font-size: 13px; line-height: 19px"><sc-for list="{{words}}" as="w" hint-placeholder-count="0"><span class="w">{{w}} </span></sc-for><sc-if value="{{streaming}}" hint-placeholder-val="{{ false }}"><span class="hcaret"></span></sc-if></div>
+<div class="{{actCls}}"><div style="font-size: 11px; font-weight: 600; color: var(--hermes); letter-spacing: .04em; text-transform: uppercase">Rascunho · nova tarefa</div><div style="font-size: 13px; line-height: 18px">Enviar proposta revisada · amanhã 10:00</div><div style="display: flex; gap: 4px"><button class="btn" type="button" style="height: 26px; padding: 0 10px; background: var(--text); color: var(--bg); font-size: 12px">Aprovar</button><button class="btn btn-fan" type="button" style="height: 26px; padding: 0 8px; font-size: 12px">Editar</button><button class="btn btn-fan" type="button" style="height: 26px; padding: 0 8px; font-size: 12px; color: var(--text-2)">Descartar</button></div></div>
+</div>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><aside class="anota"><div class="anota-h"><span class="anota-n">M11</span><span>Chat · streaming</span><span class="prio">P0</span></div><p>Desktop: painel sobrepõe o conteúdo à direita (360 px), sem empurrar o editor. Celular: tela cheia, sobe de baixo. Rolagem acompanha o streaming só se o usuário já estiver no fim. Cartão de ação só aparece quando a resposta termina.</p></aside></sc-if>
+</div>
+
+</div>
+</section>
+
+<section aria-labelledby="catal" style="padding: 72px 0 96px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 10px; max-width: 640px"><p class="eyebrow">04</p><h2 class="h-sec" id="catal">Catálogo de interações</h2><p class="p">Especificação de cada movimento do produto. As telas dos próximos passos referenciam esta tabela pelo nome da interação.</p></div>
+<div class="card" style="overflow-x: auto">
+<table class="cat">
+<thead><tr><th>Interação</th><th>O que se move</th><th>Tempo · curva</th><th>Reduzido</th></tr></thead>
+<tbody>
+<tr><td>Transição de página</td><td>Título da árvore viaja até o cabeçalho (elemento compartilhado, translate + scale); corpo entra com opacidade + 8 px</td><td class="t">lento · padrão</td><td class="r">cross-fade 120 ms</td></tr>
+<tr><td>Linha do database → página</td><td>Peek lateral desliza da direita; página cheia expande a partir da linha, título compartilhado</td><td class="t">lento · padrão</td><td class="r">cross-fade</td></tr>
+<tr><td>Árvore expandir/recolher</td><td>Altura da subárvore, seta 0→90°, filhos com defasagem de 20 ms</td><td class="t">médio · padrão</td><td class="r">sem altura animada</td></tr>
+<tr><td>Reordenar na árvore</td><td>Item levanta, vizinhos deslizam, soltar assenta</td><td class="t">rápido / mola</td><td class="r">sem escala e sombra</td></tr>
+<tr><td>Menu “/”</td><td>scale .96→1 + opacidade, origem no cursor</td><td class="t">rápido · entrada / saída</td><td class="r">só opacidade</td></tr>
+<tr><td>Bloco novo</td><td>translateY 4 px→0 + opacidade</td><td class="t">rápido · entrada</td><td class="r">só opacidade</td></tr>
+<tr><td>Arrastar bloco</td><td>Levanta pela alça, sombra e2, linha de destino, vizinhos +8 px</td><td class="t">rápido / mola</td><td class="r">sem escala e rotação</td></tr>
+<tr><td>Toggle e callout</td><td>Conteúdo abre por altura, seta gira</td><td class="t">médio · padrão</td><td class="r">instantâneo</td></tr>
+<tr><td>Menu de formatação</td><td>Surge acima da seleção após 150 ms estável: 4 px + opacidade</td><td class="t">rápido · entrada</td><td class="r">só opacidade</td></tr>
+<tr><td>Kanban</td><td>Cartão levanta com −1°, colunas abrem espaço, soltar com mola</td><td class="t">rápido / mola</td><td class="r">sem rotação</td></tr>
+<tr><td>Troca de view</td><td>Antiga sai em opacidade; nova entra com 6 px; indicador do seletor desliza</td><td class="t">rápido + médio</td><td class="r">cross-fade</td></tr>
+<tr><td>Filtrar e ordenar</td><td>Linhas reposicionam (FLIP); novas entram, removidas saem em opacidade</td><td class="t">médio · padrão</td><td class="r">sem deslocamento</td></tr>
+<tr><td>Painel de chat</td><td>translateX 100%→0; no celular, sobe de baixo</td><td class="t">médio · entrada / rápido · saída</td><td class="r">opacidade</td></tr>
+<tr><td>Streaming</td><td>Palavras entram em opacidade; cursor na cor do assistente</td><td class="t">instante · entrada</td><td class="r">sem fade, cursor fixo</td></tr>
+<tr><td>Cartão de ação</td><td>scale .96 + 6 px + opacidade, ao fim da resposta</td><td class="t">mola</td><td class="r">opacidade</td></tr>
+<tr><td>Captura rápida</td><td>Painel scale .98 + opacidade; ao salvar, sai e chama o toast</td><td class="t">rápido · entrada / saída</td><td class="r">opacidade</td></tr>
+<tr><td>Toast</td><td>8 px + opacidade, some após 4 s (pausa no hover)</td><td class="t">médio · entrada / rápido · saída</td><td class="r">opacidade</td></tr>
+<tr><td>Notificação</td><td>Entra no canto superior direito: 16 px + opacidade; empilha com 8 px</td><td class="t">médio · entrada</td><td class="r">opacidade</td></tr>
+<tr><td>Check de tarefa</td><td>Pop da caixa, traço desenhado, risco no texto</td><td class="t">mola + rápido + médio</td><td class="r">sem pop</td></tr>
+<tr><td>Cartão de estudo</td><td>rotateY 180°; avaliações sobem com defasagem de 30 ms</td><td class="t">lento · padrão / mola</td><td class="r">cross-fade</td></tr>
+<tr><td>Skeleton</td><td>Brilho contínuo; troca por cross-fade</td><td class="t">1,4 s linear / médio</td><td class="r">brilho parado</td></tr>
+<tr><td>Gráficos do painel</td><td>Barras e linhas crescem da base (scaleY / dashoffset), uma vez por visita</td><td class="t">lento · entrada</td><td class="r">aparecem prontos</td></tr>
+<tr><td>Troca de tema</td><td>Cross-fade das cores de fundo e texto</td><td class="t">médio · padrão</td><td class="r">instantâneo</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":4300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, rm: false, slow: false, run: false, menu: false, tree: false, cap: false, toast: false, check: false, flip: false, phase: 'idle', loaded: false, panel: false, streamN: 0, actCard: false };
+    this.timers = [];
+    this.iv = null;
+    this.words = 'Você tem 3 tarefas atrasadas. Sugiro mover duas para amanhã de manhã e criar uma tarefa para a proposta do cliente:'.split(' ');
+  }
+  componentWillUnmount() {
+    this.timers.forEach((t) => clearTimeout(t));
+    if (this.iv) clearInterval(this.iv);
+  }
+  later(fn, ms) {
+    const t = setTimeout(fn, ms);
+    this.timers.push(t);
+  }
+  startStream() {
+    if (this.iv) clearInterval(this.iv);
+    this.iv = setInterval(() => {
+      const n = this.state.streamN + 1;
+      if (n >= this.words.length) {
+        clearInterval(this.iv);
+        this.iv = null;
+        this.setState({ streamN: this.words.length });
+        this.later(() => { if (this.state.panel) this.setState({ actCard: true }); }, 160);
+      } else {
+        this.setState({ streamN: n });
+      }
+    }, 55);
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? (this.props.tema === 'escuro') : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const ph = s.phase;
+    const slots = ph === 'drop' ? { a: 0, c: 1, b: 2 } : { a: 0, b: 1, c: 2 };
+    const blocks = [
+      { id: 'a', t: 'Contexto da reunião' },
+      { id: 'b', t: 'Decisões tomadas' },
+      { id: 'c', t: 'Próximos passos' }
+    ].map((b) => {
+      let y = slots[b.id] * 48;
+      let lift = false;
+      if (ph === 'drag' && b.id === 'c') { y = y - 38; lift = true; }
+      if (ph === 'drag' && b.id === 'b') { y = y + 8; }
+      const extra = lift && !s.rm ? ' translateX(10px) scale(1.02) rotate(-0.6deg)' : '';
+      return { id: b.id, t: b.t, tf: 'translateY(' + y + 'px)' + extra, cls: 'blk' + (lift ? ' lift' : '') };
+    });
+    const streaming = s.panel && s.streamN < this.words.length;
+    return {
+      rootCls: 'ds' + (dark ? ' escuro' : '') + (s.slow ? ' lenta' : '') + (s.rm ? ' rm' : '') + (s.run ? ' run' : ''),
+      dark: dark,
+      light: !dark,
+      notes: notes,
+      notesPressed: notes ? 'true' : 'false',
+      swNotes: 'sw' + (notes ? ' on' : ''),
+      slowPressed: s.slow ? 'true' : 'false',
+      swSlow: 'sw' + (s.slow ? ' on' : ''),
+      rmPressed: s.rm ? 'true' : 'false',
+      swRm: 'sw' + (s.rm ? ' on' : ''),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleSlow: () => this.setState({ slow: !s.slow }),
+      toggleRm: () => this.setState({ rm: !s.rm }),
+      toggleRun: () => this.setState({ run: !s.run }),
+      menuCls: 'pop' + (s.menu ? ' on' : ''),
+      menuLabel: s.menu ? 'Fechar' : 'Digitar /',
+      toggleMenu: () => this.setState({ menu: !s.menu }),
+      treeLabel: s.tree ? 'Recolher' : 'Expandir',
+      treeExpanded: s.tree ? 'true' : 'false',
+      chevCls: 'chev' + (s.tree ? ' on' : ''),
+      kidsCls: 'kids' + (s.tree ? ' on' : ''),
+      toggleTree: () => this.setState({ tree: !s.tree }),
+      capCls: 'cap' + (s.cap ? ' on' : ''),
+      toastCls: 'toast' + (s.toast ? ' on' : ''),
+      openCap: () => this.setState({ cap: !s.cap, toast: false }),
+      closeCap: () => this.setState({ cap: false }),
+      saveCap: () => {
+        this.setState({ cap: false });
+        this.later(() => this.setState({ toast: true }), 90);
+        this.later(() => this.setState({ toast: false }), 2900);
+      },
+      checkPressed: s.check ? 'true' : 'false',
+      cbCls: 'cb' + (s.check ? ' on' : ''),
+      tlCls: 'tl' + (s.check ? ' on' : ''),
+      toggleCheck: () => this.setState({ check: !s.check }),
+      flipCls: s.flip ? 'flipon' : 'flipoff',
+      flipLabel: s.flip ? 'Próximo' : 'Mostrar resposta',
+      toggleFlip: () => this.setState({ flip: !s.flip }),
+      blocks: blocks,
+      dropCls: 'dropline' + (ph === 'drag' ? ' on' : ''),
+      dragLabel: ph === 'idle' ? 'Pegar bloco' : (ph === 'drag' ? 'Soltar' : 'Reiniciar'),
+      stepDrag: () => this.setState({ phase: ph === 'idle' ? 'drag' : (ph === 'drag' ? 'drop' : 'idle') }),
+      skOpacity: s.loaded ? 0 : 1,
+      ctOpacity: s.loaded ? 1 : 0,
+      loadLabel: s.loaded ? 'Recarregar' : 'Carregar',
+      toggleLoaded: () => this.setState({ loaded: !s.loaded }),
+      panelCls: 'panel' + (s.panel ? ' on' : ''),
+      panelLabel: s.panel ? 'Fechar' : 'Abrir Hermes',
+      words: this.words.slice(0, s.streamN),
+      streaming: streaming,
+      actCls: 'act' + (s.actCard ? ' on' : ''),
+      togglePanel: () => {
+        if (s.panel) {
+          if (this.iv) { clearInterval(this.iv); this.iv = null; }
+          this.setState({ panel: false });
+        } else {
+          this.setState({ panel: true, streamN: 0, actCard: false });
+          this.later(() => this.startStream(), 260);
+        }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Página canvas livre</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="canvas" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="hide-m">Projetos</span><span class="sep hide-m">/</span><span class="cur">Quadro de ideias</span></nav>
+<div class="tb-r">
+<span class="sync desk">Salvo</span>
+<button class="btn btn-fan btn-sm desk" type="button">Exportar PNG</button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="cv-grid" style="flex: 1; position: relative; overflow: hidden; background-color: var(--bg)">
+<div class="row rel cv-tools" role="toolbar" aria-label="Ferramentas do canvas" style="position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 10; gap: 2px; padding: 4px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--e1)">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{tools}}" as="t" hint-placeholder-count="10"><button class="{{t.cls}}" type="button" aria-label="{{t.nome}}" aria-pressed="{{t.sel}}" onClick="{{t.pick}}" title="{{t.nome}}"><span style="position: relative; display: flex"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.d}}"></path></svg><span style="position: absolute; right: -9px; bottom: -9px; font: 500 9px/1 var(--mono); color: var(--text-3)">{{t.k}}</span></span></button></sc-for>
+</div>
+<div class="cv-stage" style="position: absolute; left: 50%; top: 50%; width: 900px; height: 520px; margin: -250px 0 0 -450px">
+<div style="position: absolute; left: 20px; top: 0; font-family: var(--serif); font-size: 30px; line-height: 36px; color: var(--text)">Checkout mais rápido</div>
+<svg viewBox="0 0 900 520" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible">
+<g fill="none" stroke="var(--text-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M222 154C300 150 330 152 392 156"></path><path d="M380 148l13 8-13 8"></path>
+<path d="M600 160C660 180 690 230 700 290"></path><path d="M690 280l10 12 7-14"></path>
+<path d="M120 330c20-14 44-20 70-8 18 9 36 6 52-6 14-10 33-14 52-4" stroke="var(--accent)" stroke-width="2.5"></path>
+</g>
+</svg>
+<div style="position: absolute; left: 40px; top: 110px; width: 182px; height: 90px; border: 2px solid var(--text); border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 15px; transform: rotate(-.6deg)">Checkout atual</div>
+<button class="plain" type="button" onClick="{{toggleSel}}" aria-pressed="{{selPressed}}" style="position: absolute; left: 394px; top: 104px; width: 210px; height: 108px; cursor: pointer">
+<span style="position: absolute; inset: 0; border: 2px solid var(--accent); border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; text-align: center; padding: 0 24px">Cache por tenant?</span>
+<sc-if value="{{sel}}" hint-placeholder-val="{{ true }}"><span class="enter" style="position: absolute; inset: -8px; border: 1px solid var(--accent); border-radius: 4px; pointer-events: none"><span style="position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; background: var(--surface); border: 1px solid var(--accent)"></span><span style="position: absolute; right: -4px; top: -4px; width: 8px; height: 8px; background: var(--surface); border: 1px solid var(--accent)"></span><span style="position: absolute; left: -4px; bottom: -4px; width: 8px; height: 8px; background: var(--surface); border: 1px solid var(--accent)"></span><span style="position: absolute; right: -4px; bottom: -4px; width: 8px; height: 8px; background: var(--surface); border: 1px solid var(--accent)"></span><span style="position: absolute; left: 50%; top: -26px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent)"></span></span></sc-if>
+</button>
+<div style="position: absolute; left: 620px; top: 300px; width: 200px; padding: 14px; background: var(--warning-soft); color: var(--text); font-size: 14px; line-height: 20px; box-shadow: var(--e1); transform: rotate(1.5deg)">Invalidar quando o catálogo mudar: ouvir o evento de produto atualizado.</div>
+<div style="position: absolute; left: 110px; top: 350px; font-size: 14px; color: var(--accent)">latência hoje: medir antes</div>
+<div style="position: absolute; left: 330px; top: 300px; width: 220px; padding: 12px 14px; border-radius: 10px; border: 1.5px dashed var(--border-2); font-size: 13px; color: var(--text-2)"><b style="font-weight: 600; color: var(--text)">Riscos</b><br>dados velhos no carrinho<br>memória por tenant</div>
+</div>
+<sc-if value="{{sel}}" hint-placeholder-val="{{ true }}">
+<div class="card rise rel cv-props" style="position: absolute; left: 16px; top: 70px; width: 210px; padding: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--e1); z-index: 10">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<span class="eyebrow">Elipse selecionada</span>
+<div class="col" style="gap: 6px"><span class="label">Traço</span><div class="row" style="gap: 6px"><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--text)"></span><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--accent); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent)"></span><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--danger)"></span><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--success)"></span></div></div>
+<div class="col" style="gap: 6px"><span class="label">Fundo</span><div class="row" style="gap: 6px"><span style="width: 22px; height: 22px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--border-2)"></span><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--accent-soft); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent)"></span><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--warning-soft)"></span></div></div>
+<div class="col" style="gap: 6px"><span class="label">Espessura</span><div class="seg" style="grid-auto-columns: minmax(0, 1fr)"><button class="seg-b" type="button">fina</button><button class="seg-b on" type="button" style="background: var(--surface); box-shadow: var(--e1)">média</button><button class="seg-b" type="button">grossa</button></div></div>
+<div class="row" style="gap: 4px"><button class="btn btn-fan btn-sm" type="button">Duplicar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--danger)">Excluir</button></div>
+</div>
+</sc-if>
+<div class="row cv-zoomctl" style="position: absolute; left: 16px; bottom: 16px; gap: 2px; padding: 3px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--e1); z-index: 10"><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Diminuir zoom"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="mono" style="font-size: 12px; width: 44px; text-align: center">100%</span><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Aumentar zoom"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><button class="btn btn-fan btn-sm" type="button">Ajustar</button></div>
+<div class="row cv-undo" style="position: absolute; right: 16px; bottom: 16px; gap: 2px; padding: 3px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--e1); z-index: 10"><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Desfazer (⌘Z)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-3"></path></svg></button><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Refazer (⌘⇧Z)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0 0 12h3"></path></svg></button></div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Canvas livre</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Barra de ferramentas</span><span class="prio">P2</span></div><p>Selecionar, mão, retângulo, elipse, seta, linha, lápis, texto, nota adesiva e borracha, cada uma com tecla (V, H, R, O, A, L, P, T, N, E). Clique para trocar de ferramenta.</p><p><span class="lbl">Movimento</span> Ferramenta ativa troca em instante. Zoom e pan acompanham o gesto sem suavização extra.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Seleção e propriedades</span><span class="prio">P2</span></div><p>Clique na elipse para alternar a seleção: alças nos cantos, alça de rotação e painel de propriedades (traço, fundo, espessura). Formas com leve traço à mão, no espírito de quadro branco.</p><p><span class="lbl">Movimento</span> Painel entra com mola; alças em opacidade rápida.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Página do tipo canvas</span><span class="prio">P2</span></div><p>Uma página canvas fica na árvore como qualquer outra, com histórico e backlinks. Exporta PNG e SVG. No celular, só visualização com pan e zoom.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="canvas" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, tool: 0, sel: true };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const T = [
+      { nome: 'Selecionar', k: 'V', d: 'M5 3l14 8-6 2-2 6z' },
+      { nome: 'Mão', k: 'H', d: 'M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4.5a1.5 1.5 0 0 1 3 0V12M14 11.5V6a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6.5 7S5 17 4 14l-1-3a1.5 1.5 0 0 1 2.7-1.2L8 13' },
+      { nome: 'Retângulo', k: 'R', d: 'M4 6h16v12H4z' },
+      { nome: 'Elipse', k: 'O', d: 'M12 5c4.5 0 8 3.1 8 7s-3.5 7-8 7-8-3.1-8-7 3.5-7 8-7z' },
+      { nome: 'Seta', k: 'A', d: 'M5 19L19 5M10 5h9v9' },
+      { nome: 'Linha', k: 'L', d: 'M5 19L19 5' },
+      { nome: 'Lápis', k: 'P', d: 'M4 20l4-1L19 8l-3-3L5 16z' },
+      { nome: 'Texto', k: 'T', d: 'M5 6V4h14v2M12 4v16M9 20h6' },
+      { nome: 'Nota adesiva', k: 'N', d: 'M4 4h16v10l-6 6H4zM14 20v-6h6' },
+      { nome: 'Borracha', k: 'E', d: 'M16 4l5 5-10 10H6l-3-3zM9 20h12' }
+    ];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      tools: T.map((t, i) => Object.assign({}, t, { cls: 'tool' + (s.tool === i ? ' on' : ''), sel: s.tool === i ? 'true' : 'false', pick: () => this.setState({ tool: i }) })),
+      sel: s.sel, selPressed: s.sel ? 'true' : 'false', toggleSel: () => this.setState({ sel: !s.sel })
+    };
+  }
+}
+</script>
+</body>
+</html>

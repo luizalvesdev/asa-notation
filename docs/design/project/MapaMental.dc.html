@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mapa mental gerado pelo assistente</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="mapa" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="hide-m">Sistemas distribuídos</span><span class="sep hide-m">/</span><span class="cur">Mapa · replicação</span></nav>
+<div class="tb-r">
+<div class="rel"><button class="btn btn-sec btn-sm" type="button" aria-expanded="{{expExp}}" onClick="{{toggleExp}}">Exportar<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div class="{{expCls}}" style="position: absolute; right: 0; top: 36px; width: 180px; z-index: 40; transform-origin: 90% 0"><div class="menu"><button class="plain mrow" type="button" onClick="{{exportar}}">SVG<span class="k">vetor</span></button><button class="plain mrow" type="button" onClick="{{exportar}}">PNG<span class="k">2×</span></button></div></div></div>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="row rel" style="gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<span class="av r">R</span>
+<label for="tema" class="label" style="font-size: 13px">Tema</label>
+<input id="tema" class="inp filled" placeholder="replicação em sistemas distribuídos" style="width: 300px; max-width: 100%">
+<button class="btn btn-sec btn-sm" type="button" onClick="{{regen}}">Gerar de novo</button>
+<span class="badge r dash" style="margin-left: auto">Rascunho · ainda não salvo</span>
+<button class="btn btn-ink btn-sm" type="button">Salvar mapa</button>
+</div>
+<div class="cv-grid" style="flex: 1; position: relative; overflow: hidden">
+<div class="mm-stage {{mapCls}}" style="position: absolute; left: 50%; top: 50%; width: 860px; height: 520px; margin: -270px 0 0 -430px">
+<svg viewBox="0 0 860 520" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<g fill="none" stroke="var(--border-2)" stroke-width="2" stroke-linecap="round">
+<path d="M430 260C340 260 330 120 240 120"></path><path d="M430 260C340 260 330 400 240 400"></path><path d="M430 260C520 260 530 120 620 120"></path><path d="M430 260C520 260 530 400 620 400"></path>
+<path d="M150 120C110 120 110 70 70 70"></path><path d="M150 120C110 120 110 170 70 170"></path>
+<path d="M150 400C110 400 110 360 70 360"></path><path d="M150 400C110 400 110 450 70 450"></path>
+<path d="M710 400C750 400 750 360 790 360"></path><path d="M710 400C750 400 750 450 790 450"></path>
+</g>
+<sc-if value="{{open}}" hint-placeholder-val="{{ true }}"><g fill="none" stroke="var(--border-2)" stroke-width="2" stroke-linecap="round"><path d="M710 120C750 120 750 70 790 70"></path><path d="M710 120C750 120 750 170 790 170"></path></g></sc-if>
+</svg>
+<div class="node rise" style="left: 350px; top: 232px; width: 160px; height: 56px; background: var(--renato); color: var(--bg); border-color: transparent; font-family: var(--serif); font-size: 18px">Replicação</div>
+<div class="node rise" style="left: 160px; top: 98px; width: 160px; animation-delay: 40ms">Topologias</div>
+<div class="node rise" style="left: 160px; top: 378px; width: 160px; animation-delay: 80ms">Consistência</div>
+<button class="plain node rise" type="button" onClick="{{toggleOpen}}" aria-expanded="{{openExp}}" style="left: 540px; top: 98px; width: 160px; animation-delay: 120ms; cursor: pointer; gap: 6px">Consenso<span class="badge" style="height: 18px; padding: 0 5px; font-size: 11px">{{openBadge}}</span></button>
+<div class="node rise" style="left: 540px; top: 378px; width: 160px; animation-delay: 160ms">Riscos</div>
+<div class="node enter" style="left: 0; top: 52px; width: 120px; font-size: 12px; animation-delay: 200ms">Líder e seguidores</div>
+<div class="node enter" style="left: 0; top: 152px; width: 120px; font-size: 12px; animation-delay: 220ms">Multi-líder</div>
+<div class="node enter" style="left: 0; top: 342px; width: 120px; font-size: 12px; animation-delay: 240ms">Forte</div>
+<div class="node enter" style="left: 0; top: 432px; width: 120px; font-size: 12px; animation-delay: 260ms">Eventual</div>
+<sc-if value="{{open}}" hint-placeholder-val="{{ true }}"><a class="node enter" href="Pagina.dc.html" style="left: 740px; top: 52px; width: 120px; font-size: 12px; text-decoration: none; color: var(--text); background: var(--accent-soft); border-color: var(--accent)">Raft</a><div class="node enter" style="left: 740px; top: 152px; width: 120px; font-size: 12px; animation-delay: 30ms">Paxos</div></sc-if>
+<div class="node enter" style="left: 740px; top: 342px; width: 120px; font-size: 12px; animation-delay: 280ms">Split-brain</div>
+<div class="node enter" style="left: 740px; top: 432px; width: 120px; font-size: 12px; animation-delay: 300ms">Atraso de réplica</div>
+</div>
+<div class="toasts"><div class="{{toastCls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>mapa-replicacao exportado</div></div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Mapa mental</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Gerado a partir de um tema</span><span class="prio">P2</span></div><p>O Renato gera o mapa usando as notas existentes primeiro; nós que já são páginas viram links (Raft, em tinta). Chega como rascunho até “Salvar mapa”. “Gerar de novo” substitui o rascunho.</p><p><span class="lbl">Movimento</span> Centro primeiro, depois ramos com mola e 40 ms de defasagem, folhas em opacidade.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Interação e export</span><span class="prio">P2</span></div><p>Clique num ramo (Consenso) para recolher e expandir. Arrastar reposiciona; Tab cria filho, ↵ cria irmão. Exportar SVG ou PNG em 2×.</p><p><span class="lbl">Movimento</span> Filhos entram e saem em opacidade rápida.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="mapa" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, open: true, exp: false, toast: false, gen: 0 };
+    this.t = null;
+  }
+  componentWillUnmount() { if (this.t) clearTimeout(this.t); }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      open: s.open, openExp: s.open ? 'true' : 'false', openBadge: s.open ? '−' : '+2', toggleOpen: () => this.setState({ open: !s.open }),
+      expExp: s.exp ? 'true' : 'false', expCls: 'float' + (s.exp ? ' on' : ''), toggleExp: () => this.setState({ exp: !s.exp }),
+      exportar: () => { this.setState({ exp: false, toast: true }); if (this.t) clearTimeout(this.t); this.t = setTimeout(() => this.setState({ toast: false }), 3000); },
+      toastCls: 'toast' + (s.toast ? ' on' : ''),
+      mapCls: s.gen % 2 ? 'gen-b' : 'gen-a',
+      regen: () => this.setState({ gen: s.gen + 1, open: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

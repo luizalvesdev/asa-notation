@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Modo Anotações, fluxos e responsivo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}" style="min-height: 100vh">
+<header class="tb" style="position: sticky; top: 0; z-index: 5">
+<span class="row" style="gap: 8px; font-weight: 600; font-size: 14px"><span class="av u" style="width: 22px; height: 22px">a</span>asa-notation · passo 8</span>
+<div class="tb-r"><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button></div>
+</header>
+<main style="max-width: 1360px; margin: 0 auto; padding: 72px 40px 96px; display: flex; flex-direction: column; gap: 56px">
+<div class="col" style="gap: 16px; max-width: 780px">
+<p class="eyebrow">Passo 8 de 8 · Anotações, fluxos e responsivo</p>
+<h1 style="font-family: var(--serif); font-weight: 500; font-size: 56px; line-height: 60px; letter-spacing: -.025em">Como ler esta especificação.</h1>
+<p style="font-size: 17px; line-height: 27px; color: var(--text-2)">Todas as telas têm o interruptor Anotações no topo. Ligado, aparecem pinos numerados sobre os elementos e um painel à direita com a intenção, o comportamento, os estados, o movimento e a prioridade de cada um.</p>
+</div>
+
+<section style="display: flex; flex-wrap: wrap; gap: 24px 40px; padding-top: 32px; border-top: 1px solid var(--border)">
+<div class="col" style="gap: 10px; flex: 1 1 280px; max-width: 400px"><h2 style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px">Anatomia de uma anotação</h2><p style="font-size: 14px; line-height: 22px; color: var(--text-2)">O pino no design e o cartão no painel têm o mesmo número. A cor roxa existe só neste modo e nunca chega ao produto.</p></div>
+<div style="flex: 3 1 560px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; align-items: start">
+<div class="card rel" style="padding: 28px; background: var(--bg-2)"><span class="pin" style="top: 18px; left: 18px">4</span><div class="row" style="gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); margin-left: 16px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3; color: var(--text-3)"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>Bloco com alça</div><span class="spec" style="display: block; margin-top: 12px">pino sobre o elemento</span></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">4</span><span>Título: o que é</span><span class="prio">P0</span></div><p>Texto: intenção, comportamento e estados, em frases curtas.</p><p><span class="lbl">Movimento</span> duração · curva · propriedade · versão reduzida</p></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 20px"><b style="font-weight: 600">Prioridade</b><span><span class="prio" style="margin: 0 6px 0 0; color: var(--note)">P0</span>essencial para a primeira versão</span><span><span class="prio" style="margin: 0 6px 0 0; color: var(--note)">P1</span>logo depois do essencial</span><span><span class="prio" style="margin: 0 6px 0 0; color: var(--note)">P2</span>pode esperar sem quebrar fluxos</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-wrap: wrap; gap: 24px 40px; padding-top: 32px; border-top: 1px solid var(--border)">
+<div class="col" style="gap: 10px; flex: 1 1 280px; max-width: 400px"><h2 style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px">Fluxos clicáveis</h2><p style="font-size: 14px; line-height: 22px; color: var(--text-2)">Em modo de reprodução, os links da barra lateral, do topo e dos cartões levam às outras pranchas. Cada prancha guarda o próprio estado (tema, painel, seleção).</p></div>
+<div style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{flows}}" as="f" hint-placeholder-count="6">
+<div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px"><b style="font-weight: 600; font-size: 14px">{{f.t}}</b><div class="row" style="gap: 6px; flex-wrap: wrap"><sc-for list="{{f.steps}}" as="st" hint-placeholder-count="3"><a class="btn btn-sec btn-sm" href="{{st.href}}">{{st.t}}</a><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></sc-if></sc-for></div></div>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-wrap: wrap; gap: 24px 40px; padding-top: 32px; border-top: 1px solid var(--border)">
+<div class="col" style="gap: 10px; flex: 1 1 280px; max-width: 400px"><h2 style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px">Responsivo</h2><p style="font-size: 14px; line-height: 22px; color: var(--text-2)">As telas reagem à largura do próprio app (container queries), então as pranchas de celular e tablet ao lado usam exatamente as mesmas telas.</p></div>
+<div style="flex: 3 1 560px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px">
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px"><span class="eyebrow">Desktop · acima de 960 px</span><span style="font-size: 13px; line-height: 20px">Barra lateral fixa (recolhível para 56 px), painel de chat de 380 px à direita, painel de anotações visível.</span></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px"><span class="eyebrow">Tablet · 721 a 960 px</span><span style="font-size: 13px; line-height: 20px">Mesma estrutura; painel de anotações escondido; Kanban e Semana rolam na horizontal.</span></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px"><span class="eyebrow">Celular · até 720 px</span><span style="font-size: 13px; line-height: 20px">Navegação inferior com captura em destaque no centro, árvore em gaveta, chat em tela cheia subindo de baixo, alvos de 44 px, corpo em 16 px.</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-wrap: wrap; gap: 24px 40px; padding-top: 32px; border-top: 1px solid var(--border)">
+<div class="col" style="gap: 10px; flex: 1 1 280px; max-width: 400px"><h2 style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px">Índice das anotações</h2><p style="font-size: 14px; line-height: 22px; color: var(--text-2)">Quantas notas cada prancha tem e as prioridades presentes.</p></div>
+<div class="card" style="flex: 3 1 560px; min-width: 0; overflow: hidden">
+<div class="dgrid" role="table" aria-label="Índice" style="--cols: minmax(0, 1.4fr) 80px minmax(0, 1fr)">
+<div class="drow hd" role="row"><span role="columnheader">Prancha</span><span role="columnheader">Notas</span><span role="columnheader">Prioridades</span></div>
+<sc-for list="{{idx}}" as="i" hint-placeholder-count="12"><a class="drow click" role="row" href="{{i.href}}" style="text-decoration: none; color: var(--text)"><span>{{i.t}}</span><span class="mono">{{i.n}}</span><span class="mono" style="color: var(--text-2)">{{i.p}}</span></a></sc-for>
+</div>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"$preview":{"width":1440,"height":2900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const flow = (t, steps) => ({ t: t, steps: steps.map((x, i) => ({ t: x[0], href: x[1], more: i < steps.length - 1 })) });
+    return {
+      rootCls: 'ds' + (dark ? ' escuro' : ''),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      flows: [
+        flow('Escrever e estudar', [['Página', 'Pagina.dc.html'], ['Cards extraídos', 'Estudo.dc.html'], ['Revisão FSRS', 'Revisao.dc.html'], ['Estatísticas', 'EstudoStats.dc.html']]),
+        flow('Capturar e organizar', [['Hoje', 'Hoje.dc.html'], ['Captura ⌘⇧K', 'Captura.dc.html'], ['Inbox', 'Inbox.dc.html'], ['Perguntar ao Renato', 'Chat.dc.html']]),
+        flow('Planejar com o Hermes', [['Hoje', 'Hoje.dc.html'], ['Conversa e rascunho', 'Chat.dc.html'], ['Semana', 'Semana.dc.html'], ['Metas', 'Metas.dc.html']]),
+        flow('Rotina semanal', [['Notificação', 'Notificacoes.dc.html'], ['Revisão do sábado', 'Rotina.dc.html'], ['Progresso', 'Progresso.dc.html']]),
+        flow('Encontrar qualquer coisa', [['Busca ⌘K', 'Busca.dc.html'], ['Database', 'Database.dc.html'], ['Linha como página', 'DatabaseLinha.dc.html']]),
+        flow('Primeiro uso', [['Login', 'Login.dc.html'], ['Importar', 'Importar.dc.html'], ['Configurações', 'Configuracoes.dc.html']])
+      ],
+      idx: [
+        ['1.1 Fundamentos', 6, 'P0 · P1', 'Main.dc.html'], ['1.2 Movimento', 11, 'P0', 'Movimento.dc.html'], ['1.3 Componentes', 7, 'P0 · P1', 'Componentes.dc.html'],
+        ['2.1 Página e editor', 9, 'P0 · P1', 'Pagina.dc.html'], ['2.2 Busca', 1, 'P0', 'Busca.dc.html'], ['2.3 Nova página', 2, 'P0 · P1', 'NovaPagina.dc.html'], ['2.4 Lixeira', 2, 'P1', 'Lixeira.dc.html'], ['2.5 Histórico e link', 2, 'P1 · P2', 'Historico.dc.html'],
+        ['3.1 Database', 6, 'P0', 'Database.dc.html'], ['3.2 Linha como página', 2, 'P0', 'DatabaseLinha.dc.html'],
+        ['4.1 Hoje', 4, 'P0 · P1', 'Hoje.dc.html'], ['4.2 Semana', 3, 'P0 · P1', 'Semana.dc.html'], ['4.3 Metas', 2, 'P0', 'Metas.dc.html'], ['4.4 Rotina', 3, 'P0 · P1', 'Rotina.dc.html'], ['4.5 Progresso', 3, 'P1', 'Progresso.dc.html'], ['4.6 Notificações', 2, 'P1', 'Notificacoes.dc.html'],
+        ['5.1 Conversas', 4, 'P0', 'Chat.dc.html'], ['5.2 Inbox', 4, 'P0', 'Inbox.dc.html'],
+        ['6.1 Estudo', 3, 'P0', 'Estudo.dc.html'], ['6.2 Revisão FSRS', 4, 'P0', 'Revisao.dc.html'], ['6.3 Estatísticas', 4, 'P1', 'EstudoStats.dc.html'], ['6.4 Pesquisa', 3, 'P0 · P1', 'Pesquisa.dc.html'], ['6.5 Tutor', 3, 'P2', 'Tutor.dc.html'],
+        ['7.1 Mermaid', 3, 'P1', 'Mermaid.dc.html'], ['7.2 Canvas', 3, 'P2', 'Canvas.dc.html'], ['7.3 Mapa mental', 2, 'P2', 'MapaMental.dc.html'], ['7.4 Login', 2, 'P0', 'Login.dc.html'], ['7.5 Importar', 2, 'P1', 'Importar.dc.html'], ['7.6 Configurações', 5, 'P0 · P1 · P2', 'Configuracoes.dc.html'],
+        ['8.1 Estados', 10, 'P0 · P1', 'Estados.dc.html']
+      ].map((r) => ({ t: r[0], n: r[1], p: r[2], href: r[3] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

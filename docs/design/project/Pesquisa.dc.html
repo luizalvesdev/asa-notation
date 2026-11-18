@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pesquisa com citações, resumo e quiz</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="pesquisa" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><a href="Estudo.dc.html" class="hide-m">Estudo</a><span class="sep hide-m">/</span><span class="cur">Pesquisa · CAP</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<article class="page" style="padding-top: 48px; max-width: 800px">
+<div class="row" style="gap: 8px; margin-bottom: 10px"><span class="av r">R</span><span style="font-size: 13px; color: var(--text-2)">Pesquisa feita pelo Renato · 4 fontes · ontem</span></div>
+<h1 class="p-title" style="margin-top: 0">O teorema CAP na prática</h1>
+<p class="b-p muted">Pergunta: “Como o CAP aparece em bancos reais e onde o Raft se encaixa?”</p>
+<div class="tabs rel" role="tablist" aria-label="Seções" style="margin: 20px 0 22px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button class="{{t.cls}}" type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.nome}}</button></sc-for>
+</div>
+
+<sc-if value="{{tRes}}" hint-placeholder-val="{{ true }}">
+<div class="col enter rel" style="gap: 12px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<div class="draft r" style="padding: 10px 12px"><div class="row" style="gap: 8px; flex-wrap: wrap"><span class="draft-t">Rascunho do Renato</span><span style="font-size: 13px; color: var(--text-2)">Revise antes de salvar como página de estudo.</span><span class="row" style="margin-left: auto; gap: 4px"><button class="btn btn-ink btn-sm" type="button">Salvar como página</button><button class="btn btn-fan btn-sm" type="button">Editar</button></span></div></div>
+<h2 class="b-h2">Resumo</h2>
+<p class="b-p">O CAP diz que, durante uma partição de rede, um sistema distribuído precisa escolher entre consistência e disponibilidade <span class="cite">1</span>. Fora de partições, a escolha prática é entre latência e consistência, como propõe o modelo PACELC <span class="cite">2</span>.</p>
+<p class="b-p">Sistemas que usam consenso, como os baseados em Raft, ficam do lado da consistência: sem maioria, param de aceitar escritas <span class="cite">3</span>. Bancos com replicação assíncrona tendem a priorizar disponibilidade e aceitam leituras desatualizadas <span class="cite">4</span>.</p>
+<h2 class="b-h2">Pontos-chave</h2>
+<div class="b-li"><span class="bul">•</span><span>CAP fala de partições; não é uma escolha permanente de “2 de 3”.</span></div>
+<div class="b-li"><span class="bul">•</span><span>Raft exige maioria: com 5 nós, tolera 2 falhas.</span></div>
+<div class="b-li"><span class="bul">•</span><span>Ligado a <a class="mention" href="Pagina.dc.html">Consenso com Raft</a> e à meta Certificação.</span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{tFon}}" hint-placeholder-val="{{ false }}">
+<div class="col enter" style="gap: 8px">
+<sc-for list="{{fontes}}" as="f" hint-placeholder-count="4"><div class="b-embed"><span class="cite">{{f.n}}</span><span class="col grow1" style="min-width: 0"><span style="font-weight: 500; font-size: 14px" class="trunc">{{f.t}}</span><span style="font-size: 12px; color: var(--text-3)">{{f.d}}</span></span><button class="btn btn-fan btn-sm" type="button">{{f.cta}}</button></div></sc-for>
+<p style="font-size: 12px; color: var(--text-3); margin-top: 6px">Toda afirmação do resumo aponta para uma fonte. Afirmações sem fonte são marcadas como “sem fonte” e não viram card.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{tQuiz}}" hint-placeholder-val="{{ false }}">
+<div class="col enter rel" style="gap: 16px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<div class="row" style="flex-wrap: wrap; gap: 10px"><div class="seg" role="tablist" aria-label="Tipo de quiz"><span class="seg-ind" style="width: calc((100% - 4px) / 2); transform: translateX({{qX}})"></span><button class="{{qG}}" type="button" role="tab" aria-selected="{{qGsel}}" onClick="{{pickG}}">Geral</button><button class="{{qF}}" type="button" role="tab" aria-selected="{{qFsel}}" onClick="{{pickF}}">Pontos fracos</button></div><span style="font-size: 13px; color: var(--text-2); margin-left: auto">Questão {{qi}} de {{qn}} · {{score}} certas</span></div>
+<div class="bar"><span style="width: {{qpct}}%; transition: width var(--medio) var(--padrao)"></span></div>
+<sc-if value="{{qDone}}" hint-placeholder-val="{{ false }}"><div class="card rise" style="padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start"><b style="font-family: var(--serif); font-weight: 500; font-size: 24px">{{score}} de {{qn}} certas</b><span class="muted" style="font-size: 14px">Questões erradas viram cards com o rótulo “quiz” para a próxima revisão.</span><div class="row" style="gap: 6px"><button class="btn btn-pri btn-sm" type="button" onClick="{{reset}}">Refazer</button><a class="btn btn-sec btn-sm" href="Tutor.dc.html">Sessão com tutor</a></div></div></sc-if>
+<sc-if value="{{qOn}}" hint-placeholder-val="{{ true }}">
+<div class="col" style="gap: 10px">
+<b style="font-size: 17px; line-height: 25px; font-weight: 600">{{q.p}}</b>
+<sc-for list="{{q.opts}}" as="o" hint-placeholder-count="4"><button class="{{o.cls}}" type="button" onClick="{{o.pick}}" aria-pressed="{{o.sel}}"><span class="kpad">{{o.k}}</span><span class="grow1">{{o.t}}</span><sc-if value="{{o.right}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if></button></sc-for>
+<sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="enter" style="padding: 12px 14px; border-radius: 10px; background: var(--bg-2); font-size: 14px; line-height: 21px"><b style="font-weight: 600">{{fbTitle}}</b> {{q.exp}} <span class="cite">{{q.src}}</span></div><button class="btn btn-pri" type="button" onClick="{{next}}" style="align-self: flex-end">Próxima <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">↵</span></button></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</article>
+</div>
+<dc-import name="NavInferior" atual="estudo" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Pesquisa</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Resumo, fontes e quiz</span><span class="prio">P1</span></div><p>Três abas sobre a mesma pesquisa. A pesquisa é pedida ao Renato pelo chat ou pela paleta; chega como rascunho e vira página de estudo ao salvar.</p><p><span class="lbl">Movimento</span> Indicador da aba cresce do centro (médio); conteúdo troca com opacidade + 6 px.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Citações</span><span class="prio">P0</span></div><p>Números clicáveis levam à fonte na aba Fontes. Fonte pode ser salva como referência na nota ou como linha em Leituras.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Quiz</span><span class="prio">P1</span></div><p>Geral (sobre a pesquisa) ou Pontos fracos (cards mais errados). Teclas 1–4 respondem. Feedback mostra a explicação e a fonte. Erros viram cards. Responda para ver os estados certo e errado.</p><p><span class="lbl">Movimento</span> Certo/errado: troca de borda e fundo em rápido; explicação entra com 6 px; barra avança em médio.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="pesquisa" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"aba":{"editor":"enum","options":["Resumo","Fontes","Quiz"],"default":"Resumo"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, tab: Math.max(0, ['Resumo', 'Fontes', 'Quiz'].indexOf(props.aba || 'Resumo')), mode: 0, qi: 0, pick: null, score: 0 };
+    this.sets = [
+      [
+        { p: 'Segundo o CAP, a escolha entre consistência e disponibilidade é obrigatória quando…', opts: ['O sistema tem mais de 3 nós', 'Há uma partição de rede', 'A latência passa de 100 ms', 'Sempre, em qualquer situação'], a: 1, exp: 'O trade-off só é forçado durante partições de rede.', src: '1' },
+        { p: 'Um cluster Raft com 5 nós continua aceitando escritas com quantos nós fora?', opts: ['1', '2', '3', '4'], a: 1, exp: 'Com 5 nós a maioria é 3; tolera 2 falhas.', src: '3' },
+        { p: 'O que o PACELC acrescenta ao CAP?', opts: ['A troca entre latência e consistência sem partição', 'Um quarto requisito de durabilidade', 'Uma prova de impossibilidade', 'Nada; é sinônimo'], a: 0, exp: 'Sem partição, a escolha prática é latência contra consistência.', src: '2' }
+      ],
+      [
+        { p: 'O líder do Raft faz commit direto de entradas de…', opts: ['Qualquer termo', 'Apenas do próprio termo', 'Apenas do termo anterior', 'Termos ímpares'], a: 1, exp: 'Entradas antigas são confirmadas indiretamente, pela regra do próprio termo.', src: '3' },
+        { p: 'Um líder que recebe uma mensagem com termo maior…', opts: ['Ignora a mensagem', 'Volta a ser seguidor', 'Inicia nova eleição', 'Duplica o log'], a: 1, exp: 'Termo maior indica liderança desatualizada: ele vira seguidor.', src: '3' }
+      ]
+    ];
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const set = this.sets[s.mode];
+    const done = s.qi >= set.length;
+    const q = set[Math.min(s.qi, set.length - 1)];
+    const answered = s.pick !== null;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      tabs: ['Resumo', 'Fontes', 'Quiz'].map((n, i) => ({ nome: n, cls: 'tab' + (s.tab === i ? ' on' : ''), sel: s.tab === i ? 'true' : 'false', pick: () => this.setState({ tab: i }) })),
+      tRes: s.tab === 0, tFon: s.tab === 1, tQuiz: s.tab === 2,
+      fontes: [
+        { n: '1', t: 'Brewer’s conjecture and the feasibility of consistent, available, partition-tolerant web services', d: 'Gilbert e Lynch · 2002 · artigo', cta: 'Salvar em Leituras' },
+        { n: '2', t: 'Consistency tradeoffs in modern distributed database system design', d: 'Abadi · 2012 · artigo', cta: 'Salvar em Leituras' },
+        { n: '3', t: 'Consenso com Raft', d: 'sua nota · Estudo', cta: 'Abrir' },
+        { n: '4', t: 'Livro de dados intensivos, capítulo 9', d: 'Leituras · em andamento', cta: 'Abrir' }
+      ],
+      qX: (s.mode * 100) + '%', qG: 'seg-b' + (s.mode === 0 ? ' on' : ''), qF: 'seg-b' + (s.mode === 1 ? ' on' : ''),
+      qGsel: s.mode === 0 ? 'true' : 'false', qFsel: s.mode === 1 ? 'true' : 'false',
+      pickG: () => this.setState({ mode: 0, qi: 0, pick: null, score: 0 }), pickF: () => this.setState({ mode: 1, qi: 0, pick: null, score: 0 }),
+      qi: Math.min(s.qi + 1, set.length), qn: set.length, score: s.score, qpct: Math.round(s.qi / set.length * 100),
+      qDone: done, qOn: !done,
+      q: { p: q.p, exp: q.exp, src: q.src, opts: q.opts.map((t, i) => ({ t: t, k: String(i + 1), sel: s.pick === i ? 'true' : 'false', right: answered && i === q.a, cls: 'qopt' + (answered && i === q.a ? ' right' : '') + (answered && s.pick === i && i !== q.a ? ' wrong' : ''), pick: () => { if (s.pick === null) this.setState({ pick: i, score: s.score + (i === q.a ? 1 : 0) }); } })) },
+      answered: answered, fbTitle: answered && s.pick === q.a ? 'Certo.' : 'Não exatamente.',
+      next: () => this.setState({ qi: s.qi + 1, pick: null }),
+      reset: () => this.setState({ qi: 0, pick: null, score: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

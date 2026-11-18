@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barra lateral</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<nav class="{{rootCls}}" aria-label="Navegação principal">
+<div class="row" style="height: 48px; padding: 0 8px 0 12px; flex: none; border-bottom: 1px solid var(--border)">
+<span class="av u" style="width: 24px; height: 24px">L</span>
+<span class="lab" style="font-weight: 600; font-size: 13px; flex: 1">Meu caderno</span>
+<a class="btn btn-fan btn-ico btn-sm lab" href="NovaPagina.dc.html" aria-label="Nova página"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Recolher barra lateral (⌘\)" onClick="{{toggleMin}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M9 5v14"></path></svg></button>
+</div>
+<div class="side-in">
+<a class="{{c.busca}}" href="Busca.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><span class="lab">Buscar</span><span class="k">⌘K</span></a>
+<a class="{{c.hoje}}" href="Hoje.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span class="lab">Hoje</span><span class="cnt">5</span></a>
+<a class="{{c.semana}}" href="Semana.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z"></path><path d="M4 10h16M8 3v4M16 3v4"></path></svg><span class="lab">Semana</span></a>
+<a class="{{c.inbox}}" href="Inbox.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5 5h14l2 8v6H3v-6z"></path></svg><span class="lab">Inbox</span><span class="cnt" style="color: var(--renato); font-weight: 600">4</span></a>
+<a class="{{c.estudo}}" href="Estudo.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg><span class="lab">Estudo</span><span class="cnt">12</span></a>
+<a class="{{c.metas}}" href="Metas.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r=".5"></circle></svg><span class="lab">Metas</span></a>
+
+<div class="sgroup"><span>Hermes</span></div>
+<a class="{{c.rotina}}" href="Rotina.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg><span class="lab">Rotina e check-ins</span></a>
+<a class="{{c.progresso}}" href="Progresso.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg><span class="lab">Progresso</span></a>
+
+<div class="sgroup"><span>Favoritos</span></div>
+<a class="{{c.pagina}}" href="Pagina.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--cat-2)"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg><span class="lab">Consenso com Raft</span></a>
+<a class="{{c.database}}" href="Database.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--cat-4)"><path d="M4 5h16v14H4z"></path><path d="M4 10h16M10 10v9"></path></svg><span class="lab">Leituras</span></a>
+
+<div class="sgroup"><span>Recentes</span></div>
+<a class="tr" href="Pesquisa.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg><span class="lab">Pesquisa · CAP</span><span class="cnt">ontem</span></a>
+<a class="tr" href="Rotina.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg><span class="lab">Revisão do sábado</span><span class="cnt">15 nov</span></a>
+
+<div class="sgroup"><span>Páginas</span><a class="btn btn-fan btn-ico btn-sm" href="NovaPagina.dc.html" aria-label="Nova página" style="width: 22px; height: 22px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M12 5v14M5 12h14"></path></svg></a></div>
+<button class="plain tr" type="button" aria-expanded="{{projExp}}" onClick="{{toggleProj}}"><svg class="{{projChev}}" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span class="lab">Projetos</span><span class="cnt">3</span></button>
+<div class="{{projKids}}"><div>
+<a class="{{c.mermaid}}" href="Mermaid.dc.html" style="padding-left: 30px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg><span class="lab">Loja v2 · arquitetura</span></a>
+<a class="tr kid" href="Pagina.dc.html" style="padding-left: 30px; transition-delay: 20ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg><span class="lab">Site pessoal</span></a>
+<a class="{{c.canvas}}" href="Canvas.dc.html" style="padding-left: 30px; transition-delay: 40ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"></path></svg><span class="lab">Quadro de ideias</span></a>
+</div></div>
+<button class="plain tr" type="button" aria-expanded="{{sdExp}}" onClick="{{toggleSd}}"><svg class="{{sdChev}}" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg><span class="lab">Sistemas distribuídos</span></button>
+<div class="{{sdKids}}"><div>
+<a class="{{c.paginaTree}}" href="Pagina.dc.html" style="padding-left: 30px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg><span class="lab">Consenso com Raft</span></a>
+<a class="{{c.mapa}}" href="MapaMental.dc.html" style="padding-left: 30px; transition-delay: 20ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="20" cy="18" r="2"></circle><path d="M6 7l3.5 3M18 7l-3.5 3M18 17l-3.5-3"></path></svg><span class="lab">Mapa · replicação</span></a>
+<a class="{{c.pesquisa}}" href="Pesquisa.dc.html" style="padding-left: 30px; transition-delay: 40ms"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg><span class="lab">Pesquisa · CAP</span></a>
+</div></div>
+<a class="{{c.database2}}" href="Database.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="opacity: 0"><path d="M9 6l6 6-6 6"></path></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M4 10h16M10 10v9"></path></svg><span class="lab">Leituras</span></a>
+</div>
+<div style="flex: none; padding: 8px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 1px">
+<a class="{{c.notif}}" href="Notificacoes.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path><path d="M10 21h4"></path></svg><span class="lab">Notificações</span><span class="cnt"><span class="dot" style="background: var(--accent)"></span></span></a>
+<a class="{{c.lixeira}}" href="Lixeira.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg><span class="lab">Lixeira</span></a>
+<a class="{{c.config}}" href="Configuracoes.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4"></path></svg><span class="lab">Configurações</span></a>
+</div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"atual":{"editor":"enum","options":["busca","hoje","semana","inbox","estudo","metas","rotina","progresso","pagina","database","mermaid","canvas","mapa","pesquisa","notif","lixeira","config"],"default":"pagina"},"embutida":{"editor":"boolean","default":false},"recolhida":{"editor":"boolean","default":false},"$preview":{"width":248,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { min: null, proj: true, sd: true };
+  }
+  renderVals() {
+    const a = this.props.atual || 'pagina';
+    const min = this.state.min === null ? !!this.props.recolhida : this.state.min;
+    const cls = (id, kid) => 'tr' + (kid ? ' kid' : '') + (a === id ? ' s' : '');
+    return {
+      rootCls: (this.props.embutida ? '' : 'ds ') + 'side' + (min ? ' min' : ''),
+      toggleMin: () => this.setState({ min: !min }),
+      c: {
+        busca: cls('busca'), hoje: cls('hoje'), semana: cls('semana'), inbox: cls('inbox'), estudo: cls('estudo'), metas: cls('metas'),
+        rotina: cls('rotina'), progresso: cls('progresso'), pagina: cls('pagina'), database: cls('database'), database2: cls('none'),
+        mermaid: cls('mermaid', true), canvas: cls('canvas', true), paginaTree: cls('pagina', true), mapa: cls('mapa', true), pesquisa: cls('pesquisa', true),
+        notif: cls('notif'), lixeira: cls('lixeira'), config: cls('config')
+      },
+      projExp: this.state.proj ? 'true' : 'false',
+      projChev: 'chev' + (this.state.proj ? ' on' : ''),
+      projKids: 'kids' + (this.state.proj ? ' on' : ''),
+      toggleProj: () => this.setState({ proj: !this.state.proj }),
+      sdExp: this.state.sd ? 'true' : 'false',
+      sdChev: 'chev' + (this.state.sd ? ' on' : ''),
+      sdKids: 'kids' + (this.state.sd ? ' on' : ''),
+      toggleSd: () => this.setState({ sd: !this.state.sd })
+    };
+  }
+}
+</script>
+</body>
+</html>

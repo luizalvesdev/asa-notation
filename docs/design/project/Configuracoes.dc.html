@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Configurações</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="config" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Configurações</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="max-width: 860px; margin: 0 auto; padding: 36px 32px 120px; display: flex; flex-direction: column; gap: 18px">
+<h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Configurações</h1>
+<div class="tabs rel" role="tablist" aria-label="Seções" style="overflow-x: auto">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="7"><button class="{{t.cls}}" type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="white-space: nowrap">{{t.nome}}</button></sc-for>
+</div>
+
+<sc-if value="{{tGeral}}" hint-placeholder-val="{{ true }}"><div class="col enter" style="gap: 18px">
+<div class="col" style="gap: 8px"><span class="label">Tema</span><div class="seg" style="width: 360px; max-width: 100%"><span class="seg-ind" style="width: calc((100% - 4px) / 3); transform: translateX({{temaX}})"></span><sc-for list="{{temas}}" as="m" hint-placeholder-count="3"><button class="{{m.cls}}" type="button" onClick="{{m.pick}}">{{m.nome}}</button></sc-for></div><span class="help">“Sistema” segue a preferência do dispositivo.</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px"><div class="field"><label class="label" for="fz">Fuso horário</label><input id="fz" class="inp filled" placeholder="America/Sao_Paulo (UTC−03:00)"><span class="help">Usado em check-ins, lembretes e datas.</span></div><div class="field"><label class="label" for="ds">Semana começa em</label><input id="ds" class="inp filled" placeholder="Segunda-feira"></div></div>
+<button class="tog" type="button" role="switch" aria-checked="{{rmCk}}" onClick="{{toggleRm}}" style="padding: 0; color: var(--text); justify-content: space-between; max-width: 520px"><span class="col" style="text-align: left"><span>Reduzir movimento</span><span style="font-size: 12px; color: var(--text-3); font-weight: 400">Troca deslocamentos por opacidade. Também segue o sistema.</span></span><span class="{{rmSw}}"><span class="knob"></span></span></button>
+</div></sc-if>
+
+<sc-if value="{{tRotina}}" hint-placeholder-val="{{ false }}"><div class="col enter" style="gap: 6px">
+<span class="label" style="margin-bottom: 6px">Horários dos check-ins do Hermes</span>
+<div class="row" style="gap: 12px; min-height: 52px; border-top: 1px solid var(--border)"><span class="grow1">Plano do dia</span><span class="badge out">todo dia</span><input class="inp filled mono" aria-label="Horário do plano do dia" placeholder="08:30" style="width: 90px"></div>
+<div class="row" style="gap: 12px; min-height: 52px; border-top: 1px solid var(--border)"><span class="grow1">Métricas da quinta</span><span class="badge out">quinta</span><input class="inp filled mono" aria-label="Horário das métricas" placeholder="18:00" style="width: 90px"></div>
+<div class="row" style="gap: 12px; min-height: 52px; border-top: 1px solid var(--border)"><span class="grow1">Revisão do sábado</span><span class="badge out">sábado</span><input class="inp filled mono" aria-label="Horário da revisão" placeholder="10:00" style="width: 90px"></div>
+<div class="row" style="gap: 12px; min-height: 52px; border-top: 1px solid var(--border)"><span class="grow1">Silêncio</span><span class="help">sem notificações</span><input class="inp filled mono" aria-label="Início do silêncio" placeholder="22:00" style="width: 90px"><span>até</span><input class="inp filled mono" aria-label="Fim do silêncio" placeholder="07:30" style="width: 90px"></div>
+<a href="Rotina.dc.html" style="font-size: 13px; margin-top: 8px">Lembretes semanais ficam em Rotina</a>
+</div></sc-if>
+
+<sc-if value="{{tIA}}" hint-placeholder-val="{{ false }}"><div class="col enter rel" style="gap: 14px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<p class="muted" style="font-size: 14px">As chaves ficam cifradas no servidor e nunca voltam inteiras para a tela.</p>
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="2"><div class="card" style="padding: 14px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap"><span class="col grow1" style="min-width: 200px"><b style="font-weight: 600; font-size: 14px">{{k.t}}</b><span class="mono" style="font-size: 12px; color: var(--text-2)">{{k.mask}}</span></span><span class="{{k.stCls}}">{{k.st}}</span><button class="btn btn-sec btn-sm" type="button">{{k.cta}}</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--danger)">Remover</button></div></sc-for>
+<div class="field"><label class="label" for="nk">Adicionar chave</label><div class="row"><input id="nk" class="inp" placeholder="Cole a chave do provedor"><button class="btn btn-pri" type="button">Testar e salvar</button></div><span class="help">Testamos a chave com uma chamada mínima antes de salvar.</span></div>
+</div></sc-if>
+
+<sc-if value="{{tAPI}}" hint-placeholder-val="{{ false }}"><div class="col enter rel" style="gap: 14px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<p class="muted" style="font-size: 14px">Tokens para scripts e integrações acessarem suas páginas pela API.</p>
+<sc-if value="{{newTok}}" hint-placeholder-val="{{ false }}"><div class="rise" style="padding: 14px 16px; border-radius: 10px; background: var(--success-soft); display: flex; flex-direction: column; gap: 8px"><b style="font-weight: 600; font-size: 14px">Token criado. Copie agora: ele não aparece de novo.</b><div class="row"><input class="inp filled mono" aria-label="Novo token" placeholder="asa_live_7Kq2…f81Z" style="font-size: 12px"><button class="btn btn-sec" type="button">Copiar</button></div></div></sc-if>
+<div class="dgrid card" role="table" aria-label="Tokens" style="--cols: minmax(0, 1.3fr) 140px 130px 120px; overflow: hidden">
+<div class="drow hd" role="row"><span role="columnheader">Nome</span><span role="columnheader">Escopo</span><span role="columnheader">Último uso</span><span role="columnheader"></span></div>
+<sc-for list="{{toks}}" as="t" hint-placeholder-count="2"><div class="drow enter" role="row"><span>{{t.n}}</span><span><span class="badge out">{{t.e}}</span></span><span style="color: var(--text-2)">{{t.u}}</span><span style="text-align: right"><button class="btn btn-fan btn-sm" type="button" style="color: var(--danger)">Revogar</button></span></div></sc-for>
+</div>
+<button class="btn btn-sec" type="button" onClick="{{criarTok}}" style="align-self: flex-start"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Novo token</button>
+</div></sc-if>
+
+<sc-if value="{{tDados}}" hint-placeholder-val="{{ false }}"><div class="col enter rel" style="gap: 14px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">4</span></sc-if>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><b style="font-weight: 600">Backup e export</b><span style="font-size: 13px; color: var(--text-2)">Último backup: sexta, 17:02 · 214 páginas · 38 MB</span><div class="row" style="gap: 8px; flex-wrap: wrap"><button class="{{exCls}}" type="button" onClick="{{exportar}}">{{exLabel}}</button><button class="btn btn-sec" type="button">Exportar JSON</button><span class="badge out">automático toda sexta, 17:00</span></div></div>
+<div class="card" style="padding: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap"><span class="col grow1"><b style="font-weight: 600">Importar</b><span style="font-size: 13px; color: var(--text-2)">Notion ou Vault do GitHub, em passos.</span></span><a class="btn btn-sec" href="Importar.dc.html">Abrir assistente</a></div>
+</div></sc-if>
+
+<sc-if value="{{tApp}}" hint-placeholder-val="{{ false }}"><div class="col enter rel" style="gap: 14px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">5</span></sc-if>
+<div class="card" style="padding: 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap"><span style="width: 52px; height: 52px; border-radius: 14px; background: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px"><path d="M3 18c6 0 11-3.5 14-11 1.6 4.2.6 8.6-2.6 11.6"></path><path d="M7.5 19.5c3.6-.6 6.6-2.6 8.6-6"></path></svg></span><span class="col grow1"><b style="font-weight: 600">Instalar como aplicativo</b><span style="font-size: 13px; color: var(--text-2)">Abre em janela própria, funciona offline e aceita o atalho de captura.</span></span><button class="{{instCls}}" type="button" onClick="{{instalar}}">{{instLabel}}</button></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div class="row"><b style="font-weight: 600">Offline</b><span class="badge warn" style="margin-left: auto">1 captura na fila</span></div><span style="font-size: 13px; color: var(--text-2)">Últimas 200 páginas abertas e toda a Inbox ficam disponíveis sem rede. Capturas e edições entram numa fila e sobem ao reconectar.</span><div class="row" style="gap: 10px; font-size: 13px; border-top: 1px solid var(--border); padding-top: 10px"><span class="grow1 trunc">Foto do quadro da reunião de sexta</span><span class="spec">há 2 min</span><button class="btn btn-fan btn-sm" type="button">Descartar</button></div></div>
+<a class="card" href="Notificacoes.dc.html" style="padding: 16px; text-decoration: none; color: var(--text); display: flex; gap: 10px; align-items: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path></svg><span class="grow1">Notificações deste dispositivo</span><span class="badge ok">ativas</span></a>
+</div></sc-if>
+
+<sc-if value="{{tConta}}" hint-placeholder-val="{{ false }}"><div class="col enter" style="gap: 14px">
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><b style="font-weight: 600">Senha</b><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px"><div class="field"><label class="label" for="sa">Senha atual</label><input id="sa" class="inp" type="password"></div><div class="field"><label class="label" for="sn">Nova senha</label><input id="sn" class="inp" type="password"><span class="help">Mínimo de 12 caracteres.</span></div></div><button class="btn btn-sec" type="button" style="align-self: flex-start">Alterar senha</button></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px"><b style="font-weight: 600; padding-bottom: 8px">Sessões ativas</b><div class="row" style="gap: 10px; min-height: 44px; border-top: 1px solid var(--border); font-size: 13px"><span class="grow1">Este navegador · agora</span><span class="badge ok">atual</span></div><div class="row" style="gap: 10px; min-height: 44px; border-top: 1px solid var(--border); font-size: 13px"><span class="grow1">Aplicativo no celular · há 2 h</span><button class="btn btn-fan btn-sm" type="button" style="color: var(--danger)">Encerrar</button></div></div>
+</div></sc-if>
+</div>
+<div class="toasts"><div class="{{toastCls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Export pronto · asa-backup.zip</div></div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Configurações</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Seções</span><span class="prio">P1</span></div><p>Geral (tema, fuso, movimento), Rotina (horários dos check-ins), Assistentes (chaves de IA), API (tokens), Dados (backup, export, importar), Aplicativo (PWA, offline, notificações) e Conta (senha, sessões). Tudo salva sozinho, exceto senha e chaves.</p><p><span class="lbl">Movimento</span> Indicador da aba cresce em médio; conteúdo troca com opacidade + 6 px.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Chaves de IA</span><span class="prio">P0</span></div><p>Mostra só o final da chave e o estado (ativa, recusada). Chave recusada aparece também no chat como erro com atalho para cá.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Tokens de API</span><span class="prio">P2</span></div><p>Token novo aparece uma única vez, com aviso. Escopos: leitura ou leitura e escrita. Revogar pede confirmação.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">4</span><span>Backup e export</span><span class="prio">P1</span></div><p>Markdown (pastas espelham a árvore) e JSON (com propriedades e IDs). Export gera em segundo plano e avisa por toast e notificação.</p><p><span class="lbl">Movimento</span> Botão carregando com barra de 2 px; toast em médio.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">5</span><span>PWA e offline</span><span class="prio">P1</span></div><p>Instalar só aparece quando o navegador permite. Fila offline visível com opção de descartar item.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="config" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"aba":{"editor":"enum","options":["Geral","Rotina","Assistentes","API","Dados","Aplicativo","Conta"],"default":"Geral"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const T = ['Geral', 'Rotina', 'Assistentes', 'API', 'Dados', 'Aplicativo', 'Conta'];
+    this.state = { dark: null, notes: null, drawer: false, cap: false, tab: Math.max(0, T.indexOf(props.aba || 'Geral')), temaSel: 0, rm: false, newTok: false, ex: 'pronto', inst: false, toast: false };
+    this.t = null;
+  }
+  componentWillUnmount() { if (this.t) clearTimeout(this.t); }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const T = ['Geral', 'Rotina', 'Assistentes', 'API', 'Dados', 'Aplicativo', 'Conta'];
+    const toks = [{ n: 'Script de backup', e: 'leitura', u: 'hoje, 03:00' }, { n: 'Atalho do celular', e: 'leitura e escrita', u: 'ontem' }];
+    if (s.newTok) toks.unshift({ n: 'Novo token', e: 'leitura', u: 'nunca' });
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      tabs: T.map((n, i) => ({ nome: n, cls: 'tab' + (s.tab === i ? ' on' : ''), sel: s.tab === i ? 'true' : 'false', pick: () => this.setState({ tab: i }) })),
+      tGeral: s.tab === 0, tRotina: s.tab === 1, tIA: s.tab === 2, tAPI: s.tab === 3, tDados: s.tab === 4, tApp: s.tab === 5, tConta: s.tab === 6,
+      temaX: (s.temaSel * 100) + '%',
+      temas: ['Claro', 'Escuro', 'Sistema'].map((n, i) => ({ nome: n, cls: 'seg-b' + (s.temaSel === i ? ' on' : ''), pick: () => this.setState({ temaSel: i, dark: i === 1 ? true : (i === 0 ? false : s.dark) }) })),
+      rmCk: s.rm ? 'true' : 'false', rmSw: 'sw' + (s.rm ? ' on' : ''), toggleRm: () => this.setState({ rm: !s.rm }),
+      keys: [{ t: 'Provedor principal', mask: '••••••••••••a91f', st: 'ativa', stCls: 'badge ok', cta: 'Trocar' }, { t: 'Provedor reserva', mask: '••••••••••••07bc', st: 'recusada', stCls: 'badge bad', cta: 'Atualizar' }],
+      toks: toks, newTok: s.newTok, criarTok: () => this.setState({ newTok: true }),
+      exCls: 'btn btn-pri' + (s.ex === 'gerando' ? ' btn-load' : ''), exLabel: s.ex === 'gerando' ? 'Gerando…' : 'Exportar Markdown',
+      exportar: () => { this.setState({ ex: 'gerando' }); if (this.t) clearTimeout(this.t); this.t = setTimeout(() => { this.setState({ ex: 'pronto', toast: true }); this.t = setTimeout(() => this.setState({ toast: false }), 3500); }, 1400); },
+      toastCls: 'toast' + (s.toast ? ' on' : ''),
+      instCls: s.inst ? 'btn btn-sec' : 'btn btn-pri', instLabel: s.inst ? 'Instalado' : 'Instalar', instalar: () => this.setState({ inst: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

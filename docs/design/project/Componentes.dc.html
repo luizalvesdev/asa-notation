@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>asa-notation · Componentes e estados</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F4AD0}a:hover{color:#2740BA}
+.ds{--bg:#FBFAF7;--bg-2:#F3F2EE;--surface:#FFFFFF;--hover:#F1F0EC;--press:#E9E7E1;--border:#E6E4DE;--border-2:#D3D0C8;--text:#1A1A17;--text-2:#64625B;--text-3:#706E66;--accent:#2F4AD0;--accent-hover:#2740BA;--accent-soft:#E9ECFB;--on-accent:#FFFFFF;--hermes:#A14D06;--hermes-soft:#FBEEDD;--renato:#0E6B5E;--renato-soft:#E0F0EC;--success:#1F7A3A;--success-soft:#E4F3E8;--danger:#B42318;--danger-soft:#FCEBE9;--warning:#8A5A00;--warning-soft:#FBF1DA;--note:#6B2BD9;--note-soft:#F4EFFE;--note-border:#C9B5F5;--cat-1:#B7791F;--cat-2:#3B5BDB;--cat-3:#9C36B5;--cat-4:#2B8A3E;--cat-5:#868E96;--shine:rgba(255,255,255,.6);--e1:0 1px 2px rgba(26,26,23,.05),0 4px 12px rgba(26,26,23,.06);--e2:0 2px 6px rgba(26,26,23,.08),0 12px 28px rgba(26,26,23,.14);--e3:0 4px 12px rgba(26,26,23,.08),0 24px 64px rgba(26,26,23,.18);--instante:80ms;--rapido:140ms;--medio:220ms;--lento:300ms;--mola-d:280ms;--padrao:cubic-bezier(.2,0,0,1);--entrada:cubic-bezier(0,0,.2,1);--saida:cubic-bezier(.4,0,1,1);--mola:cubic-bezier(.34,1.56,.64,1);--sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--serif:'Newsreader',Georgia,'Times New Roman',serif;--mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:20px;min-height:100vh;transition:background-color var(--medio) var(--padrao),color var(--medio) var(--padrao);-webkit-font-smoothing:antialiased}
+.ds.escuro{--bg:#121211;--bg-2:#0C0C0B;--surface:#1A1A18;--hover:#232321;--press:#2B2B28;--border:#2A2A27;--border-2:#3A3A36;--text:#ECEAE4;--text-2:#A3A198;--text-3:#8A887F;--accent:#8EA1FF;--accent-hover:#A7B5FF;--accent-soft:#1E2340;--on-accent:#0D1030;--hermes:#F0A75E;--hermes-soft:#2B2015;--renato:#5FC9B5;--renato-soft:#13261F;--success:#6FD08C;--success-soft:#14261A;--danger:#FF8A7A;--danger-soft:#2E1714;--warning:#E8B54A;--warning-soft:#2A2110;--note:#C4B0FF;--note-soft:#1D1730;--note-border:#4A3A78;--cat-1:#E0A84A;--cat-2:#7F9CFF;--cat-3:#D08AE6;--cat-4:#69C383;--cat-5:#9AA1A8;--shine:rgba(255,255,255,.07);--e1:0 1px 2px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.35);--e2:0 2px 6px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.5);--e3:0 4px 12px rgba(0,0,0,.4),0 24px 64px rgba(0,0,0,.6)}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;min-height:52px;padding:8px 24px;box-sizing:border-box;border-bottom:1px solid var(--border);background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+.mark{width:24px;height:24px;border-radius:6px;background:var(--text);color:var(--bg);display:flex;align-items:center;justify-content:center}
+.ver{font:500 12px/16px var(--mono);color:var(--text-3)}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.navl{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:6px;font:500 13px/20px var(--sans);color:var(--text-2) !important;text-decoration:none;transition:background-color var(--instante) var(--padrao)}
+.navl:hover{background:var(--hover);color:var(--text) !important}
+.navl.on{background:var(--surface);color:var(--text) !important;box-shadow:inset 0 0 0 1px var(--border)}
+.navl:focus-visible,.btn:focus-visible,.tog:focus-visible,.plain:focus-visible,.seg-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tools{display:flex;align-items:center;gap:4px;margin-left:auto}
+.tog{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:6px;border:0;background:transparent;color:var(--text-2);font:500 13px/20px var(--sans);cursor:pointer;transition:background-color var(--instante) var(--padrao)}
+.tog:hover{background:var(--hover);color:var(--text)}
+.sw{width:28px;height:16px;border-radius:999px;background:var(--border-2);position:relative;flex:none;transition:background-color var(--rapido) var(--padrao)}
+.sw .knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform var(--mola-d) var(--mola)}
+.sw.on{background:var(--accent)}
+.sw.on .knob{transform:translateX(12px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid transparent;font:500 13px/20px var(--sans);cursor:pointer;color:var(--text);background:transparent;white-space:nowrap;box-sizing:border-box;position:relative;overflow:hidden;transition:background-color var(--instante) var(--padrao),border-color var(--instante) var(--padrao),color var(--instante) var(--padrao),transform var(--instante) var(--padrao)}
+.btn:active{transform:scale(.97)}
+.btn-pri{background:var(--accent);color:var(--on-accent)}
+.btn-pri:hover,.btn-pri.is-h{background:var(--accent-hover)}
+.btn-pri.is-p{background:var(--accent-hover);transform:scale(.97)}
+.btn-sec{background:var(--surface);border-color:var(--border-2)}
+.btn-sec:hover,.btn-sec.is-h{background:var(--hover)}
+.btn-sec.is-p{background:var(--press);transform:scale(.97)}
+.btn-fan:hover,.btn-fan.is-h{background:var(--hover)}
+.btn-fan.is-p{background:var(--press);transform:scale(.97)}
+.btn-perigo{background:var(--danger-soft);color:var(--danger)}
+.btn-perigo:hover,.btn-perigo.is-h{background:var(--danger);color:var(--bg)}
+.btn-perigo.is-p{background:var(--danger);color:var(--bg);transform:scale(.97)}
+.is-f{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-load::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:40%;background:currentColor;opacity:.7;animation:prog 1.2s linear infinite}
+@keyframes prog{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+.plain{border:0;background:transparent;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.wrap{max-width:1360px;margin:0 auto;padding:0 40px;box-sizing:border-box}
+.eyebrow{font:600 11px/16px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:0}
+.h-display{font-family:var(--serif);font-weight:500;font-size:60px;line-height:62px;letter-spacing:-.025em;margin:0;text-wrap:balance}
+.h-sec{font-family:var(--serif);font-weight:500;font-size:34px;line-height:40px;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.h3{font:600 15px/22px var(--sans);margin:0}
+.lead{font-size:17px;line-height:27px;color:var(--text-2);margin:0;text-wrap:pretty}
+.p{font-size:14px;line-height:22px;color:var(--text-2);margin:0;text-wrap:pretty}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.sec{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:40px;padding:64px 0;border-top:1px solid var(--border)}
+.sec-l{display:flex;flex-direction:column;gap:14px;max-width:440px}
+.sec-r{grid-column:span 2;min-width:0}
+.mono{font-family:var(--mono)}
+.spec{font:500 12px/18px var(--mono);color:var(--text-3)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border:1px solid var(--border-2);border-bottom-width:2px;border-radius:4px;background:var(--surface);color:var(--text-2);font:500 11px/16px var(--mono)}
+.k{margin-left:auto;font:500 11px/16px var(--mono);color:var(--text-3)}
+.anota{border:1px dashed var(--note-border);background:var(--note-soft);border-radius:10px;padding:12px 14px;font-size:13px;line-height:20px;color:var(--text);display:flex;flex-direction:column;gap:6px}
+.anota-h{display:flex;align-items:center;gap:8px;color:var(--note);font:600 12px/16px var(--sans)}
+.anota-n{display:inline-flex;align-items:center;justify-content:center;height:18px;padding:0 6px;border-radius:4px;background:var(--note);color:var(--bg);font:600 11px/16px var(--mono)}
+.prio{margin-left:auto;border:1px solid var(--note-border);border-radius:4px;padding:0 5px;font:600 11px/16px var(--mono)}
+.anota p{margin:0}
+.anota b{font-weight:600;color:var(--note)}
+.mx{display:grid;grid-template-columns:110px repeat(5,minmax(0,1fr));gap:12px 10px;align-items:center}
+.mx-h{font:500 12px/16px var(--sans);color:var(--text-3)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.label{font:500 12px/16px var(--sans);color:var(--text-2)}
+.inp{height:32px;padding:0 10px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:400 13px/20px var(--sans);outline:none;box-sizing:border-box;width:100%;transition:border-color var(--instante) var(--padrao),box-shadow var(--instante) var(--padrao)}
+.inp::placeholder{color:var(--text-3)}
+.inp:focus,.inp.is-fi{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.inp.err{border-color:var(--danger)}
+.inp.err:focus{box-shadow:0 0 0 3px var(--danger-soft)}
+.inp:disabled{background:var(--bg-2);cursor:not-allowed}
+.filled::placeholder{color:var(--text)}
+.help{font-size:12px;line-height:16px;color:var(--text-3)}
+.help.err{color:var(--danger)}
+.cbx{display:flex;align-items:center;gap:10px;height:32px;font-size:14px}
+.cb{width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--border-2);display:flex;align-items:center;justify-content:center;color:var(--on-accent);flex:none;transition:background-color var(--rapido) var(--padrao),box-shadow var(--rapido) var(--padrao)}
+.cb.on{background:var(--accent);box-shadow:none;animation:pop var(--mola-d) var(--mola)}
+.tick{width:12px;height:12px;stroke-width:2.6;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset var(--rapido) var(--entrada) 40ms}
+.cb.on .tick{stroke-dashoffset:0}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.lbl-done{color:var(--text-3);text-decoration:line-through}
+.seg{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:2px;border-radius:8px;background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--border);width:360px;max-width:100%;box-sizing:border-box}
+.seg-ind{position:absolute;top:2px;left:2px;bottom:2px;width:calc((100% - 4px) / 4);border-radius:6px;background:var(--surface);box-shadow:var(--e1);transition:transform var(--medio) var(--padrao)}
+.seg-b{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;height:28px;border:0;background:transparent;font:500 13px/20px var(--sans);color:var(--text-2);cursor:pointer;border-radius:6px;transition:color var(--instante) var(--padrao)}
+.seg-b.on{color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:4px;font:500 12px/16px var(--sans);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.menu{width:280px;padding:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--e1);box-sizing:border-box}
+.mrow{display:flex;align-items:center;gap:10px;height:32px;padding:0 8px;border-radius:6px;font-size:13px;color:var(--text)}
+.mrow.sel{background:var(--hover)}
+.mrow.kf{box-shadow:inset 0 0 0 2px var(--accent)}
+.mrow.dis{color:var(--text-3)}
+.mrow.danger{color:var(--danger)}
+.mgroup{padding:8px 8px 4px;font:600 11px/16px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.msep{height:1px;background:var(--border);margin:4px 0}
+.side{width:264px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;box-sizing:border-box;display:flex;flex-direction:column;gap:1px;font-size:13px}
+.tr{position:relative;display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px;color:var(--text-2);box-sizing:border-box}
+.tr.h{background:var(--hover);color:var(--text)}
+.tr.s{background:var(--accent-soft);color:var(--text);font-weight:500}
+.tr.f{box-shadow:inset 0 0 0 2px var(--accent);color:var(--text)}
+.tr.d{background:var(--surface);color:var(--text);box-shadow:var(--e2);transform:translateX(8px) rotate(-1deg) scale(1.02)}
+.tr .cnt{margin-left:auto;font-size:12px;color:var(--text-3)}
+.sgroup{display:flex;align-items:center;justify-content:space-between;padding:12px 8px 4px;font:600 11px/16px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.dline{height:2px;border-radius:2px;background:var(--accent);margin:0 8px 0 28px}
+.st-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;align-items:center}
+.draft{border:1px dashed var(--hermes);background:var(--hermes-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.draft-ok{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.pitem{display:flex;align-items:center;gap:10px;font-size:14px;line-height:20px}
+.pitem .m{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap}
+.toast{display:flex;align-items:center;gap:10px;min-height:40px;padding:4px 6px 4px 14px;background:var(--text);color:var(--bg);border-radius:10px;box-shadow:var(--e1);font-size:13px;box-sizing:border-box}
+.toast .btn{height:28px;color:inherit;padding:0 8px}
+.toast .btn:hover{background:rgba(127,127,127,.25)}
+.screen{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;min-height:230px;padding:24px;box-sizing:border-box}
+.screen .ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--bg-2);color:var(--text-2)}
+.screen h4{margin:0;font:600 15px/22px var(--sans)}
+.screen p{margin:0;font-size:13px;line-height:19px;color:var(--text-2);max-width:240px}
+.sk{position:relative;overflow:hidden;background:var(--hover);border-radius:4px}
+.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--shine),transparent);transform:translateX(-100%);animation:shimmer 1.4s var(--padrao) infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+@media (max-width:760px){.wrap{padding:0 20px}.h-display{font-size:40px;line-height:44px}.sec-r{grid-column:auto}.mx{grid-template-columns:repeat(2,minmax(0,1fr))}.tools{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.ds{--rapido:80ms;--medio:80ms;--lento:120ms;--mola-d:80ms;--mola:linear}.sk::after,.btn-load::after{animation:none}.cb.on{animation:none}.seg-ind{transition:none}}
+</style>
+</helmet>
+<div class="{{rootCls}}">
+<header class="topbar">
+<div class="brand">
+<span class="mark"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c6 0 11-3.5 14-11 1.6 4.2.6 8.6-2.6 11.6"></path><path d="M7.5 19.5c3.6-.6 6.6-2.6 8.6-6"></path></svg></span>
+<span>asa-notation</span>
+<span class="ver">design system · v0.1</span>
+</div>
+<nav class="nav" aria-label="Seções do design system">
+<a class="navl" href="Main.dc.html">Fundamentos</a>
+<a class="navl" href="Movimento.dc.html">Movimento</a>
+<a class="navl on" href="Componentes.dc.html" aria-current="page">Componentes</a>
+</nav>
+<div class="tools">
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+<button class="btn btn-fan" type="button" onClick="{{toggleTheme}}">
+<sc-if value="{{light}}" hint-placeholder-val="{{ true }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Tema escuro</sc-if>
+<sc-if value="{{dark}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Tema claro</sc-if>
+</button>
+</div>
+</header>
+
+<main class="wrap">
+<section style="display: flex; flex-direction: column; gap: 20px; padding: 88px 0 56px; max-width: 820px">
+<p class="eyebrow">Passo 1 de 8 · Componentes</p>
+<h1 class="h-display">As peças, em todos os estados.</h1>
+<p class="lead">Os componentes que as telas dos próximos passos vão usar, cada um com padrão, hover, pressionado, foco por teclado, desabilitado e os estados de produto: vazio, carregando, erro, sucesso, offline, rascunho de IA, arrastando e selecionado. Os interativos funcionam aqui.</p>
+</section>
+
+<section class="sec" aria-labelledby="bot">
+<div class="sec-l">
+<p class="eyebrow">01</p>
+<h2 class="h-sec" id="bot">Botões</h2>
+<p class="p">Uma ação primária por área. Secundário para alternativas, fantasma para ações de barra e menus, perigo só para excluir.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C1</span><span>Botões · estados</span><span class="prio">P0</span></div><p>Hover e pressionado em <b>instante</b> (80 ms). Pressionado encolhe para .97. Carregando: o rótulo muda (“Salvando…”) e uma barra de 2 px corre na base; nunca spinner no lugar do texto. Desabilitado a 45% e sem hover; prefira explicar o motivo num tooltip.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: flex; flex-direction: column; gap: 20px">
+<div class="card" style="padding: 20px; overflow-x: auto">
+<div class="mx" style="min-width: 640px">
+<span></span><span class="mx-h">Padrão</span><span class="mx-h">Hover</span><span class="mx-h">Pressionado</span><span class="mx-h">Foco</span><span class="mx-h">Desabilitado</span>
+<span class="mx-h">Primário</span><span><button class="btn btn-pri" type="button">Criar página</button></span><span><button class="btn btn-pri is-h" type="button">Criar página</button></span><span><button class="btn btn-pri is-p" type="button">Criar página</button></span><span><button class="btn btn-pri is-f" type="button">Criar página</button></span><span><button class="btn btn-pri" type="button" disabled>Criar página</button></span>
+<span class="mx-h">Secundário</span><span><button class="btn btn-sec" type="button">Filtrar</button></span><span><button class="btn btn-sec is-h" type="button">Filtrar</button></span><span><button class="btn btn-sec is-p" type="button">Filtrar</button></span><span><button class="btn btn-sec is-f" type="button">Filtrar</button></span><span><button class="btn btn-sec" type="button" disabled>Filtrar</button></span>
+<span class="mx-h">Fantasma</span><span><button class="btn btn-fan" type="button">Compartilhar</button></span><span><button class="btn btn-fan is-h" type="button">Compartilhar</button></span><span><button class="btn btn-fan is-p" type="button">Compartilhar</button></span><span><button class="btn btn-fan is-f" type="button">Compartilhar</button></span><span><button class="btn btn-fan" type="button" disabled>Compartilhar</button></span>
+<span class="mx-h">Perigo</span><span><button class="btn btn-perigo" type="button">Excluir</button></span><span><button class="btn btn-perigo is-h" type="button">Excluir</button></span><span><button class="btn btn-perigo is-p" type="button">Excluir</button></span><span><button class="btn btn-perigo is-f" type="button">Excluir</button></span><span><button class="btn btn-perigo" type="button" disabled>Excluir</button></span>
+</div>
+</div>
+<div class="card" style="padding: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px">
+<div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start"><span class="mx-h">Tamanhos · 28 · 32 · 40 · 44 toque</span><div style="display: flex; align-items: center; gap: 8px"><button class="btn btn-sec" type="button" style="height: 28px; padding: 0 10px; font-size: 12px">Pequeno</button><button class="btn btn-sec" type="button">Médio</button><button class="btn btn-sec" type="button" style="height: 40px; padding: 0 16px; font-size: 14px">Grande</button><button class="btn btn-pri" type="button" style="height: 44px; padding: 0 18px; font-size: 15px">Toque</button></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start"><span class="mx-h">Ícone</span><div style="display: flex; gap: 4px"><button class="btn btn-fan" type="button" aria-label="Nova página" style="width: 32px; padding: 0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><button class="btn btn-fan" type="button" aria-label="Buscar" style="width: 32px; padding: 0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></button><button class="btn btn-fan" type="button" aria-label="Abrir chat" style="width: 32px; padding: 0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg></button></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start"><span class="mx-h">Carregando</span><button class="btn btn-pri btn-load" type="button" aria-busy="true">Salvando…</button></div>
+<div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start"><span class="mx-h">Com atalho</span><button class="btn btn-sec" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar<span class="kbd" style="margin-left: 6px">⌘K</span></button></div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="cam">
+<div class="sec-l">
+<p class="eyebrow">02</p>
+<h2 class="h-sec" id="cam">Campos e seleção</h2>
+<p class="p">Campos de 32 px com rótulo acima. Foco troca a borda para tinta e acrescenta um halo suave. Erros dizem o que fazer, não só o que deu errado.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C2</span><span>Seletor de view · movimento</span><span class="prio">P0</span></div><p>O indicador desliza entre opções em <b>médio · padrão</b> (só translateX). O conteúdo da view troca com a coreografia “Troca de view”. Teclado: ←→ dentro do grupo, atalhos 1 a 4 com a tabela focada. Experimente os controles: são reais.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: flex; flex-direction: column; gap: 20px">
+<div class="card" style="padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 20px 16px">
+<div class="field"><label class="label" for="f1">Padrão</label><input class="inp" id="f1" placeholder="Nome da meta"></div>
+<div class="field"><label class="label" for="f2">Foco</label><input class="inp is-fi" id="f2" placeholder="Certificação em sistemas"></div>
+<div class="field"><label class="label" for="f3">Preenchido</label><input class="inp filled" id="f3" placeholder="Certificação até mar/2027"></div>
+<div class="field"><label class="label" for="f4">Erro</label><input class="inp err filled" id="f4" placeholder="sk-ant-••••" aria-invalid="true"><span class="help err">Chave recusada pelo provedor. Confira se ela ainda está ativa.</span></div>
+<div class="field"><label class="label" for="f5">Desabilitado</label><input class="inp" id="f5" placeholder="America/Sao_Paulo" disabled><span class="help">Fuso detectado automaticamente.</span></div>
+<div class="field"><label class="label" for="f6">Busca</label><div style="position: relative"><input class="inp" id="f6" placeholder="Buscar ou executar…" style="padding-left: 32px; padding-right: 44px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 10px; top: 8px; color: var(--text-3)"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><span class="kbd" style="position: absolute; right: 6px; top: 6px">⌘K</span></div></div>
+</div>
+<div class="card" style="padding: 20px; display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="mx-h" style="margin-bottom: 4px">Checkbox</span>
+<button class="plain cbx" type="button" role="checkbox" aria-checked="{{c1Checked}}" onClick="{{toggleC1}}"><span class="{{c1Cls}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{c1Lbl}}">Ler o artigo do Raft</span></button>
+<button class="plain cbx" type="button" role="checkbox" aria-checked="{{c2Checked}}" onClick="{{toggleC2}}"><span class="{{c2Cls}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{c2Lbl}}">Resumir eleição de líder</span></button>
+<div class="cbx" style="color: var(--text-3)"><span class="cb" style="opacity: .5"></span>Desabilitado</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="mx-h">Interruptor</span>
+<button class="tog" type="button" role="switch" aria-checked="{{s1Checked}}" onClick="{{toggleS1}}" style="padding: 0; color: var(--text); font-size: 14px"><span class="{{s1Cls}}"><span class="knob"></span></span>Lembretes por Web Push</button>
+<div class="tog" style="padding: 0; color: var(--text-3); font-size: 14px; cursor: not-allowed"><span class="sw" style="opacity: .5"><span class="knob"></span></span>Resumo por e-mail</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0"><span class="mx-h">Seletor de view</span>
+<div class="seg" role="radiogroup" aria-label="View do database">
+<span class="seg-ind" style="transform: translateX({{segX}})"></span>
+<sc-for list="{{views}}" as="v" hint-placeholder-count="4"><button class="{{v.cls}}" type="button" role="radio" aria-checked="{{v.checked}}" onClick="{{v.pick}}">{{v.nome}}</button></sc-for>
+</div>
+<span class="help">View atual: {{viewNome}}</span>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="rot">
+<div class="sec-l">
+<p class="eyebrow">03</p>
+<h2 class="h-sec" id="rot">Rótulos e propriedades</h2>
+<p class="p">Status usam forma e texto, não só cor. Classificações do Renato usam um ponto colorido sobre fundo neutro, para não competir com o acento.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C3</span><span>Propriedades tipadas</span><span class="prio">P0</span></div><p>Cada tipo de propriedade do database tem um ícone fixo no cabeçalho da coluna (texto, número, seleção, multi, data, checkbox, status, URL, relação). Cor de opção de seleção vem só da paleta categórica <span class="mono">--cat-1…5</span>.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: flex; flex-direction: column; gap: 16px">
+<div class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+<div class="st-row"><span class="mx-h">Status</span><div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span class="badge" style="background: var(--bg-2); color: var(--text-2)"><span class="dot" style="box-shadow: inset 0 0 0 1.5px var(--text-3)"></span>Não iniciado</span>
+<span class="badge" style="background: var(--accent-soft); color: var(--accent)"><span class="dot" style="background: linear-gradient(90deg, var(--accent) 50%, transparent 50%); box-shadow: inset 0 0 0 1.5px var(--accent)"></span>Em andamento</span>
+<span class="badge" style="background: var(--success-soft); color: var(--success)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px; stroke-width: 2.4"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Concluído</span>
+<span class="badge" style="background: var(--danger-soft); color: var(--danger)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px; stroke-width: 2"><path d="M12 7v6M12 17h.01"></path></svg>Atrasado</span>
+<span class="badge" style="border: 1px dashed var(--hermes); color: var(--hermes); background: var(--hermes-soft)">Rascunho</span>
+</div></div>
+<div class="st-row"><span class="mx-h">Classificação</span><div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span class="badge" style="background: var(--bg-2)"><span class="dot" style="background: var(--cat-1)"></span>ideia</span>
+<span class="badge" style="background: var(--bg-2)"><span class="dot" style="background: var(--cat-2)"></span>estudo</span>
+<span class="badge" style="background: var(--bg-2)"><span class="dot" style="background: var(--cat-3)"></span>trabalho</span>
+<span class="badge" style="background: var(--bg-2)"><span class="dot" style="background: var(--cat-4)"></span>projeto</span>
+<span class="badge" style="background: var(--bg-2)"><span class="dot" style="background: var(--cat-5)"></span>referência</span>
+<span class="badge" style="background: transparent; color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border-2)">#arquitetura</span>
+<span class="badge" style="background: transparent; color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border-2)">#raft</span>
+</div></div>
+<div class="st-row"><span class="mx-h">Datas</span><div style="display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px">
+<span style="display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 500"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z"></path><path d="M4 10h16M8 3v4M16 3v4"></path></svg>Hoje, 14:00</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z"></path><path d="M4 10h16M8 3v4M16 3v4"></path></svg>Amanhã</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-weight: 500"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z"></path><path d="M4 10h16M8 3v4M16 3v4"></path></svg>Atrasada · ontem</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l3 3-3 3"></path><path d="M4 11V9a4 4 0 0 1 4-4h12"></path><path d="M7 22l-3-3 3-3"></path><path d="M20 13v2a4 4 0 0 1-4 4H4"></path></svg>Toda quinta, 18:00</span>
+<span style="color: var(--text-3)">Sem prazo</span>
+</div></div>
+<div class="st-row"><span class="mx-h">Filtros ativos</span><div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span class="badge" style="height: 28px; background: var(--accent-soft); color: var(--text); padding: 0 4px 0 10px">Status: Em andamento<button class="btn" type="button" aria-label="Remover filtro" style="width: 22px; height: 22px; padding: 0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+<span class="badge" style="height: 28px; background: var(--accent-soft); color: var(--text); padding: 0 4px 0 10px">Meta: Certificação<button class="btn" type="button" aria-label="Remover filtro" style="width: 22px; height: 22px; padding: 0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+<button class="btn btn-fan" type="button" style="height: 28px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Filtro</button>
+</div></div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="men">
+<div class="sec-l">
+<p class="eyebrow">04</p>
+<h2 class="h-sec" id="men">Menus e árvore</h2>
+<p class="p">Menus mostram o atalho de cada ação à direita. A árvore é densa (28 px) e mostra cinco estados de item; seleção é a página aberta, foco é onde o teclado está.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C4</span><span>Seleção × foco</span><span class="prio">P0</span></div><p><b>Selecionado</b>: fundo tinta-suave e peso 500; é persistente. <b>Foco por teclado</b>: anel interno de 2 px (offset negativo, porque a lista rola); só aparece com <span class="mono">:focus-visible</span>. Os dois podem coexistir. <b>Arrastando</b>: item vira superfície com sombra e2, −1°, e uma linha de 2 px marca o destino com recuo do nível.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 20px; align-items: start">
+<div class="side">
+<div class="tr" style="color: var(--text); font-weight: 600; margin-bottom: 4px"><span style="width: 20px; height: 20px; border-radius: 5px; background: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px">L</span>Meu caderno<span class="cnt"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span></div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar<span class="k">⌘K</span></div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Hoje<span class="cnt">5</span></div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z"></path><path d="M4 10h16M8 3v4M16 3v4"></path></svg>Semana</div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5 5h14l2 8v6H3v-6z"></path></svg>Inbox<span class="cnt" style="color: var(--renato); font-weight: 600">3</span></div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg>Estudo<span class="cnt">12 cards</span></div>
+<div class="sgroup">Favoritos</div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--cat-1)"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg>Plano de estudos 2027</div>
+<div class="sgroup">Páginas<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; transform: rotate(90deg)"><path d="M9 6l6 6-6 6"></path></svg>Projetos</div>
+<div class="tr s" style="padding-left: 28px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>Loja v2</div>
+<div class="tr h" style="padding-left: 28px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>Site pessoal<span class="cnt" style="display: flex; gap: 2px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r=".6"></circle><circle cx="12" cy="12" r=".6"></circle><circle cx="19" cy="12" r=".6"></circle></svg><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span></div>
+<div class="tr f" style="padding-left: 28px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>App de finanças</div>
+<div class="dline"></div>
+<div class="tr d" style="padding-left: 28px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3; color: var(--accent)"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>Diário de bordo</div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M9 6l6 6-6 6"></path></svg>Leituras</div>
+<div class="sgroup" style="padding-top: 16px"></div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Lixeira</div>
+<div class="tr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4"></path></svg>Configurações</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div class="menu" role="presentation">
+<div class="mgroup">Página</div>
+<div class="mrow sel"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M14 4v16"></path></svg>Abrir no painel lateral<span class="k">⌥↵</span></div>
+<div class="mrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Copiar link<span class="k">⌘L</span></div>
+<div class="mrow kf"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8z"></path><path d="M4 16V4h12"></path></svg>Duplicar<span class="k">⌘D</span></div>
+<div class="mrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>Mover para…<span class="k">⌘⇧P</span></div>
+<div class="mrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>Histórico de versões<span class="k" style="display: flex"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M9 6l6 6-6 6"></path></svg></span></div>
+<div class="mrow dis" aria-disabled="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 16 0a8 8 0 1 0-16 0"></path><path d="M4 12h16M12 4c2.5 3 2.5 13 0 16M12 4c-2.5 3-2.5 13 0 16"></path></svg>Link público<span class="k" style="font-family: var(--sans)">indisponível offline</span></div>
+<div class="msep"></div>
+<div class="mrow danger"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Mover para a lixeira<span class="k" style="color: inherit">⌫</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-3)"><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--hover); vertical-align: -1px"></span> hover / ativo</span><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; box-shadow: inset 0 0 0 2px var(--accent); vertical-align: -1px"></span> foco por teclado</span></div>
+<div style="display: flex; align-items: center; gap: 12px"><span style="display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px 0 10px; border-radius: 6px; background: var(--text); color: var(--bg); font-size: 12px">Recolher barra lateral<span style="font-family: var(--mono); opacity: .7">⌘\</span></span><span class="spec">tooltip · aparece após 400 ms, some em rápido</span></div>
+<div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="mx-h">Estados do item da árvore</span>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr)); gap: 6px 10px; font-size: 12px; color: var(--text-2)"><span>Padrão</span><span>Hover · ações</span><span>Selecionado</span><span>Foco</span><span>Arrastando</span></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="raz">
+<div class="sec-l">
+<p class="eyebrow">05</p>
+<h2 class="h-sec" id="raz">Rascunho de IA</h2>
+<p class="p">O componente mais importante do produto. Tudo que Hermes e Renato produzem chega aqui primeiro. Teste: aprove, descarte e desfaça.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C5</span><span>Rascunho · estados e animação</span><span class="prio">P0</span></div><p><b>Pendente</b>: tracejado na cor do assistente, selo, três ações. <b>Editando</b>: campos inline, Salvar e Cancelar. <b>Aprovado</b>: vira borda neutra sólida e confirma em uma linha (médio · padrão), com Desfazer por 8 s. <b>Descartado</b>: colapsa para uma linha (médio), Desfazer por 8 s. Atalhos com o rascunho focado: ⌘↵, E, ⌫.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 16px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{dPend}}" hint-placeholder-val="{{ true }}">
+<div class="draft">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--hermes); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 600; font-size: 13px">H</span><span style="font-weight: 600; font-size: 13px">Hermes</span><span class="badge" style="height: 20px; border: 1px dashed var(--hermes); color: var(--hermes)">Rascunho</span><span style="margin-left: auto; font-size: 12px; color: var(--text-2)">agora</span></div>
+<p style="margin: 0; font-size: 14px; line-height: 21px">Plano para amanhã a partir das suas metas ativas:</p>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div class="pitem"><span class="cb"></span>Enviar proposta revisada ao cliente<span class="m">10:00 · Freelas Q1</span></div>
+<div class="pitem"><span class="cb"></span>Revisar 20 cards de Raft<span class="m">14:00 · Certificação</span></div>
+<div class="pitem"><span class="cb"></span>Check-in de quinta<span class="m">18:00 · recorrente</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 2px"><button class="btn btn-pri" type="button" onClick="{{approve}}">Aprovar<span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">⌘↵</span></button><button class="btn btn-sec" type="button">Editar<span class="kbd">E</span></button><button class="btn btn-fan" type="button" style="color: var(--text-2)" onClick="{{discard}}">Descartar</button><span style="margin-left: auto; font-size: 12px; color: var(--text-2)">Baseado em 3 metas</span></div>
+</div>
+</sc-if>
+<sc-if value="{{dOk}}" hint-placeholder-val="{{ false }}">
+<div class="draft-ok"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--success-soft); color: var(--success); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; stroke-width: 2.2"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></span><span style="font-size: 14px">3 tarefas criadas em <b style="font-weight: 600">Amanhã</b></span><button class="btn btn-fan" type="button" style="margin-left: auto" onClick="{{reset}}">Desfazer</button></div>
+</sc-if>
+<sc-if value="{{dGone}}" hint-placeholder-val="{{ false }}">
+<div class="draft-ok" style="background: transparent; border-style: dashed; color: var(--text-2)"><span style="font-size: 14px">Rascunho do Hermes descartado</span><button class="btn btn-fan" type="button" style="margin-left: auto" onClick="{{reset}}">Desfazer</button></div>
+</sc-if>
+</div>
+<div style="border: 1px dashed var(--renato); background: var(--renato-soft); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--renato); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 600; font-size: 13px">R</span><span style="font-weight: 600; font-size: 13px">Renato</span><span class="badge" style="height: 20px; border: 1px dashed var(--renato); color: var(--renato)">Editando</span></div>
+<p style="margin: 0; font-size: 14px; line-height: 21px">“Ideia: cache por tenant no checkout”</p>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div class="field"><label class="label" for="r1">Classificação</label><input class="inp filled is-fi" id="r1" placeholder="estudo"></div>
+<div class="field"><label class="label" for="r2">Projeto</label><input class="inp filled" id="r2" placeholder="Loja v2"></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="badge" style="background: var(--surface); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border-2)">#arquitetura</span><span class="badge" style="background: var(--surface); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border-2)">#performance</span><button class="btn btn-fan" type="button" style="height: 24px; padding: 0 6px; font-size: 12px; color: var(--text-2)">+ tag</button></div>
+<div style="display: flex; gap: 6px"><button class="btn btn-pri" type="button">Salvar</button><button class="btn btn-fan" type="button">Cancelar</button></div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="fb">
+<div class="sec-l">
+<p class="eyebrow">06</p>
+<h2 class="h-sec" id="fb">Feedback</h2>
+<p class="p">Toasts escuros sobre qualquer tema, na base central. Notificações do Hermes ficam na central e, com permissão, viram Web Push.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C6</span><span>Toasts · regras</span><span class="prio">P1</span></div><p>No máximo 3 empilhados; o mais novo embaixo. Somem em 4 s (erro fica até ação). Pausa no hover e com foco. <span class="mono">role="status"</span> para sucesso, <span class="mono">role="alert"</span> para erro. Faixa offline é persistente até reconectar e então mostra “Sincronizado” por 2 s.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 16px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+<div class="toast" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Página restaurada da lixeira<button class="btn" type="button">Abrir</button></div>
+<div class="toast" role="status">Página movida para a lixeira<button class="btn" type="button">Desfazer <span style="font-family: var(--mono); opacity: .7">⌘Z</span></button></div>
+<div class="toast" role="alert"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--danger)"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>Não foi possível salvar. Nova tentativa em 5 s.<button class="btn" type="button">Tentar agora</button></div>
+<div class="toast" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5.2-2.7M19 12.5a10 10 0 0 0-2.4-1.7M12 20h.01"></path></svg>Capturado offline · 3 na fila</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: 13px; line-height: 19px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5.2-2.7M19 12.5a10 10 0 0 0-2.4-1.7M12 20h.01"></path></svg><span><b style="font-weight: 600">Você está offline.</b> As edições ficam neste dispositivo e sincronizam ao reconectar.</span></div>
+<div class="card" style="padding: 14px 16px; display: flex; gap: 12px; box-shadow: var(--e1)">
+<span style="width: 28px; height: 28px; border-radius: 7px; background: var(--hermes); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 600; flex: none">H</span>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0"><div style="display: flex; align-items: center; gap: 8px"><span style="font-weight: 600; font-size: 13px">Check-in de quinta</span><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent)"></span><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">18:00</span></div><p style="margin: 0; font-size: 13px; line-height: 19px; color: var(--text-2)">Como foram as métricas da semana? Você fechou 9 de 12 tarefas.</p><div style="display: flex; gap: 6px"><button class="btn btn-sec" type="button" style="height: 28px">Responder</button><button class="btn btn-fan" type="button" style="height: 28px; color: var(--text-2)">Adiar 1 h</button></div></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="est" style="padding-bottom: 96px">
+<div class="sec-l">
+<p class="eyebrow">07</p>
+<h2 class="h-sec" id="est">Estados de tela</h2>
+<p class="p">Toda tela precisa desenhar estes cinco. O texto sempre oferece o próximo passo.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">C7</span><span>Estados · prioridade</span><span class="prio">P0</span></div><p>Vazio, carregando e erro são obrigatórios em cada tela dos próximos passos. Offline e sucesso aparecem onde há rede ou operação longa (captura, importação, backup). Skeleton imita a forma exata do conteúdo.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 12px">
+<div class="card screen"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5 5h14l2 8v6H3v-6z"></path></svg></span><span class="spec">vazio</span><h4>Inbox em dia</h4><p>Capture uma ideia de qualquer tela; o Renato organiza depois.</p><button class="btn btn-sec" type="button">Capturar <span class="kbd">⌘⇧K</span></button></div>
+<div class="card screen" style="align-items: stretch; text-align: left"><span class="spec" style="text-align: center">carregando</span>
+<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px" aria-busy="true" aria-label="Carregando tarefas"><div style="display: flex; gap: 10px; align-items: center"><span class="sk" style="width: 16px; height: 16px; border-radius: 5px"></span><span class="sk" style="height: 10px; flex: 1"></span></div><div style="display: flex; gap: 10px; align-items: center"><span class="sk" style="width: 16px; height: 16px; border-radius: 5px"></span><span class="sk" style="height: 10px; width: 70%"></span></div><div style="display: flex; gap: 10px; align-items: center"><span class="sk" style="width: 16px; height: 16px; border-radius: 5px"></span><span class="sk" style="height: 10px; width: 82%"></span></div><div style="display: flex; gap: 10px; align-items: center"><span class="sk" style="width: 16px; height: 16px; border-radius: 5px"></span><span class="sk" style="height: 10px; width: 55%"></span></div></div></div>
+<div class="card screen"><span class="ic" style="background: var(--danger-soft); color: var(--danger)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></span><span class="spec">erro</span><h4>Esta página não carregou</h4><p>O servidor não respondeu. O conteúdo está salvo; tente de novo.</p><button class="btn btn-sec" type="button">Tentar de novo</button></div>
+<div class="card screen"><span class="ic" style="background: var(--success-soft); color: var(--success)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; stroke-width: 2"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></span><span class="spec">sucesso</span><h4>Importação concluída</h4><p>214 páginas e 3 databases vieram do Notion.</p><button class="btn btn-sec" type="button">Ver páginas</button></div>
+<div class="card screen"><span class="ic" style="background: var(--warning-soft); color: var(--warning)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5.2-2.7M19 12.5a10 10 0 0 0-2.4-1.7M12 20h.01"></path></svg></span><span class="spec">offline</span><h4>Sem conexão</h4><p>Continue escrevendo. 3 capturas aguardam envio.</p><button class="btn btn-sec" type="button" disabled>Sincronizar</button></div>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":4600}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, c1: true, c2: false, s1: true, view: 0, draft: 'pendente' };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? (this.props.tema === 'escuro') : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const nomes = ['Tabela', 'Kanban', 'Lista', 'Calendário'];
+    return {
+      rootCls: 'ds' + (dark ? ' escuro' : ''),
+      dark: dark,
+      light: !dark,
+      notes: notes,
+      notesPressed: notes ? 'true' : 'false',
+      swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      c1Checked: s.c1 ? 'true' : 'false',
+      c1Cls: 'cb' + (s.c1 ? ' on' : ''),
+      c1Lbl: s.c1 ? 'lbl-done' : '',
+      toggleC1: () => this.setState({ c1: !s.c1 }),
+      c2Checked: s.c2 ? 'true' : 'false',
+      c2Cls: 'cb' + (s.c2 ? ' on' : ''),
+      c2Lbl: s.c2 ? 'lbl-done' : '',
+      toggleC2: () => this.setState({ c2: !s.c2 }),
+      s1Checked: s.s1 ? 'true' : 'false',
+      s1Cls: 'sw' + (s.s1 ? ' on' : ''),
+      toggleS1: () => this.setState({ s1: !s.s1 }),
+      segX: (s.view * 100) + '%',
+      viewNome: nomes[s.view],
+      views: nomes.map((n, i) => ({ nome: n, cls: 'seg-b' + (i === s.view ? ' on' : ''), checked: i === s.view ? 'true' : 'false', pick: () => this.setState({ view: i }) })),
+      dPend: s.draft === 'pendente',
+      dOk: s.draft === 'aprovado',
+      dGone: s.draft === 'descartado',
+      approve: () => this.setState({ draft: 'aprovado' }),
+      discard: () => this.setState({ draft: 'descartado' }),
+      reset: () => this.setState({ draft: 'pendente' })
+    };
+  }
+}
+</script>
+</body>
+</html>

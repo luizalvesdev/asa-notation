@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Inbox</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="inbox" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Inbox</span></nav>
+<div class="tb-r">
+<span class="sync desk" style="color: var(--warning)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5.2-2.7M12 20h.01"></path></svg>1 na fila</span>
+<button class="btn btn-fan btn-sm desk" type="button" onClick="{{openCap}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Capturar<span class="kbd">⌘⇧K</span></button>
+<button class="{{chatBtn}}" type="button" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="max-width: 880px; margin: 0 auto; padding: 36px 32px 140px; display: flex; flex-direction: column; gap: 14px">
+<div class="row" style="flex-wrap: wrap; gap: 10px; align-items: flex-end"><h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Inbox</h1><span class="muted" style="font-size: 14px; padding-bottom: 4px">{{count}} itens · o Renato sugeriu classificação para {{sugN}}</span></div>
+<div class="row rel" style="gap: 6px; flex-wrap: wrap">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{filtros}}" as="f" hint-placeholder-count="6"><button class="{{f.cls}}" type="button" aria-pressed="{{f.sel}}" onClick="{{f.pick}}"><sc-if value="{{f.dot}}" hint-placeholder-val="{{ false }}"><span class="{{f.dotCls}}"></span></sc-if>{{f.nome}}</button></sc-for>
+<button class="btn btn-sec btn-sm" type="button" style="margin-left: auto" onClick="{{acceptAll}}"><span class="av r" style="width: 16px; height: 16px; font-size: 10px; border-radius: 4px">R</span>Aceitar todas as sugestões</button>
+</div>
+<div class="col rel" style="gap: 6px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 6px">2</span></sc-if>
+<sc-for list="{{items}}" as="it" hint-placeholder-count="6">
+<div class="card enter" style="display: flex; gap: 12px; padding: 12px 14px; box-shadow: {{it.ring}}">
+<button class="plain" type="button" role="checkbox" aria-checked="{{it.checked}}" aria-label="Selecionar" onClick="{{it.toggle}}" style="padding-top: 1px"><span class="{{it.cb}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span></button>
+<div class="col grow1" style="gap: 8px; min-width: 0">
+<div class="row" style="gap: 8px"><span style="font-weight: 500; font-size: 14px" class="grow1">{{it.t}}</span><span style="font-size: 12px; color: var(--text-3); white-space: nowrap">{{it.h}}</span></div>
+<sc-if value="{{it.queued}}" hint-placeholder-val="{{ false }}"><span class="badge warn" style="align-self: flex-start"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M12 20h.01"></path></svg>Na fila offline · envia ao reconectar</span></sc-if>
+<sc-if value="{{it.pend}}" hint-placeholder-val="{{ true }}"><div class="row" style="gap: 6px; flex-wrap: wrap"><span class="badge r dash"><span class="{{it.dotCls}}"></span>{{it.tipo}}</span><sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="1"><span class="badge r dash">{{tg}}</span></sc-for><span class="badge r dash">{{it.proj}}</span><button class="btn btn-fan btn-sm" type="button" onClick="{{it.accept}}" style="height: 24px; padding: 0 8px; color: var(--renato)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Aceitar</button><button class="btn btn-fan btn-sm" type="button" style="height: 24px; padding: 0 8px; color: var(--text-2)">Editar</button></div></sc-if>
+<sc-if value="{{it.ok}}" hint-placeholder-val="{{ false }}"><div class="row enter" style="gap: 6px; flex-wrap: wrap"><span class="badge"><span class="{{it.dotCls}}"></span>{{it.tipo}}</span><sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="1"><span class="badge out">{{tg}}</span></sc-for><span class="badge out">{{it.proj}}</span><span style="font-size: 12px; color: var(--text-3)">classificado</span></div></sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div class="{{bulkCls}}" role="toolbar" aria-label="Ações em lote" style="position: absolute; left: 0; right: 0; bottom: 84px; margin: 0 auto; width: min(600px, calc(100% - 24px)); z-index: 30">
+<div class="row bulk-row" style="gap: 6px; padding: 6px 6px 6px 14px; border-radius: 12px; background: var(--text); color: var(--bg); box-shadow: var(--e3); font-size: 13px">
+<b style="font-weight: 600">{{selN}} selecionadas</b>
+<button class="btn btn-sm" type="button" style="color: inherit; margin-left: auto" onClick="{{acceptSel}}">Aplicar sugestões</button>
+<div class="rel"><button class="btn btn-sm" type="button" style="color: inherit" aria-expanded="{{moveExp}}" onClick="{{toggleMove}}">Mover para…</button>
+<div class="{{moveCls}}" style="position: absolute; bottom: 38px; right: 0; width: 240px; transform-origin: 80% 100%"><div class="menu" style="color: var(--text)"><div class="mgroup">Mover para</div><button class="plain mrow sel" type="button" onClick="{{doMove}}">Loja v2</button><button class="plain mrow" type="button" onClick="{{doMove}}">Sistemas distribuídos</button><button class="plain mrow" type="button" onClick="{{doMove}}">Leituras (database)</button><button class="plain mrow" type="button" onClick="{{doMove}}">Site pessoal</button></div></div>
+</div>
+<button class="btn btn-sm" type="button" style="color: inherit">Arquivar</button>
+<button class="btn btn-sm btn-ico" type="button" aria-label="Limpar seleção" style="color: inherit" onClick="{{clearSel}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+</div>
+<div class="toasts"><div class="{{toastCls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>{{toastTxt}}<button class="btn" type="button" onClick="{{undoMove}}">Desfazer</button></div></div>
+<dc-import name="NavInferior" atual="inbox" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="renato" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Inbox</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Classificação</span><span class="prio">P0</span></div><p>Cinco tipos: ideia, estudo, trabalho, projeto, referência. Filtros no topo. Sugestões do Renato aparecem tracejadas na cor dele até serem aceitas; aceitas viram rótulos neutros.</p><p><span class="lbl">Movimento</span> Aceitar: tracejado → sólido em médio; itens filtrados entram com opacidade + 6 px.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Seleção em lote</span><span class="prio">P0</span></div><p>Marque itens: a barra de ações sobe da base com Aplicar sugestões, Mover para…, Arquivar. ⇧ clique seleciona intervalo; ⌘A seleciona todos. Itens movidos saem da Inbox com Desfazer.</p><p><span class="lbl">Movimento</span> Barra: médio · entrada, 16 px + opacidade; menu Mover abre para cima (rápido). Itens movidos saem em opacidade e as vizinhas sobem com FLIP.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Offline</span><span class="prio">P0</span></div><p>Capturas feitas sem rede ficam na fila com selo de aviso e contagem no topo. Ao reconectar, sobem em ordem e o Renato classifica.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">4</span><span>Vazio</span><span class="prio">P0</span></div><p>“Inbox em dia” com botão Capturar e o atalho ⌘⇧K.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="inbox" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, chat: false, drawer: false, cap: false, f: 'todas', sel: { 1: true, 3: true }, ok: { 4: true }, moved: [], lastMoved: [], move: false, toast: false };
+    this.data = [
+      { id: 1, t: 'Ideia: cache por tenant no checkout', h: 'há 4 min', tipo: 'ideia', tags: ['#performance'], proj: 'Loja v2' },
+      { id: 2, t: 'Link: guia de índices parciais no Postgres', h: 'há 1 h', tipo: 'referência', tags: ['#postgres'], proj: 'Leituras' },
+      { id: 3, t: 'Dúvida: retry com idempotência em filas', h: 'ontem', tipo: 'estudo', tags: ['#filas'], proj: 'Sistemas distribuídos' },
+      { id: 4, t: 'Ligar para o contador sobre a declaração', h: 'ontem', tipo: 'trabalho', tags: ['#admin'], proj: 'Sem projeto' },
+      { id: 5, t: 'Post: por que seu retry duplica pedidos', h: 'ontem', tipo: 'projeto', tags: ['#escrita'], proj: '4 posts técnicos' },
+      { id: 6, t: 'Foto do quadro da reunião de sexta', h: 'agora', tipo: 'trabalho', tags: ['#reunião'], proj: 'Loja v2', queued: true }
+    ];
+    this.t = null;
+  }
+  componentWillUnmount() { if (this.t) clearTimeout(this.t); }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const dots = { 'ideia': 'dot c1', 'estudo': 'dot c2', 'trabalho': 'dot c3', 'projeto': 'dot c4', 'referência': 'dot c5' };
+    const live = this.data.filter((d) => s.moved.indexOf(d.id) < 0);
+    const vis = live.filter((d) => s.f === 'todas' || d.tipo === s.f);
+    const selIds = Object.keys(s.sel).filter((k) => s.sel[k]).map(Number).filter((id) => live.some((d) => d.id === id));
+    const F = ['todas', 'ideia', 'estudo', 'trabalho', 'projeto', 'referência'];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: s.chat, chatBtn: 'btn btn-fan btn-sm' + (s.chat ? ' on' : ''), toggleChat: () => this.setState({ chat: !s.chat }), closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      count: live.length, sugN: live.filter((d) => !s.ok[d.id]).length,
+      filtros: F.map((f) => ({ nome: f === 'todas' ? 'Todas' : f, dot: f !== 'todas', dotCls: dots[f] || '', sel: s.f === f ? 'true' : 'false', cls: 'btn btn-sm ' + (s.f === f ? 'btn-sec' : 'btn-fan'), pick: () => this.setState({ f: f }) })),
+      items: vis.map((d) => {
+        const sel = !!s.sel[d.id];
+        const ok = !!s.ok[d.id];
+        return Object.assign({}, d, { queued: !!d.queued, dotCls: dots[d.tipo], checked: sel ? 'true' : 'false', cb: 'cb' + (sel ? ' on' : ''), ring: sel ? 'inset 0 0 0 2px var(--accent)' : 'none', pend: !ok, ok: ok,
+          toggle: () => this.setState({ sel: Object.assign({}, s.sel, { [d.id]: !sel }), move: false }),
+          accept: () => this.setState({ ok: Object.assign({}, s.ok, { [d.id]: true }) }) });
+      }),
+      acceptAll: () => { const o = {}; this.data.forEach((d) => { o[d.id] = true; }); this.setState({ ok: o }); },
+      selN: selIds.length, bulkCls: 'float up' + (selIds.length ? ' on' : ''),
+      acceptSel: () => { const o = Object.assign({}, s.ok); selIds.forEach((id) => { o[id] = true; }); this.setState({ ok: o }); },
+      moveExp: s.move ? 'true' : 'false', moveCls: 'float up' + (s.move ? ' on' : ''), toggleMove: () => this.setState({ move: !s.move }),
+      doMove: () => {
+        this.setState({ moved: s.moved.concat(selIds), lastMoved: selIds, sel: {}, move: false, toast: true });
+        if (this.t) clearTimeout(this.t);
+        this.t = setTimeout(() => this.setState({ toast: false }), 4000);
+      },
+      clearSel: () => this.setState({ sel: {}, move: false }),
+      toastCls: 'toast' + (s.toast ? ' on' : ''), toastTxt: s.lastMoved.length + ' itens movidos para Loja v2',
+      undoMove: () => this.setState({ moved: s.moved.filter((id) => s.lastMoved.indexOf(id) < 0), toast: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

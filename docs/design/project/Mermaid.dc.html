@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Bloco Mermaid</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="mermaid" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="hide-m">Projetos</span><span class="sep hide-m">/</span><span class="cur">Loja v2 · arquitetura</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<article class="page" style="padding-top: 48px; max-width: 1000px">
+<h1 class="p-title" style="margin-top: 0">Loja v2 · arquitetura</h1>
+<p class="b-p" style="margin-bottom: 18px">Fluxo do pedido até o provedor de pagamento. A chave de idempotência evita cobrança dupla no retry.</p>
+<div class="card rel" style="overflow: hidden">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 8px; left: 8px">1</span></sc-if>
+<div class="row" style="gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap">
+<span class="mi-ic">◇</span><b style="font-weight: 600; font-size: 13px">Mermaid</b>
+<div class="seg" role="tablist" aria-label="Modo" style="margin-left: 8px"><span class="seg-ind" style="width: calc((100% - 4px) / 3); transform: translateX({{segX}})"></span><sc-for list="{{modes}}" as="m" hint-placeholder-count="3"><button class="{{m.cls}}" type="button" role="tab" aria-selected="{{m.sel}}" onClick="{{m.pick}}">{{m.nome}}</button></sc-for></div>
+<span class="row" style="margin-left: auto; gap: 4px"><button class="btn btn-fan btn-sm" type="button" onClick="{{toggleErr}}">{{errLabel}}</button><button class="btn btn-fan btn-sm" type="button">Exportar SVG</button></span>
+</div>
+<div class="mm-grid" style="display: grid; grid-template-columns: {{cols}}; min-height: 340px">
+<sc-if value="{{showCode}}" hint-placeholder-val="{{ true }}">
+<div class="rel" style="background: var(--bg-2); border-right: 1px solid var(--border); padding: 14px 0; font: 400 13px/22px var(--mono); overflow: auto">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 6px; left: auto; right: 8px">2</span></sc-if>
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="7"><div style="display: flex; gap: 14px; padding: 0 14px; background: {{l.bg}}"><span style="width: 18px; text-align: right; color: var(--text-3); flex: none">{{l.n}}</span><span style="white-space: pre; color: {{l.fg}}">{{l.t}}</span></div></sc-for>
+<sc-if value="{{err}}" hint-placeholder-val="{{ false }}"><div class="enter" style="margin: 10px 14px 0; padding: 8px 10px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font: 500 12px/18px var(--sans)">Linha 5: faltou fechar “]”. A prévia mostra a última versão válida.</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{showPrev}}" hint-placeholder-val="{{ true }}">
+<div class="rel" style="padding: 20px; display: flex; align-items: center; justify-content: center; opacity: {{prevOp}}; transition: opacity var(--medio) var(--padrao)">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 6px; left: auto; right: 8px">3</span></sc-if>
+<svg viewBox="0 0 560 260" role="img" aria-label="Fluxograma: Cliente para API Gateway, para Pedidos, para Fila de pagamentos, para Pagamentos, para Provedor de pagamento com chave de idempotência" style="width: 100%; max-width: 560px; height: auto">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--text-2)"></path></marker></defs>
+<g fill="none" stroke="var(--text-2)" stroke-width="1.5" marker-end="url(#ar)"><path d="M96 56H150"></path><path d="M262 56H316"></path><path d="M372 78V128"></path><path d="M316 160H262"></path><path d="M206 182V214"></path></g>
+<g font-family="Instrument Sans, sans-serif" font-size="13" fill="var(--text)" text-anchor="middle">
+<rect x="16" y="36" width="80" height="40" rx="8" fill="var(--surface)" stroke="var(--border-2)"></rect><text x="56" y="60">Cliente</text>
+<rect x="152" y="36" width="110" height="40" rx="8" fill="var(--surface)" stroke="var(--border-2)"></rect><text x="207" y="60">API Gateway</text>
+<rect x="318" y="36" width="108" height="40" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"></rect><text x="372" y="60">Pedidos</text>
+<path d="M318 140h108v40H318z" fill="var(--surface)" stroke="var(--border-2)"></path><ellipse cx="372" cy="140" rx="54" ry="8" fill="var(--surface)" stroke="var(--border-2)"></ellipse><text x="372" y="168" font-size="12">Fila de pagamentos</text>
+<rect x="150" y="140" width="112" height="40" rx="8" fill="var(--surface)" stroke="var(--border-2)"></rect><text x="206" y="164">Pagamentos</text>
+<rect x="128" y="216" width="156" height="40" rx="8" fill="var(--surface)" stroke="var(--border-2)"></rect><text x="206" y="240">Provedor de pagamento</text>
+<text x="290" y="205" font-size="11" fill="var(--text-2)" font-family="JetBrains Mono, monospace">idempotency key</text>
+</g>
+</svg>
+</div>
+</sc-if>
+</div>
+</div>
+<p class="b-p" style="margin-top: 18px; color: var(--text-2)">Próximo passo: decidir se a fila fica no Postgres ou num broker.</p>
+</article>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Mermaid</b><span class="spec" style="margin-left: auto">passo 7</span></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Bloco Mermaid</span><span class="prio">P1</span></div><p>Bloco do editor inserido por /mermaid. Três modos: Dividido, Código e Prévia. Fora de foco, mostra só a prévia; clique duplo abre o código.</p><p><span class="lbl">Movimento</span> Troca de modo: colunas em cross-fade médio.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Edição do código</span><span class="prio">P1</span></div><p>Editor mono com números de linha e realce simples. Erro de sintaxe marca a linha e explica em português. Use “Simular erro”.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Prévia ao vivo</span><span class="prio">P1</span></div><p>Renderiza 300 ms depois da última tecla, com as cores do tema. Com erro, mantém a última versão válida a 40% de opacidade. Exporta SVG.</p><p><span class="lbl">Movimento</span> Nova renderização em cross-fade rápido; nada pula de lugar.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="mermaid" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, mode: 0, err: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const src = ['graph LR', '  Cliente --> API[API Gateway]', '  API --> Pedidos', '  Pedidos --> Fila[(Fila de pagamentos)]', s.err ? '  Fila --> Pagamentos[Pagamentos' : '  Fila --> Pagamentos', '  Pagamentos -->|idempotency key| PSP[Provedor de pagamento]', ''];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      segX: (s.mode * 100) + '%',
+      modes: ['Dividido', 'Código', 'Prévia'].map((n, i) => ({ nome: n, cls: 'seg-b' + (s.mode === i ? ' on' : ''), sel: s.mode === i ? 'true' : 'false', pick: () => this.setState({ mode: i }) })),
+      cols: s.mode === 0 ? 'minmax(0, 1fr) minmax(0, 1.2fr)' : 'minmax(0, 1fr)',
+      showCode: s.mode !== 2, showPrev: s.mode !== 1,
+      err: s.err, errLabel: s.err ? 'Corrigir erro' : 'Simular erro', toggleErr: () => this.setState({ err: !s.err }),
+      prevOp: s.err ? 0.4 : 1,
+      lines: src.map((t, i) => ({ n: i + 1, t: t || ' ', bg: s.err && i === 4 ? 'var(--danger-soft)' : 'transparent', fg: i === 0 ? 'var(--accent)' : 'var(--text)' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

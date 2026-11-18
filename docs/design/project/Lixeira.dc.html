@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Lixeira</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="lixeira" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Lixeira</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="max-width: 920px; margin: 0 auto; padding: 48px 40px 96px; display: flex; flex-direction: column; gap: 20px">
+<div class="col" style="gap: 6px"><h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Lixeira</h1><p class="muted" style="font-size: 14px">Itens ficam aqui por 30 dias e depois são excluídos de vez.</p></div>
+<div class="row" style="gap: 8px; flex-wrap: wrap">
+<div class="rel" style="width: 320px; max-width: 100%"><label for="lq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar na lixeira</label><input id="lq" class="inp" placeholder="Buscar na lixeira" style="padding-left: 32px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 10px; top: 8px; color: var(--text-3)"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></div>
+<span style="margin-left: auto; font-size: 13px; color: var(--text-2)">{{count}} itens</span>
+<button class="btn btn-perigo btn-sm" type="button">Esvaziar lixeira</button>
+</div>
+<div class="card rel" style="overflow: hidden">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 8px; left: 8px">1</span></sc-if>
+<div class="dgrid lx" role="table" aria-label="Itens na lixeira" style="--cols: minmax(0, 2fr) minmax(0, 1.4fr) 170px 230px">
+<div class="drow hd" role="row"><span role="columnheader" style="padding-left: 16px">Página</span><span role="columnheader">Estava em</span><span role="columnheader">Excluída</span><span role="columnheader" style="text-align: right; padding-right: 16px">Ações</span></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<div class="drow enter" role="row" style="min-height: 48px"><span class="row" style="padding-left: 16px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg><span class="trunc">{{r.t}}</span></span><span style="color: var(--text-2)">{{r.loc}}</span><span style="color: var(--text-2)">{{r.d}}</span><span class="row" style="justify-content: flex-end; gap: 4px; padding-right: 10px"><button class="btn btn-sec btn-sm" type="button" onClick="{{r.restore}}">Restaurar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--danger)">Excluir de vez</button></span></div>
+</sc-for>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div class="col enter" style="align-items: center; gap: 8px; padding: 48px; text-align: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; color: var(--text-2)"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></span><b style="font-weight: 600">Lixeira vazia</b><span class="muted" style="font-size: 13px">Páginas excluídas aparecem aqui por 30 dias.</span><button class="btn btn-fan btn-sm" type="button" onClick="{{resetAll}}">Repor exemplo</button></div>
+</sc-if>
+</div>
+</div>
+<div class="toasts"><div class="{{toastCls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>“{{lastT}}” restaurada<a class="btn" href="Pagina.dc.html">Abrir</a><button class="btn" type="button" onClick="{{undo}}">Desfazer</button></div></div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Lixeira</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Restaurar</span><span class="prio">P1</span></div><p>Restaurar devolve a página ao lugar original, com filhos. Se o pai também foi excluído, volta para a raiz e o toast diz onde ficou. “Excluir de vez” e “Esvaziar” pedem confirmação em modal com o número de itens.</p><p><span class="lbl">Movimento</span> Linha restaurada sai com opacidade + colapso de altura em médio; vizinhas sobem com FLIP. Toast em médio · entrada. Experimente “Restaurar”.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Estados</span><span class="prio">P1</span></div><p>Vazio (restaure todas para ver), carregando (skeleton de linhas), offline (Restaurar desabilitado com tooltip “Disponível ao reconectar”).</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="lixeira" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.all = [
+      { id: 1, t: 'Rascunho · artigo sobre filas', loc: 'Projetos / Loja v2', d: 'hoje, 09:12' },
+      { id: 2, t: 'Ideias soltas de outubro', loc: 'Inbox', d: 'ontem' },
+      { id: 3, t: 'Resumo · Paxos simplificado', loc: 'Estudo / Sistemas distribuídos', d: '14 nov' },
+      { id: 4, t: 'Checklist de mudança de servidor', loc: 'Projetos / Site pessoal', d: '9 nov' },
+      { id: 5, t: 'Sem título', loc: 'Raiz', d: '28 out · some em 9 dias' }
+    ];
+    this.state = { dark: null, notes: null, gone: [], toast: false, last: '' };
+    this.t = null;
+  }
+  componentWillUnmount() { if (this.t) clearTimeout(this.t); }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const rows = this.all.filter((r) => s.gone.indexOf(r.id) < 0).map((r) => Object.assign({}, r, {
+      restore: () => {
+        this.setState({ gone: s.gone.concat([r.id]), toast: true, last: r.t });
+        if (this.t) clearTimeout(this.t);
+        this.t = setTimeout(() => this.setState({ toast: false }), 4000);
+      }
+    }));
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: !!s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: !!s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      rows: rows, count: rows.length, empty: rows.length === 0,
+      resetAll: () => this.setState({ gone: [] }),
+      toastCls: 'toast' + (s.toast ? ' on' : ''), lastT: s.last,
+      undo: () => this.setState({ gone: s.gone.slice(0, -1), toast: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

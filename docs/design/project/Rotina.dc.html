@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Rotina e check-ins</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="rotina" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="hide-m">Hermes</span><span class="sep hide-m">/</span><span class="cur">Rotina e check-ins</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="display: flex; flex-wrap: wrap; gap: 32px; padding: 36px 40px 120px; max-width: 1200px">
+<div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<div class="row" style="align-items: flex-end; gap: 12px"><h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Rotina</h1></div>
+<div class="tabs" role="tablist" aria-label="Check-ins">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2"><button class="{{t.cls}}" type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.nome}}</button></sc-for>
+</div>
+
+<sc-if value="{{tSab}}" hint-placeholder-val="{{ true }}">
+<div class="col enter rel" style="gap: 18px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<div class="row" style="gap: 10px"><span class="av h lg">H</span><div class="col"><b style="font-weight: 600">Revisão do sábado · 21 nov</b><span style="font-size: 13px; color: var(--text-2)">Hermes conduz em 5 perguntas · cerca de 6 min</span></div><span class="badge ac" style="margin-left: auto">2 de 5</span></div>
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<b style="font-weight: 600; font-size: 15px">Como você avalia a semana?</b>
+<div class="row" style="gap: 6px; flex-wrap: wrap" role="radiogroup" aria-label="Avaliação de 1 a 5">
+<sc-for list="{{notas}}" as="n" hint-placeholder-count="5"><button class="{{n.cls}}" type="button" role="radio" aria-checked="{{n.sel}}" onClick="{{n.pick}}" style="width: 56px; height: 56px; flex-direction: column; gap: 0; font-size: 18px; font-family: var(--serif)">{{n.v}}<span style="font: 500 10px/12px var(--sans); color: inherit; opacity: .8">{{n.l}}</span></button></sc-for>
+</div>
+</div>
+<div class="field"><label class="label" for="r1">O que funcionou?</label><textarea id="r1" class="inp" rows="2">Estudei 3 noites seguidas e terminei o artigo do Raft.</textarea></div>
+<div class="field"><label class="label" for="r2">O que travou?</label><textarea id="r2" class="inp is-fi" rows="2">A proposta do freela ficou parada esperando retorno.</textarea></div>
+<div class="draft"><span class="draft-t">Rascunho do Hermes · foco da próxima semana</span><div class="col" style="gap: 6px; font-size: 13px"><span>1. Enviar a proposta na segunda até 11h.</span><span>2. Três sessões de estudo de 50 min (ter, qui, sáb).</span><span>3. Publicar o post sobre idempotência.</span></div><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button">Aprovar e criar tarefas</button><button class="btn btn-fan btn-sm" type="button">Editar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Descartar</button></div></div>
+<div class="row" style="gap: 8px"><button class="btn btn-fan" type="button">Anterior</button><button class="btn btn-pri" type="button" style="margin-left: auto">Próxima pergunta</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{tQui}}" hint-placeholder-val="{{ false }}">
+<div class="col enter rel" style="gap: 18px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<div class="row" style="gap: 10px"><span class="av h lg">H</span><div class="col"><b style="font-weight: 600">Métricas da quinta · 19 nov</b><span style="font-size: 13px; color: var(--text-2)">Números da semana até agora, com uma pergunta</span></div></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 10px">
+<div class="stat rise"><span class="v">9/12</span><span class="l">tarefas concluídas</span></div>
+<div class="stat rise" style="animation-delay: 40ms"><span class="v">6h40</span><span class="l">de estudo</span></div>
+<div class="stat rise" style="animation-delay: 80ms"><span class="v">142</span><span class="l">cards revisados</span></div>
+<div class="stat rise" style="animation-delay: 120ms"><span class="v">5/7</span><span class="l">dias de constância</span></div>
+</div>
+<div class="bub-a"><span class="av h">H</span><div class="col" style="gap: 8px"><p style="font-size: 14px; line-height: 21px">Boa semana de estudo. A meta de posts segue em risco. Quer reservar 2 horas no sábado para o rascunho?</p><div class="row" style="gap: 6px"><button class="btn btn-sec btn-sm" type="button">Sim, reservar</button><button class="btn btn-fan btn-sm" type="button">Agora não</button><a class="btn btn-fan btn-sm" href="Chat.dc.html">Conversar</a></div></div></div>
+</div>
+</sc-if>
+</div>
+
+<aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px" class="rel">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px">
+<div class="row" style="padding-bottom: 8px"><b style="font-weight: 600; font-size: 13px">Check-ins agendados</b><a href="Configuracoes.dc.html" style="margin-left: auto; font-size: 12px">Horários</a></div>
+<sc-for list="{{checks}}" as="c" hint-placeholder-count="3">
+<div class="row" style="gap: 10px; min-height: 44px; border-top: 1px solid var(--border)"><span class="col grow1"><span style="font-size: 13px; font-weight: 500">{{c.t}}</span><span style="font-size: 12px; color: var(--text-3)">{{c.w}}</span></span><button class="tog" type="button" role="switch" aria-checked="{{c.on}}" aria-label="{{c.aria}}" onClick="{{c.toggle}}" style="padding: 0 4px"><span class="{{c.sw}}"><span class="knob"></span></span></button></div>
+</sc-for>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px">
+<div class="row" style="padding-bottom: 8px"><b style="font-weight: 600; font-size: 13px">Lembretes semanais</b><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Novo lembrete" style="margin-left: auto"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
+<div class="row" style="gap: 10px; min-height: 40px; border-top: 1px solid var(--border); font-size: 13px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path></svg><span class="grow1">Planejar a semana</span><span class="spec">dom 20:00</span></div>
+<div class="row" style="gap: 10px; min-height: 40px; border-top: 1px solid var(--border); font-size: 13px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path></svg><span class="grow1">Backup e export</span><span class="spec">sex 17:00</span></div>
+<div class="row" style="gap: 10px; min-height: 40px; border-top: 1px solid var(--border); font-size: 13px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path></svg><span class="grow1">Esvaziar a Inbox</span><span class="spec">qua 21:00</span></div>
+</div>
+<a class="card" href="Progresso.dc.html" style="padding: 16px; text-decoration: none; color: var(--text); display: flex; gap: 10px; align-items: center"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent)"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg><span class="col"><b style="font-weight: 600; font-size: 13px">Ver painel de progresso</b><span style="font-size: 12px; color: var(--text-2)">Tarefas, metas e constância</span></span></a>
+</aside>
+</div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Rotina</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Revisão do sábado</span><span class="prio">P0</span></div><p>Conversa guiada em 5 passos: nota da semana (1–5), o que funcionou, o que travou, métricas e foco da próxima semana. O foco vem como rascunho do Hermes; aprovar cria as tarefas. As respostas viram uma página “Revisão do sábado · data”.</p><p><span class="lbl">Movimento</span> Nota escolhida com pop (mola); troca de pergunta desliza 12 px na direção do avanço (médio).</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Métricas da quinta</span><span class="prio">P1</span></div><p>Quatro números calculados (tarefas, horas de estudo, cards, constância) e uma pergunta do Hermes. Troque a aba para ver.</p><p><span class="lbl">Movimento</span> Cartões entram com mola e 40 ms de defasagem.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Agenda dos check-ins</span><span class="prio">P0</span></div><p>Liga e desliga cada check-in; horários em Configurações. Na hora marcada, notificação (Web Push se permitido) que abre o check-in direto.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="rotina" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, tab: 0, nota: 4, on: { d: true, q: true, s: true } };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const labels = ['ruim', 'fraca', 'ok', 'boa', 'ótima'];
+    const checks = [{ id: 'd', t: 'Plano do dia', w: 'todo dia · 08:30' }, { id: 'q', t: 'Métricas da quinta', w: 'quinta · 18:00' }, { id: 's', t: 'Revisão do sábado', w: 'sábado · 10:00' }];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      tabs: ['Revisão do sábado', 'Métricas da quinta'].map((n, i) => ({ nome: n, cls: 'tab' + (s.tab === i ? ' on' : ''), sel: s.tab === i ? 'true' : 'false', pick: () => this.setState({ tab: i }) })),
+      tSab: s.tab === 0, tQui: s.tab === 1,
+      notas: [1, 2, 3, 4, 5].map((v) => ({ v: v, l: labels[v - 1], sel: s.nota === v ? 'true' : 'false', cls: s.nota === v ? 'btn btn-pri' : 'btn btn-sec', pick: () => this.setState({ nota: v }) })),
+      checks: checks.map((c) => ({ t: c.t, w: c.w, aria: c.t, on: s.on[c.id] ? 'true' : 'false', sw: 'sw' + (s.on[c.id] ? ' on' : ''), toggle: () => this.setState({ on: Object.assign({}, s.on, { [c.id]: !s.on[c.id] }) }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

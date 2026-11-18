@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Captura rápida</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}" style="{{rootStyle}}">
+<sc-if value="{{standalone}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; padding: 48px; display: flex; flex-direction: column; gap: 12px; opacity: .5"><div class="sk" style="height: 28px; width: 30%"></div><div class="sk" style="height: 12px; width: 60%"></div><div class="sk" style="height: 12px; width: 52%"></div><div class="sk" style="height: 12px; width: 56%"></div>
+<div style="margin-top: 24px; display: flex; gap: 8px"><button class="btn btn-sec" type="button" style="pointer-events: auto" onClick="{{reabrir}}">Reabrir captura <span class="kbd">⌘⇧K</span></button><button class="btn btn-fan" type="button" style="pointer-events: auto" onClick="{{toggleOff}}">Simular offline: {{offLabel}}</button></div></div>
+</sc-if>
+<div class="{{panelCls}}" role="dialog" aria-label="Captura rápida" style="position: absolute; left: 0; right: 0; top: 72px; width: min(520px, calc(100% - 24px)); margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--e3); padding: 14px; display: flex; flex-direction: column; gap: 12px; transform-origin: 50% 0">
+<div class="row" style="font-size: 12px; color: var(--text-2)"><span class="av r" style="width: 18px; height: 18px; font-size: 11px; border-radius: 5px">R</span>Captura rápida · vai para a Inbox<span style="margin-left: auto" class="row"><sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><span class="badge warn" style="height: 20px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5.2-2.7M12 20h.01"></path></svg>Offline · 2 na fila</span></sc-if></span></div>
+<label for="cap-txt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Texto da captura</label>
+<textarea class="inp is-fi" id="cap-txt" rows="3" placeholder="Escreva uma ideia, link ou tarefa…" style="font-size: 15px; line-height: 23px; min-height: 84px">Ideia: cache por tenant no checkout. Ver como invalidar quando o catálogo muda. #performance</textarea>
+<div class="row" style="flex-wrap: wrap; gap: 6px"><span class="badge out">#performance</span><span style="font-size: 12px; color: var(--text-3)">O Renato sugere classificação e projeto depois, na Inbox.</span></div>
+<div class="row"><span class="kbd">⌘⇧K</span><span style="font-size: 12px; color: var(--text-3)">de qualquer tela</span><button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{cancelar}}">Cancelar <span class="kbd">esc</span></button><button class="btn btn-pri btn-sm" type="button" onClick="{{salvar}}">Salvar <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">⌘↵</span></button></div>
+</div>
+<div class="toasts">
+<div class="{{toastCls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>{{toastTxt}}<a class="btn" href="Inbox.dc.html" style="color: inherit">Ver Inbox</a><button class="btn" type="button" onClick="{{desfazer}}">Desfazer</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"aberta":{"editor":"boolean","default":true},"offline":{"editor":"boolean","default":false},"embutida":{"editor":"boolean","default":false},"fechar":{"editor":null},"$preview":{"width":1200,"height":560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { toast: false, open: null, off: null };
+    this.t = null;
+  }
+  componentWillUnmount() { if (this.t) clearTimeout(this.t); }
+  close() {
+    if (this.props.embutida && this.props.fechar) this.props.fechar();
+    else this.setState({ open: false });
+  }
+  renderVals() {
+    const emb = !!this.props.embutida;
+    const open = emb ? !!this.props.aberta : (this.state.open === null ? (this.props.aberta ?? true) : this.state.open);
+    const offline = this.state.off === null ? !!this.props.offline : this.state.off;
+    return {
+      standalone: !emb,
+      rootCls: emb ? '' : 'ds',
+      rootStyle: emb ? 'position: absolute; inset: 0; pointer-events: none; z-index: 65' : 'position: relative; height: 100vh; overflow: hidden',
+      panelCls: 'float' + (open ? ' on' : ''),
+      offline: offline,
+      offLabel: offline ? 'ligado' : 'desligado',
+      toggleOff: () => this.setState({ off: !offline }),
+      reabrir: () => this.setState({ open: true }),
+      toastCls: 'toast' + (this.state.toast ? ' on' : ''),
+      toastTxt: offline ? 'Na fila · enviaremos ao reconectar' : 'Salvo na Inbox',
+      cancelar: () => this.close(),
+      salvar: () => {
+        this.close();
+        this.setState({ toast: true });
+        if (this.t) clearTimeout(this.t);
+        this.t = setTimeout(() => this.setState({ toast: false }), 4000);
+      },
+      desfazer: () => this.setState({ toast: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

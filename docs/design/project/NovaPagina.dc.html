@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Nova página · templates</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="none" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><a href="Estudo.dc.html">Estudo</a><span class="sep">/</span><span class="cur">Sem título</span></nav>
+<div class="tb-r">
+<span class="sync">Rascunho local</span>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<article class="page" style="padding-top: 96px">
+<div class="row" style="gap: 4px; margin-bottom: 8px; color: var(--text-3)"><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-3)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M9 10h.01M15 10h.01M9 15c1.5 1.2 4.5 1.2 6 0"></path></svg>Adicionar ícone</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-3)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M4 15l4-4 4 4 3-3 5 5"></path></svg>Adicionar capa</button></div>
+<label for="tit" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Título</label>
+<input id="tit" class="plain p-title" placeholder="Sem título" style="margin: 0 0 12px; width: 100%; outline: none; cursor: text; color: var(--text)">
+<p class="b-p" style="color: var(--text-3)">Comece a escrever, digite / para blocos, ou escolha um template:</p>
+<div class="rel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 10px; margin-top: 20px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{tpls}}" as="t" hint-placeholder-count="6">
+<button class="{{t.cls}}" type="button" onClick="{{t.pick}}" aria-pressed="{{t.sel}}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; text-align: left; border-radius: 10px; cursor: pointer; box-shadow: {{t.ring}}">
+<span class="col" style="gap: 5px; padding: 10px; border-radius: 6px; background: var(--bg-2); height: 74px; overflow: hidden"><span style="height: 7px; width: 55%; border-radius: 2px; background: var(--border-2)"></span><span style="height: 5px; width: 90%; border-radius: 2px; background: var(--border)"></span><span style="height: 5px; width: 75%; border-radius: 2px; background: var(--border)"></span><span style="height: 5px; width: 82%; border-radius: 2px; background: var(--border)"></span></span>
+<span style="font-weight: 600; font-size: 14px">{{t.nome}}</span>
+<span style="font-size: 12px; line-height: 17px; color: var(--text-2)">{{t.desc}}</span>
+</button>
+</sc-for>
+</div>
+<div class="row" style="margin-top: 16px; gap: 8px"><a class="btn btn-pri" href="Pagina.dc.html">Usar “{{selNome}}”</a><button class="btn btn-fan" type="button">Página vazia</button><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">Templates ficam em Configurações › Templates</span></div>
+</article>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Nova página</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Templates</span><span class="prio">P1</span></div><p>Aparecem só enquanto a página está vazia; somem ao digitar o primeiro caractere. Cada template é uma página comum marcada como template, então editar um template é editar uma página. Templates com propriedades criam a página dentro do database certo.</p><p><span class="lbl">Movimento</span> Seleção em instante. Ao aplicar, os blocos do template entram em sequência com 20 ms de defasagem (rápido · entrada).</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Estado vazio da página</span><span class="prio">P0</span></div><p>Foco cai direto no título. ↵ no título leva ao primeiro bloco. Página sem título e sem conteúdo some sozinha ao sair (não vai para a lixeira).</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="none" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, sel: 0 };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const list = [
+      { nome: 'Nota de estudo', desc: 'Resumo, perguntas, fontes e cards para revisar.' },
+      { nome: 'Projeto', desc: 'Objetivo, decisões, tarefas ligadas e links.' },
+      { nome: 'Reunião', desc: 'Pauta, decisões e próximos passos.' },
+      { nome: 'Leitura', desc: 'Ficha de livro ou artigo com nota e citações.' },
+      { nome: 'Revisão semanal', desc: 'O que fiz, o que travou, foco da próxima semana.' },
+      { nome: 'Diário', desc: 'Entrada do dia com humor e destaques.' }
+    ];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: !!s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: !!s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      selNome: list[s.sel].nome,
+      tpls: list.map((t, i) => ({ nome: t.nome, desc: t.desc, sel: s.sel === i ? 'true' : 'false', cls: 'plain card', ring: s.sel === i ? 'inset 0 0 0 2px var(--accent)' : 'none', pick: () => this.setState({ sel: i }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

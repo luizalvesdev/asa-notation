@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Histórico de versões e compartilhar</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="pagina" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><a href="Pagina.dc.html">Consenso com Raft</a><span class="sep">/</span><span class="cur">Histórico de versões</span></nav>
+<div class="tb-r">
+<button class="{{shareBtn}}" type="button" aria-expanded="{{shareExp}}" onClick="{{toggleShare}}">Compartilhar</button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="hist-split" style="flex: 1; display: flex; min-height: 0">
+<div class="scroll">
+<article class="page" style="padding-top: 40px">
+<div class="row" style="gap: 8px; margin-bottom: 18px"><span class="badge out">Versão de {{verNome}}</span><span style="font-size: 12px; color: var(--text-3)">Mostrando diferenças em relação à versão atual</span></div>
+<h1 class="p-title" style="margin-top: 0">Consenso com Raft</h1>
+<p class="b-p" style="margin-top: 8px">Raft é um algoritmo de consenso pensado para ser fácil de entender. Ele separa o problema em três partes: eleição de líder, replicação de log e segurança.</p>
+<div class="b-callout" style="margin: 12px 0; background: var(--success-soft)"><span class="badge ok" style="height: 20px">adicionado</span><div><b style="font-weight: 600">Para revisar:</b> no máximo um líder por termo; o líder só faz commit de entradas do próprio termo.</div></div>
+<h2 class="b-h1">Eleição de líder</h2>
+<div class="b-li"><span class="bul">•</span><span>Todo nó começa como seguidor e espera batimentos do líder.</span></div>
+<div class="b-li"><span class="bul">•</span><span><span style="background: var(--danger-soft); color: var(--danger); text-decoration: line-through">Depois de um tempo fixo</span> <span style="background: var(--success-soft); color: var(--success)">Sem batimento até o timeout</span>, vira candidato e pede votos.</span></div>
+<div class="b-li" style="background: var(--danger-soft); border-radius: 4px"><span class="bul">•</span><span style="text-decoration: line-through; color: var(--danger)">O nó com maior ID sempre vence.</span></div>
+<div class="b-li"><span class="bul">•</span><span>Quem recebe a maioria dos votos vira líder do termo.</span></div>
+</article>
+</div>
+<aside style="width: 300px; flex: none; border-left: 1px solid var(--border); display: flex; flex-direction: column" aria-label="Versões" class="rel hist-aside">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 12px; left: 12px">1</span></sc-if>
+<div style="padding: 14px 16px 8px; font-weight: 600; font-size: 13px">Versões</div>
+<div style="flex: 1; overflow: auto; padding: 0 8px; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{vers}}" as="v" hint-placeholder-count="6">
+<button class="{{v.cls}}" type="button" onClick="{{v.pick}}" style="height: auto; padding: 8px 10px; align-items: flex-start; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{v.t}}</span><span class="row" style="font-size: 12px; color: var(--text-3); gap: 6px">{{v.who}}</span></button>
+</sc-for>
+</div>
+<div style="padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 6px"><a class="btn btn-pri" href="Pagina.dc.html" style="flex: 1">Restaurar esta versão</a></div>
+</aside>
+</div>
+<div class="hist-pop {{shareCls}}" role="dialog" aria-label="Compartilhar" style="position: absolute; top: 52px; right: 120px; width: 380px; z-index: 40; transform-origin: 80% 0">
+<div class="menu" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div class="row"><b style="font-weight: 600">Compartilhar por link público</b><sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="anota-n" style="margin-left: 6px">2</span></sc-if></div>
+<button class="tog" type="button" role="switch" aria-checked="{{pubChecked}}" onClick="{{togglePub}}" style="padding: 0; color: var(--text); justify-content: space-between; width: 100%"><span class="col" style="text-align: left"><span style="font-size: 13px">Publicar na web</span><span style="font-size: 12px; color: var(--text-3); font-weight: 400">Qualquer pessoa com o link pode ler</span></span><span class="{{pubSw}}"><span class="knob"></span></span></button>
+<sc-if value="{{pub}}" hint-placeholder-val="{{ true }}">
+<div class="col enter" style="gap: 10px">
+<div class="row"><label for="lnk" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Link público</label><input id="lnk" class="inp filled mono" placeholder="asa.app/p/k3x9-consenso-raft" style="font-size: 12px"><button class="btn btn-sec" type="button" onClick="{{copiar}}">{{copyLabel}}</button></div>
+<div class="row" style="font-size: 12px; color: var(--text-2); gap: 6px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>Somente leitura · subpáginas não incluídas · 38 visitas</div>
+<button class="btn btn-fan btn-sm" type="button" onClick="{{togglePub}}" style="align-self: flex-start; color: var(--danger)">Revogar link</button>
+</div>
+</sc-if>
+<sc-if value="{{priv}}" hint-placeholder-val="{{ false }}"><p class="enter" style="font-size: 13px; color: var(--text-2)">Só você vê esta página. Ao publicar, um link de leitura é gerado.</p></sc-if>
+</div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Versões e link</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Histórico de versões</span><span class="prio">P1</span></div><p>Uma versão a cada sessão de edição (pausa de 10 min) e antes de toda alteração aprovada de assistente, marcada com o avatar dele. Clique nas versões: o texto do diff troca. Adicionado em verde, removido tachado em vermelho, sempre com texto além da cor.</p><p><span class="lbl">Movimento</span> Troca de versão em cross-fade médio, sem rolar a página.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Link público</span><span class="prio">P2</span></div><p>Uma página por vez, só leitura, sem subpáginas. Revogar invalida o link na hora. Indisponível offline (item desabilitado com motivo).</p><p><span class="lbl">Movimento</span> Popover: rápido · entrada, origem no botão. Conteúdo ao ligar: opacidade + 6 px.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="pagina" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"compartilhar":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, v: 1, share: props.compartilhar ?? true, pub: true, copied: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const list = [
+      { t: 'Atual', who: 'Você · agora' },
+      { t: 'Hoje, 10:12', who: 'Você · 14 alterações' },
+      { t: 'Ontem, 22:40', who: 'Renato · rascunho aprovado (callout)' },
+      { t: '14 nov, 19:05', who: 'Você · 3 alterações' },
+      { t: '12 nov, 08:30', who: 'Importado do Notion' },
+      { t: '10 nov, 21:10', who: 'Você · página criada' }
+    ];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: !!s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: !!s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      verNome: list[s.v].t,
+      vers: list.map((v, i) => ({ t: v.t, who: v.who, cls: 'plain mrow' + (s.v === i ? ' sel' : ''), pick: () => this.setState({ v: i }) })),
+      shareCls: 'float' + (s.share ? ' on' : ''), shareExp: s.share ? 'true' : 'false', shareBtn: 'btn btn-fan btn-sm' + (s.share ? ' on' : ''),
+      toggleShare: () => this.setState({ share: !s.share }),
+      pub: s.pub, priv: !s.pub, pubChecked: s.pub ? 'true' : 'false', pubSw: 'sw' + (s.pub ? ' on' : ''),
+      togglePub: () => this.setState({ pub: !s.pub, copied: false }),
+      copyLabel: s.copied ? 'Copiado' : 'Copiar',
+      copiar: () => this.setState({ copied: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

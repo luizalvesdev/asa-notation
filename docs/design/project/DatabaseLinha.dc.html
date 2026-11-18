@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Linha do database como página</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="database" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><a href="Database.dc.html">Leituras</a><span class="sep">/</span><span class="cur">In Search of an Understandable Consensus Algorithm</span></nav>
+<div class="tb-r">
+<span class="sync"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Salvo</span>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<article class="page" style="padding-top: 56px">
+<a class="btn btn-fan btn-sm" href="Database.dc.html" style="margin-left: -10px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Leituras</a>
+<h1 class="p-title rel">In Search of an Understandable Consensus Algorithm<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if></h1>
+<div class="props rel" style="margin: 12px 0 8px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<span class="pk"><span class="mi-ic">Aa</span>Autor</span><span class="pv">Diego Ongaro, John Ousterhout</span>
+<span class="pk"><span class="mi-ic">◉</span>Tipo</span><span class="pv"><span class="badge"><span class="dot c2"></span>Artigo</span></span>
+<span class="pk"><span class="mi-ic">◎</span>Status</span><span class="pv"><button class="plain" type="button" onClick="{{cycleSt}}"><span class="{{stCls}}">{{st}}</span></button></span>
+<span class="pk"><span class="mi-ic">☰</span>Tags</span><span class="pv"><span class="badge out">consenso</span><span class="badge out">raft</span></span>
+<span class="pk"><span class="mi-ic">#</span>Nota</span><span class="pv mono">★ 5</span>
+<span class="pk"><span class="mi-ic">◷</span>Início</span><span class="pv">2 nov 2026 → 9 nov 2026</span>
+<span class="pk"><span class="mi-ic">☑</span>Fichado</span><span class="pv"><span class="cb on"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span></span>
+<span class="pk"><span class="mi-ic">↗</span>Link</span><span class="pv"><a href="Pesquisa.dc.html">raft.github.io/raft.pdf</a></span>
+<span class="pk"><span class="mi-ic">⇄</span>Meta</span><span class="pv"><a class="mention" href="Metas.dc.html">Certificação em sistemas distribuídos</a></span>
+<span class="pk"><span class="mi-ic">⇄</span>Notas</span><span class="pv"><a class="mention" href="Pagina.dc.html">Consenso com Raft</a></span>
+</div>
+<button class="btn btn-fan btn-sm" type="button" style="color: var(--text-3); margin-left: -10px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Adicionar propriedade</button>
+<div class="b-hr" style="margin: 18px 0"></div>
+<h2 class="b-h2" style="margin-top: 0">Por que li</h2>
+<p class="b-p" style="margin-top: 6px">Base para a meta de certificação. Quero entender consenso antes de estudar bancos distribuídos.</p>
+<h2 class="b-h2">Ideias principais</h2>
+<div class="b-li" style="margin-top: 6px"><span class="bul">1.</span><span>Decompor o problema torna o algoritmo mais fácil de ensinar.</span></div>
+<div class="b-li"><span class="bul">2.</span><span>Líder forte simplifica a replicação: entradas só fluem do líder para os seguidores.</span></div>
+<div class="b-li"><span class="bul">3.</span><span>Timeouts aleatórios resolvem empates de eleição de forma simples.</span></div>
+<h2 class="b-h2">Fontes e referências</h2>
+<div class="col" style="gap: 6px; margin-top: 8px">
+<div class="b-embed" style="padding: 10px"><span class="cite">1</span><span class="col grow1"><span style="font-weight: 500; font-size: 14px">Artigo original (PDF)</span><span style="font-size: 12px; color: var(--text-3)">USENIX ATC 2014</span></span></div>
+<div class="b-embed" style="padding: 10px"><span class="cite">2</span><span class="col grow1"><span style="font-weight: 500; font-size: 14px">Visualização interativa</span><span style="font-size: 12px; color: var(--text-3)">raft.github.io</span></span></div>
+</div>
+</article>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Linha como página</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Página cheia</span><span class="prio">P0</span></div><p>Toda linha de database é uma página completa: mesmo editor de blocos, backlinks e histórico. Chega-se aqui por “Abrir como página” no peek ou ⌘↵ na linha.</p><p><span class="lbl">Movimento</span> Título é o elemento compartilhado entre peek, linha e cabeçalho (lento · padrão).</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Bloco de propriedades</span><span class="prio">P0</span></div><p>Propriedades no topo, editáveis no lugar; clique no Status para alternar. Relações mostram a página ligada como menção clicável. Propriedades vazias ficam ocultas atrás de “Mostrar 2 vazias”.</p><p><span class="lbl">Movimento</span> Valor troca em cross-fade instante.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="database" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, st: 2 };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const sts = ['Quero ler', 'Lendo', 'Lido'];
+    const cls = ['badge', 'badge ac', 'badge ok'];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: !!s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: !!s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      st: sts[s.st], stCls: cls[s.st], cycleSt: () => this.setState({ st: (s.st + 1) % 3 })
+    };
+  }
+}
+</script>
+</body>
+</html>

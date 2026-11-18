@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Conversas com os assistentes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="none" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="hide-m">Assistentes</span><span class="sep hide-m">/</span><span class="cur">{{cv.t}}</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div style="flex: 1; display: flex; min-height: 0">
+<aside class="hide-m rel" style="width: 280px; flex: none; border-right: 1px solid var(--border); display: flex; flex-direction: column" aria-label="Histórico de conversas">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 10px; left: 10px">1</span></sc-if>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 8px"><button class="btn btn-sec" type="button" onClick="{{novo}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova conversa</button><div class="rel"><label for="cq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar conversas</label><input id="cq" class="inp" placeholder="Buscar conversas" style="padding-left: 30px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 9px; top: 8px; color: var(--text-3)"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></div></div>
+<div style="flex: 1; overflow: auto; padding: 0 8px 12px; display: flex; flex-direction: column; gap: 1px">
+<div class="eyebrow" style="padding: 8px 8px 4px">Hoje</div>
+<sc-for list="{{convs}}" as="c" hint-placeholder-count="6">
+<sc-if value="{{c.hd}}" hint-placeholder-val="{{ false }}"><div class="eyebrow" style="padding: 12px 8px 4px">{{c.hdTxt}}</div></sc-if>
+<button class="{{c.cls}}" type="button" onClick="{{c.pick}}" style="height: auto; padding: 8px; gap: 10px; align-items: flex-start"><span class="{{c.av}}" style="width: 20px; height: 20px; font-size: 11px">{{c.ini}}</span><span class="col grow1" style="text-align: left; gap: 1px; min-width: 0"><span class="trunc" style="font-weight: 500">{{c.t}}</span><span class="trunc" style="font-size: 12px; color: var(--text-3)">{{c.d}}</span></span></button>
+</sc-for>
+</div>
+</aside>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div class="scroll">
+<div style="max-width: 720px; margin: 0 auto; padding: 32px 28px 40px; display: flex; flex-direction: column; gap: 18px">
+<div class="row" style="gap: 10px"><span class="{{cv.avLg}}">{{cv.ini}}</span><div class="col"><b style="font-weight: 600">{{cv.nome}}</b><span style="font-size: 12px; color: var(--text-3)">{{cv.papel}}</span></div></div>
+
+<sc-if value="{{isH}}" hint-placeholder-val="{{ true }}">
+<div class="bub-u">Bom dia. Organiza meu dia de amanhã com base nas metas?</div>
+<div class="bub-a"><span class="av h">H</span><div class="col" style="gap: 10px; min-width: 0"><p>Você tem 2 tarefas atrasadas e a meta “Certificação” está uma semana atrás. Montei um rascunho com 3 tarefas para amanhã:</p>
+<sc-if value="{{dPend}}" hint-placeholder-val="{{ true }}"><div class="draft rel"><sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if><span class="draft-t">Rascunho · 3 tarefas para amanhã</span><div class="col" style="gap: 6px; font-size: 13px"><div class="row"><span class="cb"></span><span class="grow1">Enviar proposta revisada</span><span class="spec">10:00</span></div><div class="row"><span class="cb"></span><span class="grow1">Revisar 20 cards de Raft</span><span class="spec">14:00</span></div><div class="row"><span class="cb"></span><span class="grow1">Check-in de quinta</span><span class="spec">18:00</span></div></div><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button" onClick="{{aprovar}}">Aprovar <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">⌘↵</span></button><button class="btn btn-fan btn-sm" type="button">Editar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)" onClick="{{descartar}}">Descartar</button></div></div></sc-if>
+<sc-if value="{{dOk}}" hint-placeholder-val="{{ false }}"><div class="draft-ok enter"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>3 tarefas criadas em <a href="Semana.dc.html">Amanhã</a><button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{reset}}">Desfazer</button></div></sc-if>
+<sc-if value="{{dGone}}" hint-placeholder-val="{{ false }}"><div class="draft-ok enter" style="border-style: dashed; color: var(--text-2)">Rascunho descartado<button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{reset}}">Desfazer</button></div></sc-if>
+</div></div>
+<div class="bub-u">Anota na revisão de sábado que a proposta travou esperando retorno.</div>
+<div class="bub-a"><span class="av h">H</span><div class="col" style="gap: 8px; min-width: 0"><div class="draft-ok" style="padding: 8px 10px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg><span>Anotado em <a href="Rotina.dc.html">Revisão do sábado · 21 nov</a></span><span class="spec" style="margin-left: auto">ação aprovada</span></div></div></div>
+<div class="bub-u">E o que falta para a meta de posts?</div>
+<div class="bub-a rel"><sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if><span class="av h">H</span><div class="col" style="gap: 8px; min-width: 0"><p><sc-for list="{{words}}" as="w" hint-placeholder-count="0"><span class="w">{{w}} </span></sc-for><sc-if value="{{streaming}}" hint-placeholder-val="{{ false }}"><span class="hcaret"></span></sc-if></p>
+<sc-if value="{{streaming}}" hint-placeholder-val="{{ false }}"><button class="btn btn-sec btn-sm" type="button" onClick="{{parar}}" style="align-self: flex-start"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg>Parar</button></sc-if>
+<sc-if value="{{stopped}}" hint-placeholder-val="{{ false }}"><span class="row" style="gap: 6px; font-size: 12px; color: var(--text-3)">Resposta interrompida<button class="btn btn-fan btn-sm" type="button" onClick="{{reenviar}}">Continuar</button></span></sc-if>
+</div></div>
+<div class="bub-a"><span class="av u" style="background: var(--danger-soft); color: var(--danger)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></span><div class="col" style="gap: 6px"><span style="font-size: 13px; color: var(--text-2)">Exemplo de erro: a chave de IA foi recusada pelo provedor.</span><div class="row" style="gap: 4px"><button class="btn btn-sec btn-sm" type="button">Tentar de novo</button><a class="btn btn-fan btn-sm" href="Configuracoes.dc.html">Atualizar chave</a></div></div></div>
+</sc-if>
+
+<sc-if value="{{isR}}" hint-placeholder-val="{{ false }}">
+<div class="bub-u">O que anotei sobre idempotência?</div>
+<div class="bub-a"><span class="av r">R</span><div class="col" style="gap: 10px; min-width: 0"><p>Encontrei 3 notas. Você anotou que o retry só pode ser ligado depois de o reprocessamento ser idempotente <span class="cite">1</span>, e pensou em usar uma chave de idempotência por pedido <span class="cite">2</span>. Há também um rascunho de post sobre o tema <span class="cite">3</span>.</p>
+<div class="col" style="gap: 6px">
+<a class="b-embed" href="Inbox.dc.html" style="text-decoration: none; color: var(--text); padding: 8px 10px"><span class="cite">1</span><span class="col grow1"><span style="font-weight: 500; font-size: 13px">Dúvida: retry com idempotência em filas</span><span style="font-size: 12px; color: var(--text-3)">Inbox · ontem</span></span></a>
+<a class="b-embed" href="Mermaid.dc.html" style="text-decoration: none; color: var(--text); padding: 8px 10px"><span class="cite">2</span><span class="col grow1"><span style="font-weight: 500; font-size: 13px">Loja v2 · arquitetura</span><span style="font-size: 12px; color: var(--text-3)">Projetos · 12 nov</span></span></a>
+<a class="b-embed" href="Pagina.dc.html" style="text-decoration: none; color: var(--text); padding: 8px 10px"><span class="cite">3</span><span class="col grow1"><span style="font-weight: 500; font-size: 13px">Post: por que seu retry duplica pedidos</span><span style="font-size: 12px; color: var(--text-3)">Projetos · rascunho</span></span></a>
+</div>
+<div class="draft r"><span class="draft-t">Rascunho · organizar 2 notas</span><span style="font-size: 13px">Mover [1] para o projeto Loja v2, marcar [1] e [3] com #idempotência e ligar [3] à meta “4 posts técnicos”.</span><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button">Aprovar</button><button class="btn btn-fan btn-sm" type="button">Editar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Descartar</button></div></div>
+</div></div>
+</sc-if>
+</div>
+</div>
+<div style="padding: 0 28px 20px; flex: none"><div style="max-width: 720px; margin: 0 auto" class="rel">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">4</span></sc-if>
+<div class="composer" style="box-shadow: var(--e1)"><label for="cin" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Mensagem</label><textarea id="cin" class="plain" rows="2" placeholder="{{ph}}" style="resize: none; outline: none; font-size: 14px; line-height: 20px; cursor: text"></textarea><div class="row" style="gap: 6px"><span class="badge out" style="height: 24px">@ mencionar página</span><span class="badge out" style="height: 24px">/ ações</span><button class="btn btn-pri btn-ico btn-sm" type="button" aria-label="Enviar (↵)" style="margin-left: auto" onClick="{{reenviar}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button></div></div>
+</div></div>
+</div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Conversas</b><span class="spec" style="margin-left: auto">passo 5</span></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Histórico</span><span class="prio">P0</span></div><p>Conversas dos dois assistentes, por data, com avatar do autor. Busca por título e conteúdo. O mesmo histórico aparece no painel lateral (⌘J). Clique para alternar entre Hermes e Renato.</p><p><span class="lbl">Movimento</span> Troca de conversa: cross-fade médio, rolagem para a última mensagem sem animação.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Ações pelo chat</span><span class="prio">P0</span></div><p>Toda ação que cria ou altera conteúdo vira rascunho tracejado na cor do assistente. Depois de aprovada, vira uma linha de confirmação com link para o resultado e Desfazer.</p><p><span class="lbl">Movimento</span> Rascunho materializa com mola; aprovado colapsa para linha em médio.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Streaming</span><span class="prio">P0</span></div><p>Palavras chegam com fade curto e cursor na cor do assistente. “Parar” interrompe e oferece Continuar. Erros explicam a causa e dão a próxima ação.</p><p><span class="lbl">Movimento</span> Palavra: instante · entrada. Sem saltos de rolagem enquanto o usuário lê acima.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">4</span><span>Compositor</span><span class="prio">P0</span></div><p>↵ envia, ⇧↵ quebra linha. @ menciona páginas como contexto; / lista ações do assistente atual. Renato responde citando notas com números clicáveis.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="none" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, drawer: false, cap: false, cv: 0, n: 0, stopped: false, draft: 'pendente' };
+    this.words = 'Falta publicar 3 posts em 6 semanas. O de idempotência já tem esboço; se você reservar 2 horas no sábado, ele sai até domingo. Quer que eu crie um rascunho de cronograma para os outros dois?'.split(' ');
+    this.iv = null;
+  }
+  componentDidMount() { this.stream(); }
+  componentWillUnmount() { if (this.iv) clearInterval(this.iv); }
+  stream() {
+    if (this.iv) clearInterval(this.iv);
+    this.setState({ n: 0, stopped: false });
+    this.iv = setInterval(() => {
+      const n = this.state.n + 1;
+      if (n >= this.words.length) { clearInterval(this.iv); this.iv = null; }
+      this.setState({ n: Math.min(n, this.words.length) });
+    }, 70);
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const C = [
+      { who: 'h', t: 'Plano de amanhã', d: 'Hermes · 10:42', g: 'Hoje' },
+      { who: 'r', t: 'O que anotei sobre idempotência?', d: 'Renato · 10:51', g: 'Hoje' },
+      { who: 'h', t: 'Revisão do sábado', d: 'Hermes · 15 nov', g: 'Esta semana' },
+      { who: 'r', t: 'Organizar Inbox da semana', d: 'Renato · 16 nov', g: 'Esta semana' },
+      { who: 'h', t: 'Métricas da quinta', d: 'Hermes · 13 nov', g: 'Esta semana' },
+      { who: 'r', t: 'Notas sobre Raft', d: 'Renato · 14 nov', g: 'Esta semana' }
+    ];
+    const cur = C[s.cv];
+    const isH = cur.who === 'h';
+    const streaming = s.n < this.words.length && !s.stopped;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      convs: C.map((c, i) => ({ t: c.t, d: c.d, ini: c.who === 'h' ? 'H' : 'R', av: 'av ' + c.who, cls: 'plain mrow' + (s.cv === i ? ' sel' : ''), hd: i === 2, hdTxt: 'Esta semana', pick: () => this.setState({ cv: i }) })),
+      cv: { t: cur.t, nome: isH ? 'Hermes' : 'Renato', papel: isH ? 'Rotina, tarefas e metas' : 'Captura e organização de notas', ini: isH ? 'H' : 'R', avLg: 'av lg ' + cur.who },
+      isH: isH, isR: !isH,
+      words: this.words.slice(0, s.n), streaming: streaming, stopped: s.stopped,
+      parar: () => { if (this.iv) { clearInterval(this.iv); this.iv = null; } this.setState({ stopped: true }); },
+      reenviar: () => this.stream(),
+      novo: () => this.setState({ cv: 0 }),
+      dPend: s.draft === 'pendente', dOk: s.draft === 'aprovado', dGone: s.draft === 'descartado',
+      aprovar: () => this.setState({ draft: 'aprovado' }), descartar: () => this.setState({ draft: 'descartado' }), reset: () => this.setState({ draft: 'pendente' }),
+      ph: isH ? 'Peça ao Hermes: tarefas, metas, rotina…' : 'Pergunte ao Renato: “o que anotei sobre…?”'
+    };
+  }
+}
+</script>
+</body>
+</html>

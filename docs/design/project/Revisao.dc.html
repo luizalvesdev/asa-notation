@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Revisão FSRS</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<div class="main">
+<header class="tb" style="gap: 14px">
+<a class="btn btn-fan btn-sm" href="Estudo.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Sair</a>
+<div class="row grow1 rel" style="gap: 12px; max-width: 520px; margin: 0 auto">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<div class="bar grow1"><span style="width: {{pct}}%; transition: width var(--medio) var(--padrao)"></span></div><span class="mono" style="font-size: 12px; color: var(--text-2); white-space: nowrap">{{pos}} de {{total}}</span></div>
+<div class="tb-r" style="margin-left: 0">
+<span class="sync desk">Sistemas distribuídos · 3:12</span>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px">
+
+<sc-if value="{{inSession}}" hint-placeholder-val="{{ true }}">
+<div class="{{flipCls}}" style="width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 22px">
+<sc-for list="{{slotA}}" as="c" hint-placeholder-count="1">
+<div class="rise flipwrap rel" style="height: 300px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<div class="flipinner">
+<div class="face front"><div class="row" style="gap: 8px"><span class="badge out" style="height: 20px">{{c.tipo}}</span><span style="font-size: 12px; color: var(--text-3)">{{c.deck}}</span></div><div style="font-family: var(--serif); font-size: 28px; line-height: 36px; text-wrap: balance">{{c.f}}<sc-if value="{{c.isCloze}}" hint-placeholder-val="{{ false }}"> <span class="cloze" style="font-family: var(--sans); font-size: 20px">[...]</span> {{c.f2}}</sc-if></div></div>
+<div class="face back"><div class="row" style="gap: 8px"><span class="badge ok" style="height: 20px">resposta</span><a href="Pagina.dc.html" style="font-size: 12px; margin-left: auto">Fonte: Consenso com Raft</a></div><div style="font-family: var(--serif); font-size: 26px; line-height: 34px; text-wrap: balance">{{c.v}}</div><span style="font-size: 13px; color: var(--text-2)">{{c.ctx}}</span></div>
+</div>
+</div>
+</sc-for>
+<sc-for list="{{slotB}}" as="c" hint-placeholder-count="0">
+<div class="rise flipwrap rel" style="height: 300px">
+<div class="flipinner">
+<div class="face front"><div class="row" style="gap: 8px"><span class="badge out" style="height: 20px">{{c.tipo}}</span><span style="font-size: 12px; color: var(--text-3)">{{c.deck}}</span></div><div style="font-family: var(--serif); font-size: 28px; line-height: 36px; text-wrap: balance">{{c.f}}<sc-if value="{{c.isCloze}}" hint-placeholder-val="{{ false }}"> <span class="cloze" style="font-family: var(--sans); font-size: 20px">[...]</span> {{c.f2}}</sc-if></div></div>
+<div class="face back"><div class="row" style="gap: 8px"><span class="badge ok" style="height: 20px">resposta</span><a href="Pagina.dc.html" style="font-size: 12px; margin-left: auto">Fonte: Consenso com Raft</a></div><div style="font-family: var(--serif); font-size: 26px; line-height: 34px; text-wrap: balance">{{c.v}}</div><span style="font-size: 13px; color: var(--text-2)">{{c.ctx}}</span></div>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{front}}" hint-placeholder-val="{{ true }}"><button class="btn btn-pri" type="button" onClick="{{virar}}" style="height: 48px; font-size: 15px">Mostrar resposta <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">espaço</span></button></sc-if>
+<div class="rel" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<sc-for list="{{rates}}" as="r" hint-placeholder-count="4"><button class="rate" type="button" onClick="{{r.pick}}" style="transition-delay: {{r.dl}}"><span style="font: 600 14px/18px var(--sans); color: {{r.c}}">{{r.n}}</span><span>{{r.i}}</span><span class="kpad" style="margin-top: 2px">{{r.k}}</span></button></sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ended}}" hint-placeholder-val="{{ false }}">
+<div class="col rise rel" style="width: 100%; max-width: 640px; gap: 20px; align-items: stretch">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">4</span></sc-if>
+<div class="col" style="gap: 6px; align-items: center; text-align: center"><span style="width: 52px; height: 52px; border-radius: 16px; background: var(--success-soft); color: var(--success); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px; stroke-width: 2"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></span><h1 style="font-family: var(--serif); font-weight: 500; font-size: 34px; line-height: 40px">Sessão concluída</h1><p class="muted">Próxima revisão: amanhã, 9 cards.</p></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr)); gap: 8px">
+<div class="stat rise"><span class="v">{{total}}</span><span class="l">cards</span></div>
+<div class="stat rise" style="animation-delay: 40ms"><span class="v">{{acerto}}%</span><span class="l">lembrados</span></div>
+<div class="stat rise" style="animation-delay: 80ms"><span class="v">3:12</span><span class="l">minutos</span></div>
+<div class="stat rise" style="animation-delay: 120ms"><span class="v">{{erros}}</span><span class="l">para reforçar</span></div>
+</div>
+<div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 8px"><b style="font-weight: 600; font-size: 13px">Para reforçar</b><sc-for list="{{errList}}" as="e" hint-placeholder-count="1"><div class="row" style="font-size: 13px; gap: 8px; min-height: 32px; border-top: 1px solid var(--border)"><span class="badge bad" style="height: 20px">De novo</span><span class="grow1 trunc">{{e}}</span></div></sc-for><sc-if value="{{noErr}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--text-2)">Nada para reforçar. Avalie algum card como “De novo” para ver a lista.</span></sc-if></div>
+<div class="row" style="gap: 8px; justify-content: center; flex-wrap: wrap"><a class="btn btn-sec" href="Pesquisa.dc.html">Quiz nos pontos fracos</a><a class="btn btn-pri" href="Estudo.dc.html">Voltar ao Estudo</a><button class="btn btn-fan" type="button" onClick="{{reiniciar}}">Repetir demo</button></div>
+</div>
+</sc-if>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Revisão FSRS</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Modo foco</span><span class="prio">P0</span></div><p>Sem barra lateral. Topo com progresso, baralho e tempo. Sair salva o que foi revisado.</p><p><span class="lbl">Movimento</span> Barra avança em médio a cada card.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Cartão</span><span class="prio">P0</span></div><p>Basic (pergunta e resposta) e cloze (lacuna destacada). O verso mostra a fonte, que abre a página de origem. Espaço vira.</p><p><span class="lbl">Movimento</span> Virar: lento · padrão, rotateY 180°. Próximo card entra com mola (scale .96 + 6 px). Reduzido: cross-fade.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Quatro avaliações</span><span class="prio">P0</span></div><p>De novo, Difícil, Bom e Fácil, com o próximo intervalo calculado pelo FSRS embaixo e teclas 1 a 4. Ficam inativas até virar. Faça a sessão inteira para ver o fim.</p><p><span class="lbl">Movimento</span> Botões sobem com mola e 30 ms de defasagem quando o card vira.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">4</span><span>Fim de sessão</span><span class="prio">P0</span></div><p>Resumo em 4 números, lista do que reforçar e caminhos para o quiz nos pontos fracos ou de volta ao Estudo.</p><p><span class="lbl">Movimento</span> Números entram com mola, 40 ms de defasagem.</p></div>
+</aside>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, i: 0, flip: false, ratings: [] };
+    this.cards = [
+      { tipo: 'basic', deck: 'Sistemas distribuídos · Raft', f: 'O que dispara uma eleição no Raft?', v: 'O timeout de eleição expira sem batimento do líder.', ctx: 'O seguidor vira candidato, incrementa o termo e pede votos.' },
+      { tipo: 'cloze', deck: 'Sistemas distribuídos · Raft', f: 'No Raft, há no máximo', f2: 'por termo.', v: 'um líder', ctx: 'Garantia de segurança da eleição.' },
+      { tipo: 'basic', deck: 'Sistemas distribuídos · Raft', f: 'Por que os timeouts de eleição são aleatórios?', v: 'Para evitar votos divididos.', ctx: 'Um nó quase sempre expira primeiro e vence.' },
+      { tipo: 'cloze', deck: 'Sistemas distribuídos · Raft', f: 'O líder só faz commit de entradas do', f2: '.', v: 'próprio termo', ctx: 'Entradas antigas são confirmadas indiretamente.' }
+    ];
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const total = this.cards.length;
+    const ended = s.i >= total;
+    const c = this.cards[Math.min(s.i, total - 1)];
+    const R = [
+      { n: 'De novo', i: '<1 min', k: '1', c: 'var(--danger)' },
+      { n: 'Difícil', i: '8 min', k: '2', c: 'var(--warning)' },
+      { n: 'Bom', i: '2 d', k: '3', c: 'var(--text)' },
+      { n: 'Fácil', i: '5 d', k: '4', c: 'var(--success)' }
+    ];
+    const erros = s.ratings.map((r, idx) => ({ r: r, idx: idx })).filter((x) => x.r === 0);
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      total: total, pos: Math.min(s.i + 1, total), pct: Math.round(Math.min(s.i, total) / total * 100),
+      inSession: !ended, ended: ended,
+      flipCls: s.flip ? 'flipon' : 'flipoff', front: !s.flip,
+      slotA: ended || s.i % 2 === 1 ? [] : [Object.assign({}, c, { isCloze: c.tipo === 'cloze' })],
+      slotB: ended || s.i % 2 === 0 ? [] : [Object.assign({}, c, { isCloze: c.tipo === 'cloze' })],
+      virar: () => this.setState({ flip: true }),
+      rates: R.map((r, j) => Object.assign({}, r, { dl: (j * 30) + 'ms', pick: () => this.setState({ i: s.i + 1, flip: false, ratings: s.ratings.concat([j]) }) })),
+      acerto: s.ratings.length ? Math.round(s.ratings.filter((r) => r > 0).length / s.ratings.length * 100) : 0,
+      erros: erros.length, errList: erros.map((x) => this.cards[x.idx].f + (this.cards[x.idx].f2 ? ' … ' + this.cards[x.idx].f2 : '')), noErr: erros.length === 0,
+      reiniciar: () => this.setState({ i: 0, flip: false, ratings: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

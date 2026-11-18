@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>asa-notation · Fundamentos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F4AD0}a:hover{color:#2740BA}
+.ds{--bg:#FBFAF7;--bg-2:#F3F2EE;--surface:#FFFFFF;--hover:#F1F0EC;--press:#E9E7E1;--border:#E6E4DE;--border-2:#D3D0C8;--text:#1A1A17;--text-2:#64625B;--text-3:#706E66;--accent:#2F4AD0;--accent-hover:#2740BA;--accent-soft:#E9ECFB;--on-accent:#FFFFFF;--hermes:#A14D06;--hermes-soft:#FBEEDD;--renato:#0E6B5E;--renato-soft:#E0F0EC;--success:#1F7A3A;--success-soft:#E4F3E8;--danger:#B42318;--danger-soft:#FCEBE9;--warning:#8A5A00;--warning-soft:#FBF1DA;--note:#6B2BD9;--note-soft:#F4EFFE;--note-border:#C9B5F5;--e1:0 1px 2px rgba(26,26,23,.05),0 4px 12px rgba(26,26,23,.06);--e2:0 2px 6px rgba(26,26,23,.08),0 12px 28px rgba(26,26,23,.14);--e3:0 4px 12px rgba(26,26,23,.08),0 24px 64px rgba(26,26,23,.18);--instante:80ms;--rapido:140ms;--medio:220ms;--lento:300ms;--mola-d:280ms;--padrao:cubic-bezier(.2,0,0,1);--entrada:cubic-bezier(0,0,.2,1);--saida:cubic-bezier(.4,0,1,1);--mola:cubic-bezier(.34,1.56,.64,1);--sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--serif:'Newsreader',Georgia,'Times New Roman',serif;--mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:20px;min-height:100vh;transition:background-color var(--medio) var(--padrao),color var(--medio) var(--padrao);-webkit-font-smoothing:antialiased}
+.ds.escuro{--bg:#121211;--bg-2:#0C0C0B;--surface:#1A1A18;--hover:#232321;--press:#2B2B28;--border:#2A2A27;--border-2:#3A3A36;--text:#ECEAE4;--text-2:#A3A198;--text-3:#8A887F;--accent:#8EA1FF;--accent-hover:#A7B5FF;--accent-soft:#1E2340;--on-accent:#0D1030;--hermes:#F0A75E;--hermes-soft:#2B2015;--renato:#5FC9B5;--renato-soft:#13261F;--success:#6FD08C;--success-soft:#14261A;--danger:#FF8A7A;--danger-soft:#2E1714;--warning:#E8B54A;--warning-soft:#2A2110;--note:#C4B0FF;--note-soft:#1D1730;--note-border:#4A3A78;--e1:0 1px 2px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.35);--e2:0 2px 6px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.5);--e3:0 4px 12px rgba(0,0,0,.4),0 24px 64px rgba(0,0,0,.6)}
+.ds a{color:var(--accent)}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;min-height:52px;padding:8px 24px;box-sizing:border-box;border-bottom:1px solid var(--border);background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+.mark{width:24px;height:24px;border-radius:6px;background:var(--text);color:var(--bg);display:flex;align-items:center;justify-content:center}
+.ver{font:500 12px/16px var(--mono);color:var(--text-3)}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.navl{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:6px;font:500 13px/20px var(--sans);color:var(--text-2) !important;text-decoration:none;transition:background-color var(--instante) var(--padrao)}
+.navl:hover{background:var(--hover);color:var(--text) !important}
+.navl.on{background:var(--surface);color:var(--text) !important;box-shadow:inset 0 0 0 1px var(--border)}
+.navl:focus-visible,.btn:focus-visible,.tog:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tools{display:flex;align-items:center;gap:4px;margin-left:auto}
+.tog{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:6px;border:0;background:transparent;color:var(--text-2);font:500 13px/20px var(--sans);cursor:pointer;transition:background-color var(--instante) var(--padrao)}
+.tog:hover{background:var(--hover);color:var(--text)}
+.sw{width:28px;height:16px;border-radius:999px;background:var(--border-2);position:relative;flex:none;transition:background-color var(--rapido) var(--padrao)}
+.sw .knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform var(--mola-d) var(--mola)}
+.sw.on{background:var(--accent)}
+.sw.on .knob{transform:translateX(12px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid transparent;font:500 13px/20px var(--sans);cursor:pointer;color:var(--text);background:transparent;transition:background-color var(--instante) var(--padrao),border-color var(--instante) var(--padrao),transform var(--instante) var(--padrao)}
+.btn:active{transform:scale(.97)}
+.btn-fan:hover{background:var(--hover)}
+.wrap{max-width:1360px;margin:0 auto;padding:0 40px;box-sizing:border-box}
+.eyebrow{font:600 11px/16px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:0}
+.h-display{font-family:var(--serif);font-weight:500;font-size:60px;line-height:62px;letter-spacing:-.025em;margin:0;text-wrap:balance}
+.h-sec{font-family:var(--serif);font-weight:500;font-size:34px;line-height:40px;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.h3{font:600 15px/22px var(--sans);margin:0}
+.lead{font-size:17px;line-height:27px;color:var(--text-2);margin:0;text-wrap:pretty}
+.p{font-size:14px;line-height:22px;color:var(--text-2);margin:0;text-wrap:pretty}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.sec{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:40px;padding:72px 0;border-top:1px solid var(--border)}
+.sec-l{display:flex;flex-direction:column;gap:14px;max-width:440px}
+.sec-r{grid-column:span 2;min-width:0}
+.mono{font-family:var(--mono)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border:1px solid var(--border-2);border-bottom-width:2px;border-radius:4px;background:var(--surface);color:var(--text-2);font:500 11px/16px var(--mono)}
+.anota{border:1px dashed var(--note-border);background:var(--note-soft);border-radius:10px;padding:12px 14px;font-size:13px;line-height:20px;color:var(--text);display:flex;flex-direction:column;gap:6px}
+.anota-h{display:flex;align-items:center;gap:8px;color:var(--note);font:600 12px/16px var(--sans)}
+.anota-n{display:inline-flex;align-items:center;justify-content:center;height:18px;padding:0 6px;border-radius:4px;background:var(--note);color:var(--bg);font:600 11px/16px var(--mono)}
+.prio{margin-left:auto;border:1px solid var(--note-border);border-radius:4px;padding:0 5px;font:600 11px/16px var(--mono)}
+.anota p{margin:0}
+.anota b{font-weight:600;color:var(--note)}
+.sw-row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--border)}
+.chip{width:22px;height:32px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.tipo-row{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid var(--border)}
+.spec{font:500 12px/18px var(--mono);color:var(--text-3)}
+@media (max-width:760px){.wrap{padding:0 20px}.h-display{font-size:40px;line-height:44px}.sec-r{grid-column:auto}.tipo-row{grid-template-columns:1fr}.tools{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.ds{--rapido:80ms;--medio:80ms;--lento:120ms;--mola-d:80ms;--mola:linear}}
+</style>
+</helmet>
+<div class="{{rootCls}}">
+<header class="topbar">
+<div class="brand">
+<span class="mark"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c6 0 11-3.5 14-11 1.6 4.2.6 8.6-2.6 11.6"></path><path d="M7.5 19.5c3.6-.6 6.6-2.6 8.6-6"></path></svg></span>
+<span>asa-notation</span>
+<span class="ver">design system · v0.1</span>
+</div>
+<nav class="nav" aria-label="Seções do design system">
+<a class="navl on" href="Main.dc.html" aria-current="page">Fundamentos</a>
+<a class="navl" href="Movimento.dc.html">Movimento</a>
+<a class="navl" href="Componentes.dc.html">Componentes</a>
+</nav>
+<div class="tools">
+<button class="tog" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swCls}}"><span class="knob"></span></span>Anotações</button>
+<button class="btn btn-fan" type="button" onClick="{{toggleTheme}}">
+<sc-if value="{{light}}" hint-placeholder-val="{{ true }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Tema escuro</sc-if>
+<sc-if value="{{dark}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Tema claro</sc-if>
+</button>
+</div>
+</header>
+
+<main class="wrap">
+<section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 56px; align-items: center; padding: 88px 0 80px">
+<div style="display: flex; flex-direction: column; gap: 22px">
+<p class="eyebrow">Passo 1 de 8 · Fundamentos</p>
+<h1 class="h-display">Um caderno rápido, calmo e denso.</h1>
+<p class="lead">Direção visual “caderno de campo”: papel levemente quente, tinta grafite e um único azul de caneta para ação, foco e seleção. Títulos de página em serifa editorial dão voz às anotações; a interface fica em sans compacta. Hermes e Renato têm cor própria, usada só onde eles agem.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span class="kbd" style="height: 26px; padding: 0 10px; font-family: var(--sans); font-size: 12px">Claro e escuro</span>
+<span class="kbd" style="height: 26px; padding: 0 10px; font-family: var(--sans); font-size: 12px">Desktop primeiro</span>
+<span class="kbd" style="height: 26px; padding: 0 10px; font-family: var(--sans); font-size: 12px">PWA mobile</span>
+<span class="kbd" style="height: 26px; padding: 0 10px; font-family: var(--sans); font-size: 12px">pt-BR</span>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">F1</span><span>Identidade · intenção</span><span class="prio">P0</span></div><p>Hierarquia vem de <b>tipografia e espaço</b>, não de cor. Cor de acento aparece só em: ação primária, foco, seleção e links. Cor de assistente só dentro de conteúdo do Hermes ou do Renato. Nunca usar hex direto em componente: sempre token semântico.</p></aside>
+</sc-if>
+</div>
+<div class="card" style="padding: 28px 32px 30px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--e1)">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3)"><span>Estudo</span><span>/</span><span>Trilhas</span><span>/</span><span style="color: var(--text-2)">Sistemas distribuídos</span></div>
+<div style="width: 40px; height: 40px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg></div>
+<h2 style="margin: 0; font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 44px; letter-spacing: -.02em">Sistemas distribuídos</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--text-2)"><span>Meta · Certificação até mar/2027</span><span>12 cards para revisar</span></div>
+<p style="margin: 0; font-size: 15px; line-height: 24px">Consenso é o problema de fazer vários nós concordarem sobre um valor mesmo com falhas. Raft separa eleição de líder, replicação de log e segurança.</p>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 24px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 16px; height: 16px; border-radius: 4px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px; stroke-width: 2.4"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></span><span style="color: var(--text-3); text-decoration: line-through">Ler o artigo do Raft</span></div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--border-2)"></span><span>Resumir eleição de líder em 5 tópicos</span></div>
+</div>
+<div style="border: 1px dashed var(--renato); background: var(--renato-soft); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--renato)"><span style="width: 18px; height: 18px; border-radius: 5px; background: var(--renato); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px">R</span>Rascunho do Renato · 3 cards sugeridos</div>
+<div style="display: flex; gap: 6px"><button class="btn" type="button" style="height: 28px; background: var(--text); color: var(--bg)">Aprovar</button><button class="btn btn-fan" type="button" style="height: 28px">Editar</button><button class="btn btn-fan" type="button" style="height: 28px; color: var(--text-2)">Descartar</button></div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="princ">
+<div class="sec-l">
+<p class="eyebrow">01</p>
+<h2 class="h-sec" id="princ">Princípios</h2>
+<p class="p">Quatro regras que decidem empates. Quando duas soluções parecem boas, vence a que respeita mais princípios.</p>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px">
+<div class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 10px"><span class="kbd" style="align-self: flex-start">⌘K</span><h3 class="h3">Teclado primeiro</h3><p class="p">Toda ação tem atalho, e o atalho aparece no menu ao lado do nome. O foco é sempre desenhado: anel de 2 px na cor tinta, afastado 2 px.</p></div>
+<div class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 10px"><span class="kbd" style="align-self: flex-start">1 px</span><h3 class="h3">Densidade calma</h3><p class="p">Muita informação, pouco ruído. Bordas de 1 px, uma cor de acento e linhas de 28 a 36 px. Espaço em branco separa grupos; linhas, só quando o espaço não basta.</p></div>
+<div class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 10px"><span class="kbd" style="align-self: flex-start; border-style: dashed">Rascunho</span><h3 class="h3">IA é rascunho</h3><p class="p">Hermes e Renato propõem; você aprova, edita ou descarta. Nada gerado por IA vira conteúdo sem passar pelo estado de rascunho tracejado.</p></div>
+<div class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 10px"><span class="kbd" style="align-self: flex-start">≤ 300 ms</span><h3 class="h3">Movimento que explica</h3><p class="p">A animação mostra de onde algo veio e para onde foi. Nunca atrasa a ação: só transformação e opacidade, teto de 300 ms nas interações frequentes.</p></div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="cor">
+<div class="sec-l">
+<p class="eyebrow">02</p>
+<h2 class="h-sec" id="cor">Cor</h2>
+<p class="p">Tokens semânticos com valor para claro e escuro. O tema escuro não é uma inversão: as superfícies sobem em luminosidade conforme se aproximam de você, e os acentos ficam mais claros para manter contraste.</p>
+<p class="p">Todos os pares de texto e fundo passam 4,5:1 nos dois temas.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">F2</span><span>Cor · comportamento</span><span class="prio">P0</span></div><p><b>Troca de tema:</b> cross-fade de cor de fundo e texto em médio (220 ms), curva padrão. Nada se move. <b>Implementação:</b> variáveis CSS na raiz, classe <span class="mono">.escuro</span>; seguir <span class="mono">prefers-color-scheme</span> até o usuário escolher.</p><p><b>Seleção</b> usa tinta-suave de fundo + texto normal; nunca texto branco sobre tinta em listas.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: 16px; align-items: start">
+<sc-for list="{{colorGroups}}" as="g" hint-placeholder-count="5">
+<div class="card" style="overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px"><h3 class="h3">{{g.nome}}</h3><span class="spec">claro · escuro</span></div>
+<sc-for list="{{g.itens}}" as="c" hint-placeholder-count="4">
+<div class="sw-row">
+<div style="display: flex; gap: 4px"><span class="chip" style="background: {{c.l}}"></span><span class="chip" style="background: {{c.d}}"></span></div>
+<div style="min-width: 0"><div style="font-weight: 600; font-size: 13px">{{c.nome}} <span class="spec">{{c.token}}</span></div><div style="font-size: 12px; line-height: 18px; color: var(--text-2)">{{c.uso}}</div></div>
+<div class="spec" style="text-align: right">{{c.l}}<br>{{c.d}}</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="tipo">
+<div class="sec-l">
+<p class="eyebrow">03</p>
+<h2 class="h-sec" id="tipo">Tipografia</h2>
+<p class="p">Três famílias, papéis fixos. <b style="color: var(--text)">Newsreader</b> só em títulos de página e de seção: é a voz do caderno. <b style="color: var(--text)">Instrument Sans</b> em toda a interface e no corpo do editor. <b style="color: var(--text)">JetBrains Mono</b> em código, atalhos e valores.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">F3</span><span>Tipografia · regras</span><span class="prio">P0</span></div><p>Interface em 13 px para densidade; corpo do editor em 15 px para leitura longa. No celular, corpo sobe para 16 px (evita zoom no foco do iOS). Números de tabela com <span class="mono">tabular-nums</span>. Título de página é o elemento compartilhado na transição árvore → cabeçalho.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r">
+<div class="tipo-row"><div style="font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 44px; letter-spacing: -.02em">Plano de estudos 2027</div><div class="spec">display · título de página<br>Newsreader 500 · 40/44 · −2%</div></div>
+<div class="tipo-row"><div style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px; letter-spacing: -.015em">Revisão do sábado</div><div class="spec">título-1 · seção de página<br>Newsreader 500 · 30/36 · −1,5%</div></div>
+<div class="tipo-row"><div style="font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -.01em">Metas do trimestre</div><div class="spec">título-2 · bloco H2<br>Instrument Sans 600 · 20/28</div></div>
+<div class="tipo-row"><div style="font-weight: 600; font-size: 16px; line-height: 24px">Tarefas de hoje</div><div class="spec">título-3 · bloco H3, painéis<br>Instrument Sans 600 · 16/24</div></div>
+<div class="tipo-row"><div style="font-size: 15px; line-height: 24px; max-width: 620px">Anotei três ideias para o módulo de pagamentos e uma dúvida sobre filas: o reprocessamento precisa ser idempotente antes de ligar o retry automático.</div><div class="spec">corpo · editor<br>Instrument Sans 400 · 15/24</div></div>
+<div class="tipo-row"><div style="font-size: 13px; line-height: 20px; font-weight: 500; display: flex; gap: 16px; flex-wrap: wrap"><span>Mover para…</span><span>Duplicar</span><span>Copiar link</span><span style="color: var(--text-2)">Editado há 2 min</span></div><div class="spec">interface · menus, árvore, tabelas<br>Instrument Sans 500 · 13/20</div></div>
+<div class="tipo-row"><div style="font-size: 12px; line-height: 16px; color: var(--text-2)">Criado por Renato · 14 nov · 3 backlinks</div><div class="spec">legenda · metadados<br>Instrument Sans 400 · 12/16</div></div>
+<div class="tipo-row"><div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3)">Favoritos</div><div class="spec">rótulo · grupos da barra lateral<br>Instrument Sans 600 · 11/16 · +6%</div></div>
+<div class="tipo-row"><div style="font-family: var(--mono); font-size: 13px; line-height: 20px">graph TD; Meta --> Tarefa --> Subtarefa</div><div class="spec">mono · código, atalhos<br>JetBrains Mono 400 · 13/20</div></div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="esp">
+<div class="sec-l">
+<p class="eyebrow">04</p>
+<h2 class="h-sec" id="esp">Espaço, forma e profundidade</h2>
+<p class="p">Grade de 4 px. Raios pequenos e consistentes: quanto maior a superfície, maior o raio. Sombra só para o que flutua acima do conteúdo; o resto usa borda.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">F4</span><span>Densidade · alturas</span><span class="prio">P0</span></div><p>Item da árvore <b>28 px</b> · controle <b>32 px</b> · linha de tabela <b>36 px</b> · alvo de toque no celular <b>44 px</b>. Sombra e2 aparece só ao arrastar e some ao soltar (via opacidade de uma camada, para manter 60 fps).</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: flex; flex-direction: column; gap: 28px">
+<div class="card" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+<h3 class="h3" style="margin-bottom: 6px">Espaçamento</h3>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-1</span><span class="spec">4</span><span style="height: 10px; width: 4px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-2</span><span class="spec">8</span><span style="height: 10px; width: 8px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-3</span><span class="spec">12</span><span style="height: 10px; width: 12px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-4</span><span class="spec">16</span><span style="height: 10px; width: 16px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-5</span><span class="spec">24</span><span style="height: 10px; width: 24px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-6</span><span class="spec">32</span><span style="height: 10px; width: 32px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-7</span><span class="spec">48</span><span style="height: 10px; width: 48px; background: var(--accent); border-radius: 2px"></span></div>
+<div style="display: grid; grid-template-columns: 64px 44px minmax(0, 1fr); gap: 10px; align-items: center"><span class="spec">esp-8</span><span class="spec">72</span><span style="height: 10px; width: 72px; background: var(--accent); border-radius: 2px"></span></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px">
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><span style="width: 44px; height: 44px; border: 1.5px solid var(--text-2); border-radius: 4px"></span><div><div style="font-weight: 600; font-size: 13px">raio-1 · 4</div><div style="font-size: 12px; color: var(--text-2)">chips, teclas, checkbox</div></div></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><span style="width: 44px; height: 44px; border: 1.5px solid var(--text-2); border-radius: 6px"></span><div><div style="font-weight: 600; font-size: 13px">raio-2 · 6</div><div style="font-size: 12px; color: var(--text-2)">botões, campos, itens</div></div></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><span style="width: 44px; height: 44px; border: 1.5px solid var(--text-2); border-radius: 10px"></span><div><div style="font-weight: 600; font-size: 13px">raio-3 · 10</div><div style="font-size: 12px; color: var(--text-2)">cartões, menus, toasts</div></div></div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><span style="width: 44px; height: 44px; border: 1.5px solid var(--text-2); border-radius: 14px"></span><div><div style="font-weight: 600; font-size: 13px">raio-4 · 14</div><div style="font-size: 12px; color: var(--text-2)">painéis, paleta, modais</div></div></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 16px; padding: 24px; background: var(--bg-2); border-radius: 14px">
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-height: 76px"><div style="font-weight: 600; font-size: 13px">nível 0</div><div style="font-size: 12px; color: var(--text-2)">só borda · cartões, blocos</div></div>
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-height: 76px; box-shadow: var(--e1)"><div style="font-weight: 600; font-size: 13px">nível 1</div><div style="font-size: 12px; color: var(--text-2)">menus, popovers, toasts</div></div>
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-height: 76px; box-shadow: var(--e2); transform: rotate(-1deg)"><div style="font-weight: 600; font-size: 13px">nível 2</div><div style="font-size: 12px; color: var(--text-2)">arrastando</div></div>
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; min-height: 76px; box-shadow: var(--e3)"><div style="font-weight: 600; font-size: 13px">nível 3</div><div style="font-size: 12px; color: var(--text-2)">paleta, captura, modal</div></div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="assist">
+<div class="sec-l">
+<p class="eyebrow">05</p>
+<h2 class="h-sec" id="assist">Assistentes</h2>
+<p class="p">Dois assistentes, duas identidades. A cor de cada um marca autoria: avatar, rascunhos, cartões de ação e o cabeçalho do chat. Fora disso, a interface continua neutra.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">F5</span><span>Rascunho de IA · regra</span><span class="prio">P0</span></div><p>Todo conteúdo gerado entra com <b>contorno tracejado na cor do assistente</b>, fundo suave e selo “Rascunho”. Ações: Aprovar (⌘↵), Editar (E), Descartar (⌫). Ao aprovar, o tracejado vira borda sólida neutra em médio e o selo some com fade.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px">
+<div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px"><span style="width: 40px; height: 40px; border-radius: 10px; background: var(--hermes); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 22px; font-weight: 600">H</span><div><div style="font-weight: 600; font-size: 16px">Hermes</div><div style="font-size: 13px; color: var(--text-2)">Rotina, tarefas e metas</div></div></div>
+<p class="p">Pontual e direto. Conduz check-ins, cobra prazos, monta o Hoje e a Semana, faz a revisão do sábado.</p>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><span style="height: 24px; padding: 0 8px; border-radius: 4px; background: var(--hermes-soft); color: var(--hermes); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">âmbar</span><span style="height: 24px; padding: 0 8px; border-radius: 4px; background: var(--bg-2); color: var(--text-2); font-size: 12px; display: inline-flex; align-items: center">Hoje · Semana · Metas · Check-ins</span></div>
+<div style="border: 1px dashed var(--hermes); background: var(--hermes-soft); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 20px"><div style="font-weight: 600; color: var(--hermes); font-size: 12px; margin-bottom: 4px">Rascunho · nova tarefa</div>Enviar proposta revisada ao cliente · amanhã, 10:00 · meta “Freelas Q1”</div>
+</div>
+<div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px"><span style="width: 40px; height: 40px; border-radius: 10px; background: var(--renato); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 22px; font-weight: 600">R</span><div><div style="font-weight: 600; font-size: 16px">Renato</div><div style="font-size: 13px; color: var(--text-2)">Captura e organização de notas</div></div></div>
+<p class="p">Curioso e arquivista. Recebe capturas, classifica, sugere tags e projeto, encontra o que você anotou.</p>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><span style="height: 24px; padding: 0 8px; border-radius: 4px; background: var(--renato-soft); color: var(--renato); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">verde-petróleo</span><span style="height: 24px; padding: 0 8px; border-radius: 4px; background: var(--bg-2); color: var(--text-2); font-size: 12px; display: inline-flex; align-items: center">Inbox · Captura · Busca conversada</span></div>
+<div style="border: 1px dashed var(--renato); background: var(--renato-soft); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 20px"><div style="font-weight: 600; color: var(--renato); font-size: 12px; margin-bottom: 4px">Rascunho · classificação</div>“Ideia de cache por tenant” → estudo · projeto Loja v2 · #arquitetura</div>
+</div>
+</div>
+</section>
+
+<section class="sec" aria-labelledby="tecl" style="padding-bottom: 96px">
+<div class="sec-l">
+<p class="eyebrow">06</p>
+<h2 class="h-sec" id="tecl">Teclado e ícones</h2>
+<p class="p">Atalhos aparecem à direita de cada item de menu, em mono. Ícones de traço 1,5 px em grade de 24, desenhados a 16 px na interface e 20 px no celular.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota"><div class="anota-h"><span class="anota-n">F6</span><span>Atalhos · implementação</span><span class="prio">P1</span></div><p>Mostrar ⌘ no macOS e Ctrl no Windows/Linux. Sequências “G então H” exibem as duas teclas separadas por um traço fino. Atalhos ficam desativados enquanto um campo de texto tem foco, exceto os que usam ⌘/Ctrl.</p></aside>
+</sc-if>
+</div>
+<div class="sec-r" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; align-items: start">
+<div class="card" style="overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px"><span>Paleta de comandos</span><span style="display: flex; gap: 4px"><span class="kbd">⌘</span><span class="kbd">K</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Captura rápida</span><span style="display: flex; gap: 4px"><span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">K</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Abrir chat</span><span style="display: flex; gap: 4px"><span class="kbd">⌘</span><span class="kbd">J</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Recolher barra lateral</span><span style="display: flex; gap: 4px"><span class="kbd">⌘</span><span class="kbd">\</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Ir para Hoje</span><span style="display: flex; gap: 4px; align-items: center"><span class="kbd">G</span><span style="color: var(--text-3); font-size: 11px">então</span><span class="kbd">H</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Ir para Inbox</span><span style="display: flex; gap: 4px; align-items: center"><span class="kbd">G</span><span style="color: var(--text-3); font-size: 11px">então</span><span class="kbd">I</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Ir para Estudo</span><span style="display: flex; gap: 4px; align-items: center"><span class="kbd">G</span><span style="color: var(--text-3); font-size: 11px">então</span><span class="kbd">E</span></span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border)"><span>Alternar tema</span><span style="display: flex; gap: 4px"><span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">L</span></span></div>
+</div>
+<div class="card" style="padding: 18px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 8px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Hoje</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M4 6h16v14H4z"></path><path d="M4 10h16M8 3v4M16 3v4"></path></svg>Semana</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5 5h14l2 8v6H3v-6z"></path></svg>Inbox</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg>Estudo</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>Página</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg>Favorito</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Lixeira</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4"></path></svg>Ajustes</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M4 5h16v11H9l-5 4z"></path></svg>Chat</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"></path><path d="M10 21h4"></path></svg>Avisos</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--text)"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>Recentes</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":4500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null };
+  }
+  renderVals() {
+    const dark = this.state.dark === null ? (this.props.tema === 'escuro') : this.state.dark;
+    const notes = this.state.notes === null ? (this.props.anotacoes ?? true) : this.state.notes;
+    return {
+      rootCls: 'ds' + (dark ? ' escuro' : ''),
+      dark: dark,
+      light: !dark,
+      notes: notes,
+      notesPressed: notes ? 'true' : 'false',
+      swCls: 'sw' + (notes ? ' on' : ''),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      colorGroups: [
+        { nome: 'Superfícies', itens: [
+          { nome: 'fundo', token: '--bg', uso: 'Fundo do app e do editor', l: '#FBFAF7', d: '#121211' },
+          { nome: 'fundo-2', token: '--bg-2', uso: 'Barra lateral, áreas rebaixadas', l: '#F3F2EE', d: '#0C0C0B' },
+          { nome: 'superfície', token: '--surface', uso: 'Cartões, menus, painéis', l: '#FFFFFF', d: '#1A1A18' },
+          { nome: 'hover', token: '--hover', uso: 'Linhas e itens sob o cursor', l: '#F1F0EC', d: '#232321' },
+          { nome: 'pressionado', token: '--press', uso: 'Item ativo durante o clique', l: '#E9E7E1', d: '#2B2B28' }
+        ]},
+        { nome: 'Texto e bordas', itens: [
+          { nome: 'texto', token: '--text', uso: 'Títulos e corpo', l: '#1A1A17', d: '#ECEAE4' },
+          { nome: 'texto-2', token: '--text-2', uso: 'Descrições, metadados', l: '#64625B', d: '#A3A198' },
+          { nome: 'texto-3', token: '--text-3', uso: 'Placeholders, rótulos de grupo', l: '#706E66', d: '#8A887F' },
+          { nome: 'borda', token: '--border', uso: 'Divisores, contorno de cartão', l: '#E6E4DE', d: '#2A2A27' },
+          { nome: 'borda-forte', token: '--border-2', uso: 'Campos, botão secundário', l: '#D3D0C8', d: '#3A3A36' }
+        ]},
+        { nome: 'Acento · tinta', itens: [
+          { nome: 'tinta', token: '--accent', uso: 'Ação primária, foco, links', l: '#2F4AD0', d: '#8EA1FF' },
+          { nome: 'tinta-hover', token: '--accent-hover', uso: 'Hover da ação primária', l: '#2740BA', d: '#A7B5FF' },
+          { nome: 'tinta-suave', token: '--accent-soft', uso: 'Seleção, destaque de busca', l: '#E9ECFB', d: '#1E2340' }
+        ]},
+        { nome: 'Assistentes', itens: [
+          { nome: 'hermes', token: '--hermes', uso: 'Avatar, rascunhos e ações do Hermes', l: '#A14D06', d: '#F0A75E' },
+          { nome: 'hermes-suave', token: '--hermes-soft', uso: 'Fundo de rascunho do Hermes', l: '#FBEEDD', d: '#2B2015' },
+          { nome: 'renato', token: '--renato', uso: 'Avatar, rascunhos e ações do Renato', l: '#0E6B5E', d: '#5FC9B5' },
+          { nome: 'renato-suave', token: '--renato-soft', uso: 'Fundo de rascunho do Renato', l: '#E0F0EC', d: '#13261F' }
+        ]},
+        { nome: 'Estado', itens: [
+          { nome: 'sucesso', token: '--success', uso: 'Concluído, salvo, sincronizado', l: '#1F7A3A', d: '#6FD08C' },
+          { nome: 'perigo', token: '--danger', uso: 'Erro, excluir, atrasado', l: '#B42318', d: '#FF8A7A' },
+          { nome: 'aviso', token: '--warning', uso: 'Offline, vence hoje', l: '#8A5A00', d: '#E8B54A' },
+          { nome: 'anotação', token: '--note', uso: 'Só no modo Anotações (spec)', l: '#6B2BD9', d: '#C4B0FF' }
+        ]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

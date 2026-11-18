@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Página · Consenso com Raft</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="pagina" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs rel" aria-label="Caminho"><sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if><a href="Estudo.dc.html" class="hide-m">Estudo</a><span class="sep hide-m">/</span><a href="Pagina.dc.html" class="hide-m">Sistemas distribuídos</a><span class="sep hide-m">/</span><span class="cur">Consenso com Raft</span></nav>
+<div class="tb-r">
+<span class="sync desk"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Salvo</span>
+<a class="btn btn-fan btn-sm desk" href="Historico.dc.html">Compartilhar</a>
+<a class="btn btn-fan btn-ico btn-sm desk" href="Historico.dc.html" aria-label="Histórico de versões"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg></a>
+<a class="btn btn-fan btn-ico btn-sm desk" href="Busca.dc.html" aria-label="Buscar (⌘K)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></a>
+<button class="btn btn-fan btn-sm desk" type="button" onClick="{{openCap}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Capturar<span class="kbd">⌘⇧K</span></button>
+<button class="{{chatBtn}}" type="button" aria-pressed="{{chatPressed}}" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span><span class="kbd desk">⌘J</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+
+<div class="scroll">
+<div class="cover rel" style="background: var(--bg-2)">
+<svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; color: var(--border-2)"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M180 70L420 120L640 50L880 110L1060 60M420 120L520 170M640 50L700 -10M880 110L960 170"></path></g><g fill="var(--surface)" stroke="currentColor" stroke-width="1.5"><circle cx="180" cy="70" r="9"></circle><circle cx="420" cy="120" r="9"></circle><circle cx="880" cy="110" r="9"></circle><circle cx="1060" cy="60" r="9"></circle><circle cx="520" cy="170" r="7"></circle><circle cx="960" cy="170" r="7"></circle></g><circle cx="640" cy="50" r="13" fill="var(--accent)"></circle></svg>
+<div class="row desk" style="position: absolute; right: 16px; bottom: 12px; gap: 4px"><button class="btn btn-sec btn-sm" type="button">Trocar capa</button><button class="btn btn-sec btn-sm" type="button">Remover</button></div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 12px; left: 16px">3</span></sc-if>
+</div>
+<article class="page">
+<div class="p-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 30px; height: 30px; stroke-width: 1.4"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path><path d="M8 7h7M8 11h5"></path></svg></div>
+<h1 class="p-title">Consenso com Raft</h1>
+<div class="p-meta"><span class="row" style="gap: 6px"><span class="dot c2"></span>estudo</span><span>Meta · Certificação até mar/2027</span><span>Editado há 3 min</span><a href="#backlinks" style="color: var(--text-2)">4 backlinks</a><a href="Estudo.dc.html" style="color: var(--text-2)">12 cards</a></div>
+
+<div class="blk hv rel"><div class="hdl"><button class="hbtn" type="button" aria-label="Adicionar bloco abaixo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><button class="hbtn" type="button" aria-label="Arrastar ou abrir menu do bloco"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg></button></div><sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="left: -76px; top: 4px">4</span></sc-if>
+<p class="b-p">Raft é um algoritmo de consenso pensado para ser fácil de entender. Ele separa o problema em três partes: <a class="wl" href="MapaMental.dc.html">[[Eleição de líder]]</a>, replicação de log e segurança.</p></div>
+
+<div class="blk"><div class="b-callout"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent); margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><div><b style="font-weight: 600">Para revisar:</b> no máximo um líder por termo; o líder só faz commit de entradas do próprio termo.</div></div></div>
+
+<div class="blk"><h2 class="b-h1">Eleição de líder</h2></div>
+<div class="blk"><div class="b-li"><span class="bul">•</span><span>Todo nó começa como seguidor e espera batimentos do líder.</span></div></div>
+<div class="blk"><div class="b-li"><span class="bul">•</span><span>Sem batimento até o timeout, vira candidato, incrementa o termo e pede votos.</span></div></div>
+<div class="blk"><div class="b-li"><span class="bul">•</span><span>Quem recebe a maioria dos votos vira líder do termo.</span></div></div>
+
+<div class="blk rel"><p class="b-p">Comparar com <a class="mention" href="Pesquisa.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path></svg>Pesquisa · CAP</a> e com o capítulo 9 do livro de dados intensivos: <button class="plain sel-txt" type="button" onClick="{{toggleFmt}}" aria-expanded="{{fmtExp}}">o líder é a única fonte de verdade do log</button>.</p>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin r" style="top: -14px">6</span></sc-if>
+<div class="{{fmtCls}}" style="position: absolute; left: 260px; top: -38px; display: flex; align-items: center; gap: 1px; padding: 3px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--e2); z-index: 20; transform-origin: 50% 100%">
+<button class="btn btn-sm" type="button" style="height: 26px; padding: 0 8px; font-weight: 700">B</button><button class="btn btn-sm" type="button" style="height: 26px; padding: 0 8px; font-style: italic; font-family: var(--serif); font-size: 14px">i</button><button class="btn btn-sm" type="button" style="height: 26px; padding: 0 8px; text-decoration: line-through">S</button><button class="btn btn-sm" type="button" style="height: 26px; padding: 0 8px; font-family: var(--mono)">&lt;/&gt;</button><button class="btn btn-sm" type="button" style="height: 26px; padding: 0 8px">Link</button><span style="width: 1px; height: 18px; background: var(--border)"></span><button class="btn btn-sm" type="button" style="height: 26px; padding: 0 8px">Transformar em<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M6 9l6 6 6-6"></path></svg></button>
+</div>
+</div>
+
+<div class="blk"><button class="plain b-li" type="button" onClick="{{toggleT1}}" aria-pressed="{{t1Pressed}}" style="align-items: center"><span class="{{t1Cls}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{t1Txt}}">Ler a seção 5 do artigo original</span></button></div>
+<div class="blk"><button class="plain b-li" type="button" onClick="{{toggleT2}}" aria-pressed="{{t2Pressed}}" style="align-items: center"><span class="{{t2Cls}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{t2Txt}}">Implementar eleição num simulador simples</span></button></div>
+
+<div class="blk"><pre class="b-code"><span style="color: var(--text-3)">// candidato inicia a eleição</span>
+func (r *Raft) startElection() {
+    r.term++
+    r.votedFor = r.id
+    for _, peer := range r.peers {
+        go r.requestVote(peer, r.term)
+    }
+}</pre><div class="row" style="justify-content: space-between; padding: 4px 2px 0; font-size: 12px; color: var(--text-3)"><span>Go</span><span>Copiar</span></div></div>
+
+<div class="blk rel"><button class="plain row" type="button" onClick="{{toggleTg}}" aria-expanded="{{tgExp}}" style="gap: 6px; font-size: 15px; line-height: 25px; width: 100%"><svg class="{{tgChev}}" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg><span style="font-weight: 500">Por que timeouts aleatórios?</span></button>
+<div class="{{tgKids}}"><div><p class="b-p kid" style="padding: 4px 0 4px 20px; color: var(--text-2)">Se todos os seguidores expirassem juntos, todos virariam candidatos ao mesmo tempo e dividiriam os votos. Sortear o timeout entre 150 e 300 ms faz um nó quase sempre sair na frente.</p></div></div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin r" style="top: -6px">7</span></sc-if>
+</div>
+
+<div class="blk" style="padding: 10px 0"><blockquote class="b-quote">Compreensibilidade foi o nosso objetivo mais importante.<div style="font: 400 13px/20px var(--sans); color: var(--text-2); margin-top: 4px">Ongaro e Ousterhout, 2014</div></blockquote></div>
+
+<div class="blk"><h2 class="b-h1">Replicação de log</h2></div>
+<div class="blk"><div class="b-cols">
+<div class="col" style="gap: 6px"><h3 class="b-h3" style="margin-top: 0">Líder</h3><div class="b-li"><span class="bul">•</span><span>Recebe comandos dos clientes.</span></div><div class="b-li"><span class="bul">•</span><span>Envia AppendEntries em paralelo.</span></div><div class="b-li"><span class="bul">•</span><span>Faz commit ao ter maioria.</span></div></div>
+<div class="col" style="gap: 6px"><h3 class="b-h3" style="margin-top: 0">Seguidores</h3><div class="b-li"><span class="bul">•</span><span>Só respondem ao líder.</span></div><div class="b-li"><span class="bul">•</span><span>Rejeitam entradas de termos antigos.</span></div><div class="b-li"><span class="bul">•</span><span>Aplicam o log em ordem.</span></div></div>
+</div></div>
+
+<div class="blk" style="padding: 8px 0"><table class="b-tbl"><thead><tr><th>Estado</th><th>Faz</th><th>Sai quando</th></tr></thead><tbody><tr><td>Seguidor</td><td>Responde a RPCs</td><td>Timeout sem batimento</td></tr><tr><td>Candidato</td><td>Pede votos</td><td>Vence, perde ou empata</td></tr><tr><td>Líder</td><td>Replica o log</td><td>Vê termo maior</td></tr></tbody></table></div>
+
+<div class="blk" style="padding: 8px 0"><figure class="b-img"><svg viewBox="0 0 640 150" role="img" aria-label="Linha do tempo de termos: termo 1 com líder, termo 2 sem líder por voto dividido, termo 3 com novo líder" style="display: block; width: 100%; height: auto"><rect width="640" height="150" fill="var(--bg-2)"></rect><g font-family="Instrument Sans, sans-serif" font-size="12" fill="var(--text-2)"><rect x="40" y="56" width="220" height="36" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"></rect><text x="150" y="79" text-anchor="middle" fill="var(--text)">Termo 1 · líder A</text><rect x="270" y="56" width="110" height="36" rx="6" fill="var(--surface)" stroke="var(--border-2)" stroke-dasharray="4 3"></rect><text x="325" y="79" text-anchor="middle">Termo 2 · empate</text><rect x="390" y="56" width="210" height="36" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"></rect><text x="495" y="79" text-anchor="middle" fill="var(--text)">Termo 3 · líder C</text><path d="M40 118H600" stroke="var(--border-2)"></path><text x="40" y="136">tempo</text></g></svg><figcaption style="padding: 8px 12px; font-size: 12px; color: var(--text-2)">Termos numerados; um termo pode terminar sem líder.</figcaption></figure></div>
+
+<div class="blk"><a class="b-embed" href="Pesquisa.dc.html" style="text-decoration: none; color: var(--text)"><span style="width: 40px; height: 40px; border-radius: 8px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; color: var(--text-2)"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 16 0a8 8 0 1 0-16 0"></path><path d="M4 12h16M12 4c2.5 3 2.5 13 0 16M12 4c-2.5 3-2.5 13 0 16"></path></svg></span><span class="col grow1"><span style="font-weight: 500">Visualização interativa do Raft</span><span class="trunc" style="font-size: 12px; color: var(--text-3)">raft.github.io · embed</span></span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M7 17L17 7M9 7h8v8"></path></svg></a></div>
+
+<div class="blk"><div class="b-hr"></div></div>
+
+<div class="blk rel">
+<button class="plain b-p" type="button" onClick="{{toggleSlash}}" aria-expanded="{{slashExp}}" style="width: 100%; color: var(--text-3)"><span style="color: var(--text)">/</span><sc-if value="{{slash}}" hint-placeholder-val="{{ false }}"><span style="color: var(--text)">ta</span><span class="caret" style="color: var(--text)"></span></sc-if><sc-if value="{{noSlash}}" hint-placeholder-val="{{ true }}"> Digite / para comandos, @ para mencionar, [[ para linkar</sc-if></button>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="left: -36px; top: 6px">5</span></sc-if>
+<div class="{{slashCls}}" role="listbox" aria-label="Inserir bloco" style="position: absolute; left: 0; top: 34px; width: 300px; z-index: 25">
+<div class="menu" style="max-height: 360px; overflow: auto">
+<div class="mgroup">Básicos</div>
+<div class="mrow sel"><span class="mi-ic">▦</span><span class="col"><span>Tabela</span><span style="font-size: 11px; color: var(--text-3)">Tabela simples no texto</span></span><span class="k">/ta</span></div>
+<div class="mrow"><span class="mi-ic">☐</span>Checklist<span class="k">[]</span></div>
+<div class="mrow"><span class="mi-ic">H2</span>Título 2<span class="k">##</span></div>
+<div class="mgroup">Avançados</div>
+<div class="mrow"><span class="mi-ic">DB</span><span class="col"><span>Database · tabela</span><span style="font-size: 11px; color: var(--text-3)">Com propriedades e views</span></span></div>
+<div class="mrow"><span class="mi-ic">▸</span>Toggle<span class="k">&gt;</span></div>
+<div class="mrow"><span class="mi-ic">‖</span>Colunas</div>
+<div class="mrow"><span class="mi-ic">◇</span>Diagrama Mermaid</div>
+<div class="mgroup">Mídia</div>
+<div class="mrow"><span class="mi-ic">▣</span>Imagem</div>
+<div class="mrow"><span class="mi-ic">↗</span>Embed de link</div>
+<div class="msep"></div>
+<div class="row" style="padding: 4px 8px; font-size: 11px; color: var(--text-3); gap: 10px"><span>↑↓ navegar</span><span>↵ inserir</span><span>esc fechar</span></div>
+</div>
+</div>
+</div>
+
+<section id="backlinks" class="rel" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 16px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 8px">8</span></sc-if>
+<button class="plain row" type="button" onClick="{{toggleBl}}" aria-expanded="{{blExp}}" style="gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-2)"><svg class="{{blChev}}" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg>4 backlinks</button>
+<div class="{{blKids}}"><div style="padding-top: 8px">
+<a class="b-embed kid" href="MapaMental.dc.html" style="text-decoration: none; color: var(--text); border: 0; padding: 8px; flex-direction: column; align-items: flex-start; gap: 2px"><span style="font-weight: 500; font-size: 14px">Mapa · replicação</span><span style="font-size: 13px; color: var(--text-2)">…o nó central é <mark>Consenso com Raft</mark>, ligado a eleição e log…</span></a>
+<a class="b-embed kid" href="Pesquisa.dc.html" style="text-decoration: none; color: var(--text); border: 0; padding: 8px; flex-direction: column; align-items: flex-start; gap: 2px; transition-delay: 20ms"><span style="font-weight: 500; font-size: 14px">Pesquisa · CAP</span><span style="font-size: 13px; color: var(--text-2)">…sistemas CP como os baseados em <mark>Consenso com Raft</mark> escolhem…</span></a>
+<a class="b-embed kid" href="Rotina.dc.html" style="text-decoration: none; color: var(--text); border: 0; padding: 8px; flex-direction: column; align-items: flex-start; gap: 2px; transition-delay: 40ms"><span style="font-weight: 500; font-size: 14px">Revisão do sábado · 15 nov</span><span style="font-size: 13px; color: var(--text-2)">…terminei <mark>Consenso com Raft</mark>, faltam os exercícios…</span></a>
+<a class="b-embed kid" href="DatabaseLinha.dc.html" style="text-decoration: none; color: var(--text); border: 0; padding: 8px; flex-direction: column; align-items: flex-start; gap: 2px; transition-delay: 60ms"><span style="font-weight: 500; font-size: 14px">Leituras · In Search of an Understandable Consensus Algorithm</span><span style="font-size: 13px; color: var(--text-2)">…resumo em <mark>Consenso com Raft</mark>.</span></a>
+</div></div>
+</section>
+</article>
+</div>
+<dc-import name="NavInferior" atual="pagina" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="renato" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Página e editor</b><span class="spec" style="margin-left: auto">passo 2</span></div>
+<sc-for list="{{notesList}}" as="n" hint-placeholder-count="4">
+<div class="anota"><div class="anota-h"><span class="anota-n">{{n.n}}</span><span>{{n.t}}</span><span class="prio">{{n.p}}</span></div><p>{{n.txt}}</p><p><span class="lbl">Movimento</span> {{n.anim}}</p></div>
+</sc-for>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="pagina" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"chat":{"editor":"boolean","default":false},"gaveta":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, chat: null, drawer: null, cap: false, slash: false, fmt: false, tg: true, bl: true, t1: true, t2: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const p = this.props;
+    const dark = s.dark === null ? p.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (p.anotacoes ?? true) : s.notes;
+    const chat = s.chat === null ? !!p.chat : s.chat;
+    const drawer = s.drawer === null ? !!p.gaveta : s.drawer;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: chat, chatPressed: chat ? 'true' : 'false', chatBtn: 'btn btn-fan btn-sm' + (chat ? ' on' : ''),
+      toggleChat: () => this.setState({ chat: !chat }),
+      closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: drawer, drawerCls: 'drawer' + (drawer ? ' on' : ''),
+      openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      slash: s.slash, noSlash: !s.slash, slashExp: s.slash ? 'true' : 'false', slashCls: 'float' + (s.slash ? ' on' : ''),
+      toggleSlash: () => this.setState({ slash: !s.slash }),
+      fmtCls: 'float up' + (s.fmt ? ' on' : ''), fmtExp: s.fmt ? 'true' : 'false',
+      toggleFmt: () => this.setState({ fmt: !s.fmt }),
+      tgExp: s.tg ? 'true' : 'false', tgChev: 'chev' + (s.tg ? ' on' : ''), tgKids: 'kids' + (s.tg ? ' on' : ''),
+      toggleTg: () => this.setState({ tg: !s.tg }),
+      blExp: s.bl ? 'true' : 'false', blChev: 'chev' + (s.bl ? ' on' : ''), blKids: 'kids' + (s.bl ? ' on' : ''),
+      toggleBl: () => this.setState({ bl: !s.bl }),
+      t1Pressed: s.t1 ? 'true' : 'false', t1Cls: 'cb' + (s.t1 ? ' on' : ''), t1Txt: s.t1 ? 'done-txt' : '', toggleT1: () => this.setState({ t1: !s.t1 }),
+      t2Pressed: s.t2 ? 'true' : 'false', t2Cls: 'cb' + (s.t2 ? ' on' : ''), t2Txt: s.t2 ? 'done-txt' : '', toggleT2: () => this.setState({ t2: !s.t2 }),
+      notesList: [
+        { n: '1', t: 'Árvore lateral', p: 'P0', txt: 'Grupos: atalhos (Buscar, Hoje, Semana, Inbox, Estudo, Metas), Hermes, Favoritos, Recentes e Páginas aninhadas. Itens reordenáveis com arrastar; ⌘\\ recolhe para trilho de ícones de 56 px. Teclado: ↑↓ navega, →← expande e recolhe.', anim: 'Expandir: médio · padrão (altura) + seta 90° rápido. Recolher a barra: largura em médio · padrão.' },
+        { n: '2', t: 'Breadcrumb e elemento compartilhado', p: 'P0', txt: 'Caminho clicável. Ao abrir uma página pela árvore, o título viaja da árvore até o cabeçalho; o corpo entra depois. No celular, só o nome atual.', anim: 'Transição de página: lento · padrão (translate + scale do título), corpo opacidade + 8 px.' },
+        { n: '3', t: 'Capa e ícone', p: 'P1', txt: 'Capa opcional; botões aparecem só no hover da capa. Ícone abre seletor de ícones de traço (sem emoji). Sem capa, o título sobe 140 px.', anim: 'Botões da capa: opacidade em instante.' },
+        { n: '4', t: 'Bloco: alça e +', p: 'P0', txt: 'No hover do bloco surgem + (inserir abaixo) e a alça ⋮⋮ (arrastar ou abrir menu do bloco: transformar, duplicar, mover, excluir). Teclado: ⌘⇧↑↓ move o bloco.', anim: 'Alça: opacidade instante. Arrastar: ver coreografia M9.' },
+        { n: '5', t: 'Menu /', p: 'P0', txt: 'Clique na linha vazia para ver o menu aberto com o filtro “ta”. Categorias Básicos, Avançados e Mídia; o primeiro resultado fica selecionado; ↵ insere. @ abre o mesmo componente com páginas; [[ busca páginas e cria se não existir.', anim: 'rápido · entrada, scale .96 → 1 a partir do caret. Bloco novo entra com 4 px + opacidade.' },
+        { n: '6', t: 'Formatação ao selecionar', p: 'P0', txt: 'Clique no trecho destacado. A barra aparece acima da seleção após 150 ms estável: negrito, itálico, tachado, código, link e Transformar em.', anim: 'rápido · entrada, 4 px de baixo para cima.' },
+        { n: '7', t: 'Toggle e callout', p: 'P1', txt: 'Toggle clicável (aqui aberto). Callout com ícone de traço e fundo rebaixado; nada de borda colorida à esquerda.', anim: 'Toggle: médio · padrão; conteúdo opacidade + 4 px.' },
+        { n: '8', t: 'Backlinks', p: 'P1', txt: 'Lista as páginas que mencionam esta, com o trecho e o termo destacado. Recolhível; o estado fica salvo por página.', anim: 'Itens com defasagem de 20 ms.' },
+        { n: '9', t: 'Salvamento e offline', p: 'P0', txt: 'Salva sozinho a cada pausa de 600 ms. Status no topo: Salvando… / Salvo / Offline · salvo neste dispositivo.', anim: 'Troca de status em cross-fade rápido.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

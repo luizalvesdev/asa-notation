@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Semana</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="semana" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Semana</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-sm desk" type="button" onClick="{{openCap}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Capturar</button>
+<button class="{{chatBtn}}" type="button" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="padding: 36px 32px 120px">
+<div class="row" style="flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 18px">
+<h1 style="font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 44px; letter-spacing: -.02em">Semana</h1><span class="muted" style="font-size: 15px; padding-bottom: 4px">16 a 22 de novembro</span>
+<span class="row" style="margin-left: auto; gap: 2px"><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Semana anterior"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><button class="btn btn-sec btn-sm" type="button">Esta semana</button><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Próxima semana"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></span>
+</div>
+<div class="row rel" style="gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 10px; background: var(--danger-soft); margin-bottom: 14px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<b style="font-weight: 600; font-size: 13px; color: var(--danger)">Atrasadas · 2</b>
+<span class="badge" style="background: var(--surface)">Enviar proposta revisada · ontem</span>
+<span class="badge" style="background: var(--surface)">Responder e-mail do contador · seg</span>
+<button class="btn btn-fan btn-sm" type="button" style="margin-left: auto">Redistribuir com Hermes</button>
+</div>
+<div class="wk rel">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+<div class="{{d.cls}}">
+<div class="row" style="padding: 2px 4px 6px; font-size: 13px"><b style="font-weight: 600">{{d.nome}}</b><span style="color: var(--text-3)">{{d.n}}</span><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">{{d.cnt}}</span></div>
+<sc-for list="{{d.items}}" as="t" hint-placeholder-count="3">
+<button class="plain wcard enter" type="button" role="checkbox" aria-checked="{{t.checked}}" onClick="{{t.toggle}}"><span class="row" style="gap: 8px; align-items: flex-start"><span class="{{t.cb}}" style="width: 16px; height: 16px; margin-top: 1px"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{t.txt}}">{{t.t}}</span></span><span class="row" style="gap: 6px; font-size: 11px; color: var(--text-3); padding-left: 24px"><span class="mono">{{t.h}}</span><span class="trunc">{{t.meta}}</span></span></button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+<div class="rel" style="margin-top: 18px; padding: 12px; border-radius: 12px; border: 1px dashed var(--border-2)">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<div class="row" style="margin-bottom: 8px"><b style="font-weight: 600; font-size: 13px">Sem prazo</b><span style="font-size: 12px; color: var(--text-3)">arraste para um dia</span></div>
+<div class="row" style="gap: 8px; flex-wrap: wrap"><span class="wcard" style="width: 220px">Ler o capítulo 9 do livro de dados intensivos<span style="font-size: 11px; color: var(--text-3)">Certificação</span></span><span class="wcard" style="width: 220px">Organizar a Inbox<span style="font-size: 11px; color: var(--text-3)">sugerida pelo Renato</span></span><span class="wcard" style="width: 220px">Trocar senha do servidor<span style="font-size: 11px; color: var(--text-3)">Site pessoal</span></span></div>
+</div>
+</div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="hermes" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Semana</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Atrasadas</span><span class="prio">P0</span></div><p>Faixa no topo só quando há atrasadas. “Redistribuir com Hermes” gera um rascunho de nova distribuição para aprovar.</p><p><span class="lbl">Movimento</span> Faixa some com colapso médio quando zera.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Colunas dos dias</span><span class="prio">P0</span></div><p>Segunda a domingo; hoje em tinta-suave. Recorrentes aparecem em todos os dias aplicáveis. Arrastar cartão entre dias muda a data. Clique para concluir. No celular, rolagem horizontal com um dia por tela e o dia atual centralizado.</p><p><span class="lbl">Movimento</span> Arrastar: padrão Kanban (levanta, coluna abre espaço, mola).</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Sem prazo</span><span class="prio">P1</span></div><p>Bacia de tarefas sem data; soltar num dia agenda. Vazio: some.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="semana" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, chat: false, drawer: false, cap: false, done: { a1: true, a2: true, b1: true, b2: true, c1: true } };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const D = [
+      { nome: 'seg', n: '16', items: [{ id: 'a1', t: 'Daily do trabalho', h: '09:30', meta: 'recorrente' }, { id: 'a2', t: 'Planejar a semana', h: '08:30', meta: 'Hermes' }, { id: 'a3', t: 'Responder e-mail do contador', h: '—', meta: 'atrasada' }] },
+      { nome: 'ter', n: '17', items: [{ id: 'b1', t: 'Daily do trabalho', h: '09:30', meta: 'recorrente' }, { id: 'b2', t: 'Revisar cards de Raft', h: '14:00', meta: 'Certificação' }, { id: 'b3', t: 'Enviar proposta revisada', h: '10:00', meta: 'Freelas Q1' }] },
+      { nome: 'qua', n: '18', today: true, items: [{ id: 'c1', t: 'Daily do trabalho', h: '09:30', meta: 'recorrente' }, { id: 'c2', t: 'Revisar 20 cards de Raft', h: '14:00', meta: 'Certificação' }, { id: 'c3', t: 'Rascunho do post sobre idempotência', h: '16:00', meta: '4 posts técnicos' }, { id: 'c4', t: 'Treino', h: '19:00', meta: 'recorrente' }] },
+      { nome: 'qui', n: '19', items: [{ id: 'd1', t: 'Daily do trabalho', h: '09:30', meta: 'recorrente' }, { id: 'd2', t: 'Check-in: métricas da quinta', h: '18:00', meta: 'Hermes' }, { id: 'd3', t: 'Revisar cards de Raft', h: '14:00', meta: 'Certificação' }] },
+      { nome: 'sex', n: '20', items: [{ id: 'e1', t: 'Daily do trabalho', h: '09:30', meta: 'recorrente' }, { id: 'e2', t: 'Reunião com cliente novo', h: '15:00', meta: 'Freelas Q1' }, { id: 'e3', t: 'Backup semanal', h: '17:00', meta: 'lembrete' }] },
+      { nome: 'sáb', n: '21', items: [{ id: 'f1', t: 'Revisão do sábado', h: '10:00', meta: 'Hermes' }] },
+      { nome: 'dom', n: '22', items: [{ id: 'g1', t: 'Planejar a semana', h: '20:00', meta: 'lembrete' }] }
+    ];
+    const days = D.map((d) => {
+      const items = d.items.map((t) => {
+        const ok = !!s.done[t.id];
+        return Object.assign({}, t, { checked: ok ? 'true' : 'false', cb: 'cb' + (ok ? ' on' : ''), txt: ok ? 'done-txt' : '', toggle: () => this.setState({ done: Object.assign({}, s.done, { [t.id]: !ok }) }) });
+      });
+      const n = items.filter((t) => s.done[t.id]).length;
+      return { nome: d.nome, n: d.n, items: items, cnt: n + '/' + items.length, cls: 'wkd' + (d.today ? ' today' : '') };
+    });
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: s.chat, chatBtn: 'btn btn-fan btn-sm' + (s.chat ? ' on' : ''), toggleChat: () => this.setState({ chat: !s.chat }), closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      days: days
+    };
+  }
+}
+</script>
+</body>
+</html>

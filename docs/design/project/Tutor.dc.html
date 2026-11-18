@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sessão guiada com tutor socrático</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<div class="main">
+<header class="tb" style="gap: 14px">
+<a class="btn btn-fan btn-sm" href="Estudo.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Estudo</a>
+<div class="row rel hide-m" style="gap: 18px; margin: 0 auto">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{steps}}" as="st" hint-placeholder-count="3"><span class="{{st.cls}}"><span class="n">{{st.n}}</span>{{st.t}}</span></sc-for>
+</div>
+<div class="tb-r" style="margin-left: 0">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="max-width: 700px; margin: 0 auto; padding: 36px 24px 40px; display: flex; flex-direction: column; gap: 18px">
+<div class="col" style="gap: 4px"><span class="eyebrow">Sessão guiada · Replicação de log</span><h1 style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px">Por que o líder espera a maioria?</h1><span style="font-size: 13px; color: var(--text-2)">O tutor pergunta em vez de explicar. Base: <a href="Pagina.dc.html">Consenso com Raft</a> e 2 fontes.</span></div>
+<div class="bub-a"><span class="av r">R</span><p>Imagine 5 nós. O líder recebeu um comando e enviou a entrada para todos. O que pode dar errado se ele confirmar o comando ao cliente depois de gravar só no próprio log?</p></div>
+<div class="bub-u">Se o líder cair, a entrada se perde porque ninguém mais tem.</div>
+<div class="bub-a"><span class="av r">R</span><p>Isso. E se ele esperasse só 1 seguidor confirmar, e esses dois caíssem juntos? Quantas cópias são necessárias para que qualquer novo líder eleito tenha a entrada?</p></div>
+<sc-if value="{{hint}}" hint-placeholder-val="{{ false }}"><div class="rise rel" style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: 14px; line-height: 21px"><sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"></path></svg><span><b style="font-weight: 600">Dica:</b> um novo líder precisa de votos da maioria. Pense em duas maiorias de 5 nós: elas sempre se cruzam?</span></div></sc-if>
+<sc-if value="{{answered}}" hint-placeholder-val="{{ false }}">
+<div class="bub-u enter">3, a maioria. Duas maiorias sempre têm pelo menos um nó em comum.</div>
+<div class="bub-a"><span class="av r">R</span><div class="col" style="gap: 10px"><p><sc-for list="{{words}}" as="w" hint-placeholder-count="0"><span class="w">{{w}} </span></sc-for><sc-if value="{{streaming}}" hint-placeholder-val="{{ false }}"><span class="rcaret"></span></sc-if></p>
+<sc-if value="{{doneStream}}" hint-placeholder-val="{{ false }}"><div class="draft r rise"><span class="draft-t">Rascunho · 1 card desta sessão</span><span style="font-size: 13px">Por que o commit exige maioria? → Porque duas maiorias sempre se cruzam, então todo novo líder tem a entrada.</span><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button">Adicionar à revisão</button><button class="btn btn-fan btn-sm" type="button">Editar</button></div></div></sc-if>
+</div></div>
+</sc-if>
+</div>
+</div>
+<div style="padding: 0 24px 20px; flex: none"><div class="rel" style="max-width: 700px; margin: 0 auto">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<div class="composer" style="box-shadow: var(--e1)"><label for="tin" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Sua resposta</label><textarea id="tin" class="plain" rows="2" placeholder="Responda com suas palavras…" style="resize: none; outline: none; font-size: 14px; line-height: 20px; cursor: text"></textarea>
+<div class="row" style="gap: 6px; flex-wrap: wrap"><button class="btn btn-fan btn-sm" type="button" onClick="{{showHint}}" aria-pressed="{{hintPressed}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"></path></svg>Pedir dica</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Não sei</button><button class="btn btn-fan btn-sm" type="button" onClick="{{reset}}" style="color: var(--text-2)">Reiniciar demo</button><button class="btn btn-pri btn-sm" type="button" onClick="{{responder}}" style="margin-left: auto">Responder <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">↵</span></button></div></div>
+</div></div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Tutor socrático</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Etapas</span><span class="prio">P2</span></div><p>Entender, Aplicar, Testar. A etapa avança quando a resposta mostra o conceito; o tutor nunca dá a resposta antes de duas tentativas ou de “Não sei”.</p><p><span class="lbl">Movimento</span> Etapa concluída: círculo preenche em médio.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Dica</span><span class="prio">P2</span></div><p>Dica aproxima sem entregar. Usar dica fica registrado e pesa no card gerado (nasce como “Difícil”).</p><p><span class="lbl">Movimento</span> Entra com mola.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Resposta e card</span><span class="prio">P2</span></div><p>Clique em Responder: o tutor responde em streaming e propõe um card como rascunho. Sair salva a sessão como página ligada à trilha.</p></div>
+</aside>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, hint: false, answered: false, n: 0 };
+    this.words = 'Exato. Como duas maiorias de 5 nós sempre têm um nó em comum, qualquer candidato que vença a eleição recebeu voto de alguém com a entrada, e o Raft só elege quem tem o log mais atualizado. Você chegou à propriedade de interseção de quóruns.'.split(' ');
+    this.iv = null;
+  }
+  componentWillUnmount() { if (this.iv) clearInterval(this.iv); }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const doneStream = s.answered && s.n >= this.words.length;
+    const stepIdx = doneStream ? 2 : 1;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      steps: ['Entender', 'Aplicar', 'Testar'].map((t, i) => ({ t: t, n: i < stepIdx ? '✓' : String(i + 1), cls: 'step' + (i < stepIdx ? ' ok' : '') + (i === stepIdx ? ' on' : '') })),
+      hint: s.hint, hintPressed: s.hint ? 'true' : 'false', showHint: () => this.setState({ hint: true }),
+      answered: s.answered, words: this.words.slice(0, s.n), streaming: s.answered && !doneStream, doneStream: doneStream,
+      responder: () => {
+        if (s.answered) return;
+        this.setState({ answered: true, n: 0 });
+        if (this.iv) clearInterval(this.iv);
+        this.iv = setInterval(() => {
+          const n = this.state.n + 1;
+          if (n >= this.words.length) { clearInterval(this.iv); this.iv = null; }
+          this.setState({ n: Math.min(n, this.words.length) });
+        }, 50);
+      },
+      reset: () => { if (this.iv) clearInterval(this.iv); this.setState({ hint: false, answered: false, n: 0 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Importar do Notion e do Vault do GitHub</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="config" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<nav class="crumbs" aria-label="Caminho"><a href="Configuracoes.dc.html">Configurações</a><span class="sep">/</span><span class="cur">Importar</span></nav>
+<div class="tb-r">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll" style="background: var(--bg-2)">
+<div class="modal rel imp-modal" role="dialog" aria-label="Assistente de importação" style="margin: 48px auto; width: 720px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<div class="row" style="gap: 18px; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap">
+<sc-for list="{{steps}}" as="st" hint-placeholder-count="5"><span class="{{st.cls}}"><span class="n">{{st.n}}</span>{{st.t}}</span></sc-for>
+</div>
+<div style="padding: 24px 24px 8px; min-height: 340px">
+
+<sc-if value="{{s0}}" hint-placeholder-val="{{ true }}">
+<div class="col enter" style="gap: 14px">
+<h2 style="font: 600 18px/26px var(--sans)">De onde vamos importar?</h2>
+<div class="imp-src" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button class="plain card" type="button" onClick="{{pickN}}" aria-pressed="{{nSel}}" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; text-align: left; cursor: pointer; box-shadow: {{nRing}}"><span style="width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--text); display: flex; align-items: center; justify-content: center; font: 700 16px/1 var(--serif)">N</span><b style="font-weight: 600">Notion</b><span style="font-size: 13px; color: var(--text-2)">Páginas, databases e propriedades, via export em Markdown e CSV ou token de integração.</span></button>
+<button class="plain card" type="button" onClick="{{pickG}}" aria-pressed="{{gSel}}" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; text-align: left; cursor: pointer; box-shadow: {{gRing}}"><span style="width: 32px; height: 32px; border-radius: 8px; background: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9"></path></svg></span><b style="font-weight: 600">Vault do GitHub</b><span style="font-size: 13px; color: var(--text-2)">Repositório de notas em Markdown, com links [[ ]] e pastas viram páginas aninhadas.</span></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s1}}" hint-placeholder-val="{{ false }}">
+<div class="col enter" style="gap: 14px">
+<h2 style="font: 600 18px/26px var(--sans)">Conectar {{fonte}}</h2>
+<sc-if value="{{isN}}" hint-placeholder-val="{{ true }}"><div class="field"><label class="label" for="nt">Token de integração do Notion</label><input id="nt" class="inp filled mono" placeholder="secret_••••••••••••••••3f9a"><span class="help">Somente leitura. O token é usado uma vez e descartado ao fim.</span></div></sc-if>
+<sc-if value="{{isG}}" hint-placeholder-val="{{ false }}"><div class="field"><label class="label" for="gr">Repositório</label><input id="gr" class="inp filled mono" placeholder="github.com/usuario/vault-notas"></div><div class="field"><label class="label" for="gt">Token de acesso (somente leitura)</label><input id="gt" class="inp filled mono" placeholder="github_pat_••••••••a21c"></div></sc-if>
+<div class="draft-ok"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Conectado. Encontramos {{achados}}.</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div class="col enter" style="gap: 10px">
+<h2 style="font: 600 18px/26px var(--sans)">Escolha o que importar</h2>
+<sc-for list="{{escolhas}}" as="e" hint-placeholder-count="5"><button class="plain cbx" type="button" role="checkbox" aria-checked="{{e.ck}}" onClick="{{e.toggle}}" style="padding-left: {{e.ind}}"><span class="{{e.cb}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="grow1">{{e.t}}</span><span style="font-size: 12px; color: var(--text-3)">{{e.n}}</span></button></sc-for>
+<span class="help">Destino: nova seção “Importado” na árvore. Nada existente é sobrescrito.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<div class="col enter" style="gap: 14px">
+<h2 style="font: 600 18px/26px var(--sans)">Importando…</h2>
+<div class="row" style="gap: 12px"><div class="bar grow1" style="height: 8px"><span style="width: {{prog}}%; transition: width var(--medio) var(--padrao); animation: none"></span></div><span class="mono" style="font-size: 13px">{{prog}}%</span></div>
+<span style="font-size: 13px; color: var(--text-2)">{{pagN}} de 214 páginas · {{dbN}} de 3 databases · pode fechar esta tela, a importação continua.</span>
+<div style="background: var(--bg-2); border-radius: 8px; padding: 10px 12px; font: 400 12px/20px var(--mono); color: var(--text-2); height: 120px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end">
+<sc-for list="{{log}}" as="l" hint-placeholder-count="4"><span class="enter">{{l}}</span></sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s4}}" hint-placeholder-val="{{ false }}">
+<div class="col rise" style="gap: 14px">
+<span style="width: 44px; height: 44px; border-radius: 12px; background: var(--success-soft); color: var(--success); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px; stroke-width: 2"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></span>
+<h2 style="font-family: var(--serif); font-weight: 500; font-size: 28px; line-height: 34px">Importação concluída</h2>
+<span style="font-size: 14px; color: var(--text-2)">214 páginas, 3 databases e 1.920 links internos. 2 itens precisam de atenção:</span>
+<div class="col" style="gap: 6px"><div class="draft-ok" style="background: var(--warning-soft); border-color: transparent"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--warning)"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>Propriedade “Fórmula” virou texto em Leituras</div><div class="draft-ok" style="background: var(--warning-soft); border-color: transparent"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--warning)"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>3 embeds sem suporte viraram links</div></div>
+</div>
+</sc-if>
+</div>
+<div class="row" style="gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border)">
+<sc-if value="{{canBack}}" hint-placeholder-val="{{ false }}"><button class="btn btn-fan" type="button" onClick="{{back}}">Voltar</button></sc-if>
+<span style="margin-left: auto"></span>
+<sc-if value="{{s4}}" hint-placeholder-val="{{ false }}"><button class="btn btn-fan" type="button" onClick="{{restart}}">Importar outra fonte</button><a class="btn btn-pri" href="Pagina.dc.html">Abrir páginas importadas</a></sc-if>
+<sc-if value="{{showNext}}" hint-placeholder-val="{{ true }}"><button class="btn btn-pri" type="button" onClick="{{next}}">{{nextLabel}}</button></sc-if>
+</div>
+</div>
+</div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Importação</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Assistente em passos</span><span class="prio">P1</span></div><p>Origem, Conectar, Escolher, Importando, Concluído. Percorra com Continuar. A importação roda no servidor e sobrevive a fechar a tela; o progresso aparece também como notificação.</p><p><span class="lbl">Movimento</span> Passo concluído: círculo preenche em médio. Conteúdo do passo entra com opacidade + 6 px. Barra de progresso em médio · padrão; log rola com cada linha entrando em opacidade.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Erros e conflitos</span><span class="prio">P1</span></div><p>Token inválido: mensagem no campo com o motivo. Itens que não mapeiam (fórmulas, embeds) não bloqueiam: viram texto ou link e aparecem no resumo final.</p></div>
+</aside>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, step: 0, src: 'n', ck: { 0: true, 1: true, 2: true, 3: false, 4: true }, prog: 0 };
+    this.iv = null;
+    this.logs = ['✓ Estudo/Consenso com Raft.md', '✓ Leituras (database, 42 linhas)', '✓ Projetos/Loja v2/arquitetura.md', '✓ Diário/2026-10-31.md', '↻ convertendo links internos…', '✓ Tarefas (database, 118 linhas)'];
+  }
+  componentWillUnmount() { if (this.iv) clearInterval(this.iv); }
+  run() {
+    if (this.iv) clearInterval(this.iv);
+    this.setState({ prog: 0 });
+    this.iv = setInterval(() => {
+      const p = Math.min(100, this.state.prog + 7);
+      this.setState({ prog: p });
+      if (p >= 100) { clearInterval(this.iv); this.iv = null; setTimeout(() => this.setState({ step: 4 }), 400); }
+    }, 160);
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const names = ['Origem', 'Conectar', 'Escolher', 'Importando', 'Concluído'];
+    const E = s.src === 'n'
+      ? [{ t: 'Estudo', n: '86 páginas', ind: '0px' }, { t: 'Leituras (database)', n: '42 linhas', ind: '28px' }, { t: 'Projetos', n: '51 páginas', ind: '0px' }, { t: 'Arquivo 2023', n: '120 páginas', ind: '0px' }, { t: 'Tarefas (database)', n: '118 linhas', ind: '0px' }]
+      : [{ t: 'notas/', n: '160 arquivos', ind: '0px' }, { t: 'notas/estudo/', n: '58 arquivos', ind: '28px' }, { t: 'diario/', n: '40 arquivos', ind: '0px' }, { t: 'anexos/', n: '96 imagens', ind: '0px' }, { t: 'templates/', n: '6 arquivos', ind: '0px' }];
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      steps: names.map((t, i) => ({ t: t, n: i < s.step ? '✓' : String(i + 1), cls: 'step' + (i < s.step ? ' ok' : '') + (i === s.step ? ' on' : '') })),
+      s0: s.step === 0, s1: s.step === 1, s2: s.step === 2, s3: s.step === 3, s4: s.step === 4,
+      pickN: () => this.setState({ src: 'n' }), pickG: () => this.setState({ src: 'g' }),
+      nSel: s.src === 'n' ? 'true' : 'false', gSel: s.src === 'g' ? 'true' : 'false',
+      nRing: s.src === 'n' ? 'inset 0 0 0 2px var(--accent)' : 'none', gRing: s.src === 'g' ? 'inset 0 0 0 2px var(--accent)' : 'none',
+      isN: s.src === 'n', isG: s.src === 'g', fonte: s.src === 'n' ? 'o Notion' : 'o Vault do GitHub',
+      achados: s.src === 'n' ? '417 páginas e 3 databases' : '324 arquivos Markdown e 96 anexos',
+      escolhas: E.map((e, i) => Object.assign({}, e, { ck: s.ck[i] ? 'true' : 'false', cb: 'cb' + (s.ck[i] ? ' on' : ''), toggle: () => this.setState({ ck: Object.assign({}, s.ck, { [i]: !s.ck[i] }) }) })),
+      prog: s.prog, pagN: Math.round(214 * s.prog / 100), dbN: Math.min(3, Math.floor(s.prog / 34)),
+      log: this.logs.slice(0, Math.max(1, Math.ceil(s.prog / 17))),
+      canBack: s.step > 0 && s.step < 3, showNext: s.step < 3,
+      nextLabel: s.step === 2 ? 'Importar' : 'Continuar',
+      next: () => { const n = s.step + 1; this.setState({ step: n }); if (n === 3) setTimeout(() => this.run(), 50); },
+      back: () => this.setState({ step: s.step - 1 }),
+      restart: () => this.setState({ step: 0, prog: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

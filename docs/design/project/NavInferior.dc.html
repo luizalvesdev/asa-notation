@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Navegação inferior (celular)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{wrapCls}}" style="{{wrapStyle}}">
+<nav class="bnav" aria-label="Navegação inferior" style="{{navStyle}}">
+<a class="{{c.hoje}}" href="Hoje.dc.html"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Hoje</a>
+<a class="{{c.inbox}}" href="Inbox.dc.html"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5 5h14l2 8v6H3v-6z"></path></svg>Inbox</a>
+<button class="bn" type="button" onClick="{{capturar}}" aria-label="Captura rápida"><span style="width: 52px; height: 40px; border-radius: 14px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; box-shadow: var(--e1)"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M12 5v14M5 12h14"></path></svg></span></button>
+<a class="{{c.estudo}}" href="Estudo.dc.html"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 19V5"></path></svg>Estudo</a>
+<button class="bn" type="button" onClick="{{menu}}"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>Páginas</button>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"atual":{"editor":"enum","options":["hoje","inbox","estudo","pagina"],"default":"hoje"},"embutida":{"editor":"boolean","default":false},"capturar":{"editor":null},"menu":{"editor":null},"$preview":{"width":390,"height":72}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.atual || 'hoje';
+    const emb = !!this.props.embutida;
+    const cls = (id) => 'bn' + (a === id ? ' on' : '');
+    return {
+      wrapCls: emb ? '' : 'ds',
+      wrapStyle: emb ? '' : 'height: 72px; position: relative',
+      navStyle: emb ? '' : 'display: flex; position: absolute; left: 0; right: 0; bottom: 0; height: 64px; border-top: 1px solid var(--border); background: var(--bg); padding: 0 4px 4px',
+      c: { hoje: cls('hoje'), inbox: cls('inbox'), estudo: cls('estudo') },
+      capturar: () => { if (this.props.capturar) this.props.capturar(); },
+      menu: () => { if (this.props.menu) this.props.menu(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

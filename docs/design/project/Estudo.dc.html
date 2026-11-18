@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Estudo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="estudo" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Estudo</span></nav>
+<div class="tb-r">
+<a class="btn btn-fan btn-sm desk" href="EstudoStats.dc.html">Estatísticas</a>
+<button class="{{chatBtn}}" type="button" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="padding: 36px 40px 120px; max-width: 1120px; display: flex; flex-direction: column; gap: 24px">
+<h1 style="font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 44px; letter-spacing: -.02em">Estudo</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 12px" class="rel">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<a class="card" href="Revisao.dc.html" style="flex: 2 1 420px; padding: 20px; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: var(--text); background: var(--accent-soft); border-color: transparent"><span class="eyebrow" style="color: var(--accent)">Revisão de hoje</span><span style="font-family: var(--serif); font-size: 30px; line-height: 36px">12 cards · cerca de 8 min</span><span style="font-size: 13px; color: var(--text-2)">9 de revisão e 3 novos · Sistemas distribuídos e Postgres</span><span class="btn btn-pri" style="align-self: flex-start; margin-top: 4px">Começar revisão <span class="kbd" style="background: transparent; color: inherit; border-color: currentColor">↵</span></span></a>
+<div class="card" style="flex: 1 1 260px; padding: 18px; display: flex; flex-direction: column; gap: 10px"><span class="eyebrow">Pontos fracos</span><span style="font-size: 14px; line-height: 21px">3 cards errados 2 vezes esta semana, todos sobre <b style="font-weight: 600">commit de entradas</b>.</span><a class="btn btn-sec btn-sm" href="Pesquisa.dc.html" style="align-self: flex-start">Quiz nos pontos fracos</a><a class="btn btn-fan btn-sm" href="Tutor.dc.html" style="align-self: flex-start">Sessão guiada com tutor</a></div>
+</div>
+
+<div class="col rel" style="gap: 12px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<div class="row"><h2 style="font: 600 18px/26px var(--sans)">Trilhas</h2><span style="font-size: 13px; color: var(--text-3); margin-left: 8px">ligadas às metas</span><button class="btn btn-fan btn-sm" type="button" style="margin-left: auto"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova trilha</button></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{trilhas}}" as="t" hint-placeholder-count="3">
+<button class="plain card" type="button" onClick="{{t.pick}}" aria-pressed="{{t.sel}}" style="padding: 16px; display: flex; flex-direction: column; gap: 10px; text-align: left; cursor: pointer; box-shadow: {{t.ring}}">
+<span class="row" style="gap: 8px"><span class="{{t.dot}}"></span><b style="font-weight: 600; font-size: 14px" class="grow1">{{t.t}}</b><span style="font-size: 12px; color: var(--text-3)">{{t.cards}}</span></span>
+<span class="bar" style="width: 100%"><span style="width: {{t.p}}%"></span></span>
+<span style="font-size: 12px; color: var(--text-2)">Meta: {{t.meta}}</span>
+</button>
+</sc-for>
+</div>
+<div class="card enter" style="padding: 18px; display: flex; flex-direction: column; gap: 4px">
+<div class="row" style="padding-bottom: 8px"><b style="font-weight: 600">{{tr.t}} · módulos</b><span style="margin-left: auto; font-size: 12px; color: var(--text-3)">{{tr.p}}%</span></div>
+<sc-for list="{{tr.mods}}" as="m" hint-placeholder-count="4">
+<div class="row" style="gap: 12px; min-height: 44px; border-top: 1px solid var(--border)"><span class="{{m.ic}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="col grow1"><span style="font-size: 14px; font-weight: 500">{{m.t}}</span><span style="font-size: 12px; color: var(--text-3)">{{m.d}}</span></span><a class="btn btn-fan btn-sm" href="{{m.href}}">{{m.cta}}</a></div>
+</sc-for>
+</div>
+</div>
+
+<div class="col rel" style="gap: 12px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<div class="row"><h2 style="font: 600 18px/26px var(--sans)">Cards extraídos das páginas</h2></div>
+<div class="draft r">
+<div class="row"><span class="av r" style="width: 18px; height: 18px; font-size: 11px">R</span><span class="draft-t">Rascunho · 4 cards de “Consenso com Raft”</span><a href="Pagina.dc.html" style="margin-left: auto; font-size: 12px">Ver página</a></div>
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="4">
+<button class="plain" type="button" role="checkbox" aria-checked="{{c.checked}}" onClick="{{c.toggle}}" style="display: flex; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface); text-align: left; cursor: pointer"><span class="{{c.cb}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="col grow1" style="gap: 4px"><span class="row" style="gap: 6px"><span class="badge out" style="height: 18px; font-size: 11px">{{c.tipo}}</span></span><span style="font-size: 14px">{{c.f}}<sc-if value="{{c.isCloze}}" hint-placeholder-val="{{ false }}"> <span class="cloze">{{c.cl}}</span> {{c.f2}}</sc-if></span><sc-if value="{{c.isBasic}}" hint-placeholder-val="{{ true }}"><span style="font-size: 13px; color: var(--text-2)">→ {{c.v}}</span></sc-if></span></button>
+</sc-for>
+<sc-if value="{{cPend}}" hint-placeholder-val="{{ true }}"><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button" onClick="{{aprovar}}">Aprovar {{nSel}} cards</button><button class="btn btn-fan btn-sm" type="button">Editar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Descartar</button></div></sc-if>
+<sc-if value="{{cOk}}" hint-placeholder-val="{{ false }}"><div class="draft-ok enter"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>{{nSel}} cards adicionados à trilha Sistemas distribuídos<button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{desfazer}}">Desfazer</button></div></sc-if>
+</div>
+</div>
+</div>
+</div>
+<dc-import name="NavInferior" atual="estudo" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="renato" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Estudo</b><span class="spec" style="margin-left: auto">passo 6</span></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Revisão do dia</span><span class="prio">P0</span></div><p>Uma ação principal: começar a revisão, com contagem e tempo estimado pelo FSRS. Pontos fracos levam ao quiz e à sessão com tutor.</p><p><span class="lbl">Movimento</span> Cartão principal entra primeiro; os outros com 40 ms de defasagem.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Trilhas ligadas às metas</span><span class="prio">P0</span></div><p>Cada trilha pertence a uma meta e tem módulos (páginas ou conjuntos de cards). Progresso da trilha alimenta o progresso da meta. Clique numa trilha para ver os módulos.</p><p><span class="lbl">Movimento</span> Painel de módulos troca com opacidade + 6 px.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Cards extraídos</span><span class="prio">P0</span></div><p>O Renato propõe cards basic (frente e verso) e cloze (lacuna) a partir de páginas. Você escolhe quais entram; nada vai para a revisão sem aprovação. Cada card guarda a página de origem como fonte.</p><p><span class="lbl">Movimento</span> Aprovar: rascunho colapsa em linha de confirmação (médio).</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="estudo" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, chat: false, drawer: false, cap: false, tr: 0, sel: { 0: true, 1: true, 2: true }, ok: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const T = [
+      { t: 'Sistemas distribuídos', meta: 'Certificação em sistemas distribuídos', p: 42, cards: '86 cards', dot: 'dot c2', mods: [{ t: 'Consenso e Raft', d: '24 cards · retenção 91%', st: 2 }, { t: 'Replicação', d: 'em andamento · 18 cards', st: 1 }, { t: 'Particionamento', d: 'próximo', st: 0 }, { t: 'Transações distribuídas', d: 'depois', st: 0 }] },
+      { t: 'PostgreSQL avançado', meta: 'sem meta', p: 44, cards: '31 cards', dot: 'dot c4', mods: [{ t: 'Índices', d: '12 cards', st: 2 }, { t: 'Planos de execução', d: 'em andamento', st: 1 }, { t: 'Particionamento de tabelas', d: 'próximo', st: 0 }] },
+      { t: 'Escrita técnica', meta: 'Publicar 4 posts técnicos', p: 25, cards: '9 cards', dot: 'dot c1', mods: [{ t: 'Estrutura de um post', d: '9 cards', st: 2 }, { t: 'Exemplos de código', d: 'em andamento', st: 1 }] }
+    ];
+    const tr = T[s.tr];
+    const C = [
+      { tipo: 'basic', f: 'O que dispara uma eleição no Raft?', v: 'O timeout de eleição expira sem batimento do líder.' },
+      { tipo: 'cloze', f: 'No Raft, há no máximo', cl: '[...]', f2: 'por termo.' },
+      { tipo: 'basic', f: 'Por que os timeouts de eleição são aleatórios?', v: 'Para evitar votos divididos: um nó quase sempre sai na frente.' },
+      { tipo: 'cloze', f: 'O líder só faz commit de entradas do', cl: '[...]', f2: '.' }
+    ];
+    const nSel = Object.keys(s.sel).filter((k) => s.sel[k]).length;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: s.chat, chatBtn: 'btn btn-fan btn-sm' + (s.chat ? ' on' : ''), toggleChat: () => this.setState({ chat: !s.chat }), closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      trilhas: T.map((t, i) => Object.assign({}, t, { sel: s.tr === i ? 'true' : 'false', ring: s.tr === i ? 'inset 0 0 0 2px var(--accent)' : 'none', pick: () => this.setState({ tr: i }) })),
+      tr: { t: tr.t, p: tr.p, mods: tr.mods.map((m) => ({ t: m.t, d: m.d, ic: m.st === 2 ? 'cb on round' : (m.st === 1 ? 'cb round' : 'cb round'), cta: m.st === 1 ? 'Continuar' : (m.st === 2 ? 'Revisar' : 'Abrir'), href: m.st === 1 ? 'Tutor.dc.html' : (m.st === 2 ? 'Revisao.dc.html' : 'Pagina.dc.html') })) },
+      cards: C.map((c, i) => Object.assign({}, c, { isCloze: c.tipo === 'cloze', isBasic: c.tipo === 'basic', checked: s.sel[i] ? 'true' : 'false', cb: 'cb' + (s.sel[i] ? ' on' : ''), toggle: () => this.setState({ sel: Object.assign({}, s.sel, { [i]: !s.sel[i] }) }) })),
+      nSel: nSel, cPend: !s.ok, cOk: s.ok,
+      aprovar: () => this.setState({ ok: true }), desfazer: () => this.setState({ ok: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

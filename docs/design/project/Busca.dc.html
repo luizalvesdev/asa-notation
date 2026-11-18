@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Busca global · paleta de comandos</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}" style="position: relative; height: 100vh; overflow: hidden; container-type: inline-size">
+<dc-import name="Pagina" tema="{{tema}}" anotacoes="{{ false }}" hint-size="100%,100%"></dc-import>
+<div class="overlay busca-ov" style="padding-top: 10vh; gap: 16px; align-items: flex-start">
+<div class="palette" role="dialog" aria-label="Paleta de comandos" style="width: 860px">
+<div class="pal-in"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar</label><input id="q" class="plain filled grow1" placeholder="raft" style="font-size: 16px; outline: none; cursor: text"><span class="kbd">esc</span></div>
+<div class="row pal-keys" style="padding: 8px 12px; border-bottom: 1px solid var(--border)">
+<div class="seg" role="tablist" aria-label="Filtrar resultados">
+<span class="seg-ind" style="width: calc((100% - 4px) / 4); transform: translateX({{segX}})"></span>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button class="{{t.cls}}" type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.nome}} <span style="font-size: 11px; color: var(--text-3)">{{t.n}}</span></button></sc-for>
+</div>
+<span style="margin-left: auto; font-size: 12px; color: var(--text-3)">Busca em títulos, conteúdo, tarefas e cards</span>
+</div>
+<div class="pal-grid" style="display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 380px">
+<div style="padding: 6px; display: flex; flex-direction: column; gap: 1px; border-right: 1px solid var(--border)">
+<sc-if value="{{showPag}}" hint-placeholder-val="{{ true }}">
+<div class="mgroup">Páginas</div>
+<sc-for list="{{pags}}" as="r" hint-placeholder-count="3"><button class="{{r.cls}}" type="button" onClick="{{r.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg><span class="col grow1" style="text-align: left"><span class="trunc">{{r.t}}</span></span><span class="trunc" style="font-size: 12px; color: var(--text-3); max-width: 220px">{{r.loc}}</span></button></sc-for>
+</sc-if>
+<sc-if value="{{showCont}}" hint-placeholder-val="{{ true }}">
+<div class="mgroup">Conteúdo</div>
+<sc-for list="{{conts}}" as="r" hint-placeholder-count="2"><button class="{{r.cls}}" type="button" onClick="{{r.pick}}" style="height: auto; padding: 8px 10px; align-items: flex-start"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><path d="M4 7h16M4 12h16M4 17h10"></path></svg><span class="col grow1" style="text-align: left; gap: 2px"><span style="font-size: 13px">…{{r.a}}<mark>{{r.m}}</mark>{{r.b}}…</span><span style="font-size: 12px; color: var(--text-3)">{{r.loc}}</span></span></button></sc-for>
+</sc-if>
+<sc-if value="{{showAc}}" hint-placeholder-val="{{ true }}">
+<div class="mgroup">Ações</div>
+<sc-for list="{{acoes}}" as="r" hint-placeholder-count="3"><button class="{{r.cls}}" type="button" onClick="{{r.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span class="grow1 trunc" style="text-align: left">{{r.t}}</span><span class="k">{{r.k}}</span></button></sc-for>
+</sc-if>
+</div>
+<div class="pal-prev" style="padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-2)">
+<span class="eyebrow">Prévia</span>
+<div class="enter" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: var(--serif); font-size: 22px; line-height: 28px">{{prev.t}}</span>
+<span style="font-size: 12px; color: var(--text-3)">{{prev.loc}}</span>
+<p style="font-size: 13px; line-height: 20px; color: var(--text-2)">{{prev.txt}}</p>
+<a class="btn btn-sec btn-sm" href="{{prev.href}}" style="align-self: flex-start">Abrir <span class="kbd">↵</span></a>
+</div>
+</div>
+</div>
+<div class="row pal-keys" style="gap: 16px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-3)"><span class="row" style="gap: 4px"><span class="kbd">↑</span><span class="kbd">↓</span> navegar</span><span class="row" style="gap: 4px"><span class="kbd">↵</span> abrir</span><span class="row" style="gap: 4px"><span class="kbd">⌘↵</span> abrir no painel lateral</span><span class="row" style="gap: 4px"><span class="kbd">⇥</span> trocar filtro</span></div>
+</div>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="anota" style="width: 300px; flex: none" aria-label="Anotações de design">
+<div class="anota-h"><span class="anota-n">B</span><span>Paleta de comandos</span><span class="prio">P0</span></div>
+<p>⌘K de qualquer tela. Três tipos de resultado no mesmo lugar: <b>páginas</b>, <b>conteúdo</b> (trecho com o termo destacado) e <b>ações</b> (criar, ir para, revisar, perguntar a um assistente). Sem consulta, mostra Recentes e Ações frequentes.</p>
+<p><b>Estados:</b> carregando (skeleton de 3 linhas após 150 ms), vazio (“Nada encontrado para ‘x’ · Criar página ‘x’”), offline (busca só no que está em cache, com aviso).</p>
+<p><span class="lbl">Movimento</span> Abre com rápido · entrada, scale .98 + opacidade; o fundo escurece em médio. Prévia troca com cross-fade a cada seleção. Filtros reorganizam a lista sem animação de altura.</p>
+<p>Clique nas abas e nos resultados: a prévia acompanha.</p>
+<button class="btn btn-sec btn-sm" type="button" onClick="{{toggleTheme}}" style="align-self: flex-start">Alternar tema</button>
+</aside>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, tab: 0, sel: 'p0' };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const data = {
+      p0: { t: 'Consenso com Raft', loc: 'Estudo / Sistemas distribuídos', txt: 'Raft é um algoritmo de consenso pensado para ser fácil de entender. Ele separa o problema em eleição de líder, replicação de log e segurança.', href: 'Pagina.dc.html' },
+      p1: { t: 'Mapa · replicação', loc: 'Estudo / Sistemas distribuídos', txt: 'Mapa mental gerado pelo Renato a partir do tema “replicação”, com Raft no centro.', href: 'MapaMental.dc.html' },
+      p2: { t: 'In Search of an Understandable Consensus Algorithm', loc: 'Leituras · lido', txt: 'Artigo original do Raft. Status: lido. Nota 5. Ligado à meta Certificação.', href: 'DatabaseLinha.dc.html' },
+      c0: { t: 'Consenso com Raft', loc: 'Trecho no corpo da página', txt: '…o líder é a única fonte de verdade do log, e os seguidores só respondem a ele.', href: 'Pagina.dc.html' },
+      c1: { t: 'Revisar 20 cards de Raft', loc: 'Tarefa · Hoje, 14:00', txt: 'Tarefa ligada à meta Certificação. Recorrente às terças e quintas.', href: 'Hoje.dc.html' },
+      a0: { t: 'Revisar cards de Raft', loc: 'Ação · 12 cards pendentes', txt: 'Abre a sessão de revisão filtrada pelo baralho Sistemas distribuídos.', href: 'Revisao.dc.html' },
+      a1: { t: 'Perguntar ao Renato', loc: 'Ação · assistente', txt: '“O que anotei sobre raft?” Abre o painel do Renato com a pergunta já enviada.', href: 'Chat.dc.html' },
+      a2: { t: 'Criar página “raft”', loc: 'Ação', txt: 'Cria uma página nova com este título dentro de Estudo.', href: 'NovaPagina.dc.html' }
+    };
+    const rowCls = (id) => 'plain mrow' + (s.sel === id ? ' sel' : '');
+    const mk = (id, extra) => Object.assign({ cls: rowCls(id), pick: () => this.setState({ sel: id }) }, extra);
+    const tabs = ['Tudo', 'Páginas', 'Conteúdo', 'Ações'];
+    const counts = ['8', '3', '2', '3'];
+    return {
+      rootCls: 'ds' + (dark ? ' escuro' : ''),
+      tema: dark ? 'escuro' : 'claro',
+      notes: notes,
+      toggleTheme: () => this.setState({ dark: !dark }),
+      segX: (s.tab * 100) + '%',
+      tabs: tabs.map((n, i) => ({ nome: n, n: counts[i], cls: 'seg-b' + (s.tab === i ? ' on' : ''), sel: s.tab === i ? 'true' : 'false', pick: () => this.setState({ tab: i }) })),
+      showPag: s.tab === 0 || s.tab === 1,
+      showCont: s.tab === 0 || s.tab === 2,
+      showAc: s.tab === 0 || s.tab === 3,
+      pags: [mk('p0', { t: 'Consenso com Raft', loc: 'Estudo / Sistemas distribuídos' }), mk('p1', { t: 'Mapa · replicação', loc: 'Estudo / Sistemas distribuídos' }), mk('p2', { t: 'In Search of an Understandable Consensus Algorithm', loc: 'Leituras' })],
+      conts: [mk('c0', { a: 'o líder é a única fonte de verdade do log; ', m: 'Raft', b: ' separa eleição e replicação', loc: 'Consenso com Raft' }), mk('c1', { a: 'Revisar 20 cards de ', m: 'Raft', b: '', loc: 'Tarefa · Hoje, 14:00' })],
+      acoes: [mk('a0', { t: 'Revisar cards de Raft · 12 pendentes', k: 'G E' }), mk('a1', { t: 'Perguntar ao Renato: “o que anotei sobre raft?”', k: '⌘J' }), mk('a2', { t: 'Criar página “raft”', k: '⌘N' })],
+      prev: data[s.sel]
+    };
+  }
+}
+</script>
+</body>
+</html>

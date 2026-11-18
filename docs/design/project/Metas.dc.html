@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Metas</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="metas" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Metas</span></nav>
+<div class="tb-r">
+<button class="{{chatBtn}}" type="button" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div style="flex: 1; display: flex; min-height: 0">
+<div class="scroll" style="flex: 1 1 420px; border-right: 1px solid var(--border)">
+<div style="padding: 32px 28px 120px; display: flex; flex-direction: column; gap: 14px">
+<div class="row" style="flex-wrap: wrap; gap: 10px"><h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Metas</h1>
+<div class="seg" role="tablist" aria-label="Filtro" style="margin-left: auto"><span class="seg-ind" style="width: calc((100% - 4px) / 2); transform: translateX({{segX}})"></span><button class="{{tA}}" type="button" role="tab" aria-selected="{{aSel}}" onClick="{{pickA}}">Ativas</button><button class="{{tC}}" type="button" role="tab" aria-selected="{{cSel}}" onClick="{{pickC}}">Concluídas</button></div>
+<button class="btn btn-pri btn-sm" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova meta</button>
+</div>
+<div class="col rel" style="gap: 8px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<sc-for list="{{list}}" as="g" hint-placeholder-count="4">
+<button class="{{g.cls}}" type="button" onClick="{{g.pick}}" aria-pressed="{{g.sel}}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; text-align: left; border-radius: 10px; cursor: pointer; box-shadow: {{g.ring}}">
+<span class="row" style="gap: 8px"><span style="font-weight: 600; font-size: 14px" class="grow1">{{g.t}}</span><span class="{{g.stCls}}">{{g.st}}</span></span>
+<span class="bar" style="width: 100%"><span style="width: {{g.pct}}%"></span></span>
+<span class="row" style="gap: 12px; font-size: 12px; color: var(--text-2)"><span>{{g.pct}}%</span><span>{{g.tasks}}</span><span style="margin-left: auto">{{g.prazo}}</span></span>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+<div class="scroll hide-m" style="flex: 1 1 520px">
+<div class="enter rel" style="padding: 32px 36px 120px; display: flex; flex-direction: column; gap: 18px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<span class="eyebrow">Meta</span>
+<h2 style="font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 36px; letter-spacing: -.015em">{{g.t}}</h2>
+<div class="props">
+<span class="pk">Prazo</span><span class="pv">{{g.prazo}}</span>
+<span class="pk">Status</span><span class="pv"><span class="{{g.stCls}}">{{g.st}}</span></span>
+<span class="pk">Progresso</span><span class="pv">{{g.pct}}% · {{g.tasks}}</span>
+<span class="pk">Trilha de estudo</span><span class="pv"><a class="mention" href="Estudo.dc.html">{{g.trilha}}</a></span>
+</div>
+<p class="b-p" style="color: var(--text-2)">{{g.desc}}</p>
+<div class="col" style="gap: 2px">
+<div class="row" style="padding-bottom: 6px"><b style="font-weight: 600; font-size: 13px">Tarefas ligadas</b><button class="btn btn-fan btn-sm" type="button" style="margin-left: auto; color: var(--text-2)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Tarefa</button></div>
+<sc-for list="{{g.tl}}" as="t" hint-placeholder-count="4">
+<div class="col"><div class="task" style="min-height: 36px"><span class="{{t.cb}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{t.txt}}">{{t.t}}</span><span class="meta">{{t.d}}</span></div>
+<sc-for list="{{t.subs}}" as="u" hint-placeholder-count="0"><div class="task" style="min-height: 30px; padding-left: 40px; font-size: 13px"><span class="{{u.cb}}" style="width: 16px; height: 16px"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{u.txt}}">{{u.t}}</span></div></sc-for>
+</div>
+</sc-for>
+</div>
+<div class="draft"><span class="draft-t">Rascunho do Hermes · ajuste de ritmo</span><span style="font-size: 13px; line-height: 19px">{{g.sug}}</span><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button">Aprovar</button><button class="btn btn-fan btn-sm" type="button">Editar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Descartar</button></div></div>
+</div>
+</div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="hermes" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Metas</b></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Lista de metas</span><span class="prio">P0</span></div><p>Cada meta: prazo, status (no ritmo, atrás, em risco, concluída) e progresso calculado pelas tarefas ligadas. Status vem de comparar progresso com o tempo decorrido; o texto sempre acompanha a cor. Clique numa meta para ver o detalhe.</p><p><span class="lbl">Movimento</span> Barras crescem na entrada (lento · entrada). Troca Ativas/Concluídas em cross-fade médio.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Detalhe da meta</span><span class="prio">P0</span></div><p>Tarefas ligadas com subtarefas, trilha de estudo associada e sugestão de ritmo do Hermes como rascunho. No celular, o detalhe abre em tela própria.</p><p><span class="lbl">Movimento</span> Detalhe troca com opacidade + 6 px (médio · entrada).</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="metas" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, chat: false, drawer: false, cap: false, sel: 0, tab: 0 };
+    this.metas = [
+      { t: 'Certificação em sistemas distribuídos', st: 'Atrás do ritmo', stCls: 'badge warn', pct: 42, tasks: '5 de 12 tarefas', prazo: '31 mar 2027', trilha: 'Sistemas distribuídos', desc: 'Passar na certificação até março. Base: consenso, replicação, particionamento e transações distribuídas.', sug: 'Para voltar ao ritmo: 3 sessões de estudo por semana (ter, qui, sáb) de 50 min, e mover “Ler Paxos” para a próxima semana.', tl: [{ t: 'Ler o artigo do Raft', d: 'feito', ok: true }, { t: 'Revisar 20 cards de Raft', d: 'hoje', ok: false }, { t: 'Capítulo 9 do livro de dados intensivos', d: 'sem prazo', ok: false, subs: [{ t: 'Linearizabilidade', ok: true }, { t: 'Ordenação e causalidade', ok: false }] }, { t: 'Simulado 1', d: '12 dez', ok: false }], done: false },
+      { t: 'Freelas Q1: 3 clientes', st: 'No ritmo', stCls: 'badge ok', pct: 33, tasks: '1 de 3 clientes', prazo: '31 mar 2027', trilha: '—', desc: 'Fechar três clientes de freela até o fim do primeiro trimestre.', sug: 'Reservar 2 horas na sexta para prospecção e enviar a proposta pendente antes das 11h.', tl: [{ t: 'Enviar proposta revisada ao cliente', d: 'atrasada', ok: false }, { t: 'Reunião com cliente novo', d: 'sex', ok: false }, { t: 'Atualizar portfólio', d: 'feito', ok: true }], done: false },
+      { t: 'Publicar 4 posts técnicos', st: 'Em risco', stCls: 'badge bad', pct: 25, tasks: '1 de 4 posts', prazo: '31 dez 2026', trilha: '—', desc: 'Escrever e publicar quatro posts técnicos até o fim do ano.', sug: 'Com 6 semanas restantes, reduzir para 3 posts ou publicar um a cada 10 dias a partir de hoje.', tl: [{ t: 'Post sobre idempotência', d: 'hoje', ok: false, subs: [{ t: 'Esboço da estrutura', ok: true }, { t: 'Exemplo de código', ok: false }] }, { t: 'Post sobre Raft', d: 'dez', ok: false }], done: false },
+      { t: 'Ler 12 livros em 2026', st: 'No ritmo', stCls: 'badge ok', pct: 75, tasks: '9 de 12 livros', prazo: '31 dez 2026', trilha: '—', desc: 'Ligada ao database Leituras: cada livro marcado como Lido conta.', sug: 'Faltam 3 livros em 6 semanas: um a cada duas semanas mantém o ritmo.', tl: [{ t: 'Terminar livro de dados intensivos', d: 'dez', ok: false }], done: false },
+      { t: 'Migrar o site para servidor próprio', st: 'Concluída', stCls: 'badge', pct: 100, tasks: '6 de 6 tarefas', prazo: '30 set 2026', trilha: '—', desc: 'Concluída em 28 de setembro.', sug: 'Nenhum ajuste necessário.', tl: [{ t: 'Configurar DNS', d: 'feito', ok: true }, { t: 'Certificado TLS', d: 'feito', ok: true }], done: true }
+    ];
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark === null ? this.props.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (this.props.anotacoes ?? true) : s.notes;
+    const idx = this.metas.map((m, i) => i).filter((i) => this.metas[i].done === (s.tab === 1));
+    const list = idx.map((i) => {
+      const m = this.metas[i];
+      return Object.assign({}, m, { cls: 'plain card', sel: s.sel === i ? 'true' : 'false', ring: s.sel === i ? 'inset 0 0 0 2px var(--accent)' : 'none', pick: () => this.setState({ sel: i }) });
+    });
+    const m = this.metas[s.sel];
+    const g = Object.assign({}, m, { tl: m.tl.map((t) => ({ t: t.t, d: t.d, cb: 'cb' + (t.ok ? ' on' : ''), txt: t.ok ? 'done-txt' : '', subs: (t.subs || []).map((u) => ({ t: u.t, cb: 'cb' + (u.ok ? ' on' : ''), txt: u.ok ? 'done-txt' : '' })) })) });
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: s.chat, chatBtn: 'btn btn-fan btn-sm' + (s.chat ? ' on' : ''), toggleChat: () => this.setState({ chat: !s.chat }), closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      segX: (s.tab * 100) + '%',
+      tA: 'seg-b' + (s.tab === 0 ? ' on' : ''), tC: 'seg-b' + (s.tab === 1 ? ' on' : ''),
+      aSel: s.tab === 0 ? 'true' : 'false', cSel: s.tab === 1 ? 'true' : 'false',
+      pickA: () => this.setState({ tab: 0, sel: 0 }), pickC: () => this.setState({ tab: 1, sel: 4 }),
+      list: list, g: g
+    };
+  }
+}
+</script>
+</body>
+</html>

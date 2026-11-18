@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Hoje</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="hoje" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Hoje</span></nav>
+<div class="tb-r">
+<a class="btn btn-fan btn-ico btn-sm desk" href="Busca.dc.html" aria-label="Buscar (⌘K)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></a>
+<button class="btn btn-fan btn-sm desk" type="button" onClick="{{openCap}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Capturar<span class="kbd">⌘⇧K</span></button>
+<button class="{{chatBtn}}" type="button" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span><span class="kbd desk">⌘J</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="display: flex; flex-wrap: wrap; gap: 40px; padding: 40px 40px 120px; max-width: 1180px">
+<div style="flex: 999 1 520px; min-width: 0">
+<div class="row" style="align-items: flex-end; gap: 12px; flex-wrap: wrap"><h1 style="font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 44px; letter-spacing: -.02em">Hoje</h1><span class="muted" style="font-size: 15px; padding-bottom: 4px">quarta, 18 de novembro</span></div>
+<div class="rel" style="margin-top: 18px; display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--hermes-soft)">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<span class="av h lg">H</span>
+<div class="col grow1" style="gap: 8px"><p style="font-size: 14px; line-height: 21px">Bom dia. Você tem <b style="font-weight: 600">4 tarefas hoje</b> e <b style="font-weight: 600">2 atrasadas</b>. A proposta destrava o freela; sugiro fazê-la antes das 11h. Amanhã às 18h tem check-in de quinta.</p><div class="row" style="gap: 6px; flex-wrap: wrap"><button class="btn btn-sec btn-sm" type="button" onClick="{{toggleChat}}">Planejar com Hermes</button><button class="btn btn-fan btn-sm" type="button" onClick="{{moveLate}}">Mover atrasadas para hoje</button></div></div>
+</div>
+<div class="row rel" style="margin-top: 20px; gap: 12px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">2</span></sc-if>
+<div class="bar grow1"><span style="width: {{pct}}%; transition: width var(--medio) var(--padrao)"></span></div><span style="font-size: 13px; color: var(--text-2); white-space: nowrap">{{doneN}} de {{totalN}} concluídas</span>
+</div>
+
+<sc-if value="{{hasLate}}" hint-placeholder-val="{{ true }}">
+<div class="sec-h" style="color: var(--danger)">Atrasadas <span class="n">{{lateN}}</span></div>
+<sc-for list="{{late}}" as="t" hint-placeholder-count="2">
+<div class="task enter"><button class="plain row" type="button" role="checkbox" aria-checked="{{t.checked}}" onClick="{{t.toggle}}" style="gap: 12px; flex: 1; min-width: 0"><span class="{{t.cb}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{t.txt}}">{{t.t}}</span></button><span class="meta"><span class="hide-m">{{t.meta}}</span><span style="color: var(--danger)">{{t.when}}</span></span></div>
+</sc-for>
+</sc-if>
+
+<div class="sec-h">Hoje <span class="n">{{todayN}}</span></div>
+<sc-for list="{{today}}" as="t" hint-placeholder-count="4">
+<div class="col">
+<div class="task"><button class="plain row" type="button" role="checkbox" aria-checked="{{t.checked}}" onClick="{{t.toggle}}" style="gap: 12px; flex: 1; min-width: 0"><span class="{{t.cb}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{t.txt}}">{{t.t}}</span></button>
+<sc-if value="{{t.hasSub}}" hint-placeholder-val="{{ false }}"><button class="btn btn-fan btn-sm" type="button" onClick="{{t.toggleSub}}" aria-expanded="{{t.subExp}}" style="color: var(--text-2)"><svg class="{{t.chev}}" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg>{{t.subLabel}}</button></sc-if>
+<span class="meta"><sc-if value="{{t.rec}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" aria-label="Recorrente" style="width: 14px; height: 14px"><path d="M17 2l3 3-3 3"></path><path d="M4 11V9a4 4 0 0 1 4-4h12"></path><path d="M7 22l-3-3 3-3"></path><path d="M20 13v2a4 4 0 0 1-4 4H4"></path></svg></sc-if><span class="hide-m">{{t.meta}}</span><span class="mono">{{t.when}}</span></span></div>
+<sc-if value="{{t.hasSub}}" hint-placeholder-val="{{ false }}"><div class="{{t.kids}}"><div style="padding-left: 32px">
+<sc-for list="{{t.subs}}" as="u" hint-placeholder-count="3"><div class="task kid" style="min-height: 34px; font-size: 13px"><span class="{{u.cb}}" style="width: 16px; height: 16px"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span><span class="{{u.txt}}">{{u.t}}</span></div></sc-for>
+</div></div></sc-if>
+</div>
+</sc-for>
+
+<div class="sec-h">Sem prazo <span class="n">2</span></div>
+<div class="task"><span class="cb"></span><span>Ler o capítulo 9 do livro de dados intensivos</span><span class="meta"><span class="hide-m">Certificação</span></span></div>
+<div class="task"><span class="cb"></span><span>Organizar a Inbox</span><span class="meta"><span class="badge r" style="height: 20px">Renato sugeriu</span></span></div>
+
+<button class="plain task" type="button" style="color: var(--text-3); margin-top: 6px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Adicionar tarefa<span class="meta"><span class="kbd">N</span></span></button>
+</div>
+
+<aside style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 16px; min-width: 0" class="rel">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">3</span></sc-if>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div class="row"><b style="font-weight: 600; font-size: 13px">Metas em foco</b><a href="Metas.dc.html" style="margin-left: auto; font-size: 12px">Ver todas</a></div>
+<a href="Metas.dc.html" class="col" style="gap: 6px; text-decoration: none; color: var(--text)"><span class="row" style="font-size: 13px"><span class="grow1 trunc">Certificação em sistemas distribuídos</span><span class="badge warn" style="height: 20px">atrás</span></span><div class="bar"><span style="width: 42%"></span></div><span style="font-size: 12px; color: var(--text-3)">42% · prazo mar/2027</span></a>
+<a href="Metas.dc.html" class="col" style="gap: 6px; text-decoration: none; color: var(--text)"><span class="row" style="font-size: 13px"><span class="grow1 trunc">Freelas Q1: 3 clientes</span></span><div class="bar"><span style="width: 33%; animation-delay: 60ms"></span></div><span style="font-size: 12px; color: var(--text-3)">1 de 3 · prazo 31 mar</span></a>
+<a href="Metas.dc.html" class="col" style="gap: 6px; text-decoration: none; color: var(--text)"><span class="row" style="font-size: 13px"><span class="grow1 trunc">Publicar 4 posts técnicos</span><span class="badge bad" style="height: 20px">em risco</span></span><div class="bar"><span style="width: 25%; animation-delay: 120ms"></span></div><span style="font-size: 12px; color: var(--text-3)">1 de 4 · prazo 31 dez</span></a>
+</div>
+<a class="card" href="Rotina.dc.html" style="padding: 16px; display: flex; gap: 12px; text-decoration: none; color: var(--text)"><span class="av h">H</span><span class="col" style="gap: 2px"><span style="font-weight: 600; font-size: 13px">Próximo check-in</span><span style="font-size: 13px; color: var(--text-2)">Métricas da quinta · amanhã, 18:00</span></span></a>
+<a class="card" href="Revisao.dc.html" style="padding: 16px; display: flex; gap: 12px; text-decoration: none; color: var(--text)"><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path></svg></span><span class="col" style="gap: 2px"><span style="font-weight: 600; font-size: 13px">12 cards para revisar</span><span style="font-size: 13px; color: var(--text-2)">cerca de 8 minutos</span></span></a>
+</aside>
+</div>
+</div>
+<dc-import name="NavInferior" atual="hoje" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="hermes" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Hoje</b><span class="spec" style="margin-left: auto">passo 4</span></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">1</span><span>Resumo do Hermes</span><span class="prio">P0</span></div><p>Gerado no primeiro acesso do dia (ou no check-in diário). É mensagem, não rascunho: não cria nada. Botões levam ao chat ou aplicam uma ação simples com Desfazer. Experimente “Mover atrasadas para hoje”.</p><p><span class="lbl">Movimento</span> Entra com opacidade + 6 px (médio) depois do skeleton.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">2</span><span>Tarefas do dia</span><span class="prio">P0</span></div><p>Atrasadas, Hoje (ordenadas por horário) e Sem prazo. Ícone de recorrência; subtarefas recolhíveis com contagem. Clique nos checkboxes: barra e contagens acompanham. Concluída fica 1,2 s no lugar e desce para “Concluídas”.</p><p><span class="lbl">Movimento</span> Check: mola + traço; barra cresce em médio; reordenação com FLIP.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">3</span><span>Coluna de contexto</span><span class="prio">P1</span></div><p>Metas em foco (até 3, com estado no ritmo/atrás/em risco), próximo check-in e cards a revisar. No celular vai para baixo da lista.</p><p><span class="lbl">Movimento</span> Barras de progresso crescem da esquerda na entrada (lento · entrada), defasagem de 60 ms.</p></div>
+<div class="anota"><div class="anota-h"><span class="anota-n">4</span><span>Estados</span><span class="prio">P0</span></div><p>Vazio: “Dia livre. Puxe algo de Sem prazo ou peça um plano ao Hermes.” Tudo concluído: mensagem curta e a barra cheia em sucesso. Offline: marcar funciona e sincroniza depois.</p><p><span class="lbl">Movimento</span> Dia concluído: barra muda para sucesso em médio.</p></div>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="hoje" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"chat":{"editor":"boolean","default":false},"gaveta":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null, notes: null, chat: null, drawer: null, cap: false, done: { h3: true }, sub: { h2: true }, moved: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const p = this.props;
+    const dark = s.dark === null ? p.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (p.anotacoes ?? true) : s.notes;
+    const chat = s.chat === null ? !!p.chat : s.chat;
+    const drawer = s.drawer === null ? !!p.gaveta : s.drawer;
+    const lateData = [
+      { id: 'o1', t: 'Enviar proposta revisada ao cliente', meta: 'Freelas Q1', when: 'ontem' },
+      { id: 'o2', t: 'Responder e-mail do contador', meta: '', when: 'seg, 16 nov' }
+    ];
+    const todayData = [
+      { id: 'h3', t: 'Daily do trabalho', meta: 'Trabalho', when: '09:30', rec: true },
+      { id: 'h1', t: 'Revisar 20 cards de Raft', meta: 'Certificação', when: '14:00', rec: true },
+      { id: 'h2', t: 'Escrever rascunho do post sobre idempotência', meta: '4 posts técnicos', when: '16:00', subs: [{ t: 'Esboço da estrutura', ok: true }, { t: 'Exemplo de código', ok: false }, { t: 'Revisar título', ok: false }] },
+      { id: 'h4', t: 'Treino', meta: '', when: '19:00', rec: true }
+    ];
+    const deco = (t) => {
+      const ok = !!s.done[t.id];
+      const subs = (t.subs || []).map((u) => ({ t: u.t, cb: 'cb' + (u.ok ? ' on' : ''), txt: u.ok ? 'done-txt' : '' }));
+      const open = !!s.sub[t.id];
+      return Object.assign({}, t, {
+        checked: ok ? 'true' : 'false', cb: 'cb' + (ok ? ' on' : ''), txt: ok ? 'done-txt' : '',
+        toggle: () => this.setState({ done: Object.assign({}, s.done, { [t.id]: !ok }) }),
+        hasSub: subs.length > 0, subs: subs, subLabel: subs.filter((u) => u.cb !== 'cb').length + '/' + subs.length,
+        subExp: open ? 'true' : 'false', chev: 'chev' + (open ? ' on' : ''), kids: 'kids' + (open ? ' on' : ''),
+        toggleSub: () => this.setState({ sub: Object.assign({}, s.sub, { [t.id]: !open }) }),
+        rec: !!t.rec
+      });
+    };
+    let lateList = lateData;
+    let todayList = todayData;
+    if (s.moved) {
+      todayList = lateData.map((t) => Object.assign({}, t, { when: 'hoje' })).concat(todayData);
+      lateList = [];
+    }
+    const all = lateList.concat(todayList);
+    const doneN = all.filter((t) => s.done[t.id]).length;
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: chat, chatBtn: 'btn btn-fan btn-sm' + (chat ? ' on' : ''), toggleChat: () => this.setState({ chat: !chat }), closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: drawer, drawerCls: 'drawer' + (drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      late: lateList.map(deco), today: todayList.map(deco),
+      hasLate: lateList.length > 0, lateN: lateList.length, todayN: todayList.length,
+      doneN: doneN, totalN: all.length, pct: Math.round(doneN / all.length * 100),
+      moveLate: () => this.setState({ moved: !s.moved })
+    };
+  }
+}
+</script>
+</body>
+</html>

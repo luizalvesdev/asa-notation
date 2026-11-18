@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel dos assistentes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<aside class="{{rootCls}}" style="{{rootStyle}}" aria-label="Assistentes">
+<div class="chat-h">
+<div class="seg" role="tablist" aria-label="Assistente" style="width: 200px">
+<span class="seg-ind" style="width: calc((100% - 4px) / 2); transform: translateX({{segX}})"></span>
+<button class="{{segH}}" type="button" role="tab" aria-selected="{{hSel}}" onClick="{{pickH}}"><span class="av h" style="width: 16px; height: 16px; font-size: 10px; border-radius: 4px">H</span>Hermes</button>
+<button class="{{segR}}" type="button" role="tab" aria-selected="{{rSel}}" onClick="{{pickR}}"><span class="av r" style="width: 16px; height: 16px; font-size: 10px; border-radius: 4px">R</span>Renato</button>
+</div>
+<div class="row" style="margin-left: auto; gap: 2px">
+<button class="{{histCls}}" type="button" aria-label="Histórico de conversas" aria-pressed="{{histPressed}}" onClick="{{toggleHist}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Fechar painel (esc)" onClick="{{fechar}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+</div>
+
+<sc-if value="{{hist}}" hint-placeholder-val="{{ false }}">
+<div class="chat-body enter" style="gap: 4px">
+<div class="eyebrow" style="padding: 0 6px 6px">Conversas com {{nome}}</div>
+<sc-for list="{{histList}}" as="h" hint-placeholder-count="5">
+<button class="plain mrow" type="button" onClick="{{toggleHist}}" style="height: auto; padding: 8px; align-items: flex-start; flex-direction: column; gap: 2px"><span style="font-weight: 500; font-size: 13px">{{h.t}}</span><span style="font-size: 12px; color: var(--text-3)">{{h.d}}</span></button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{conv}}" hint-placeholder-val="{{ true }}">
+<div class="chat-body">
+<div style="text-align: center; font-size: 12px; color: var(--text-3)">Hoje, 10:42</div>
+<sc-if value="{{isH}}" hint-placeholder-val="{{ true }}">
+<div class="bub-u">Bom dia. Organiza meu dia de amanhã com base nas metas?</div>
+<div class="bub-a"><span class="av h">H</span><div class="col" style="gap: 10px; min-width: 0">
+<div><sc-for list="{{words}}" as="w" hint-placeholder-count="0"><span class="w">{{w}} </span></sc-for><sc-if value="{{streaming}}" hint-placeholder-val="{{ false }}"><span class="hcaret"></span></sc-if></div>
+<sc-if value="{{showAct}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{dPend}}" hint-placeholder-val="{{ true }}">
+<div class="draft rise">
+<div class="row"><span class="draft-t">Rascunho · 3 tarefas para amanhã</span></div>
+<div class="col" style="gap: 6px; font-size: 13px">
+<div class="row"><span class="cb"></span><span class="grow1">Enviar proposta revisada</span><span class="spec">10:00</span></div>
+<div class="row"><span class="cb"></span><span class="grow1">Revisar 20 cards de Raft</span><span class="spec">14:00</span></div>
+<div class="row"><span class="cb"></span><span class="grow1">Check-in de quinta</span><span class="spec">18:00</span></div>
+</div>
+<div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button" onClick="{{aprovar}}">Aprovar</button><a class="btn btn-fan btn-sm" href="Hoje.dc.html">Editar</a><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)" onClick="{{descartar}}">Descartar</button></div>
+</div>
+</sc-if>
+<sc-if value="{{dOk}}" hint-placeholder-val="{{ false }}"><div class="draft-ok enter"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>3 tarefas criadas em Amanhã<button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{reset}}">Desfazer</button></div></sc-if>
+<sc-if value="{{dGone}}" hint-placeholder-val="{{ false }}"><div class="draft-ok enter" style="border-style: dashed; color: var(--text-2)">Rascunho descartado<button class="btn btn-fan btn-sm" type="button" style="margin-left: auto" onClick="{{reset}}">Desfazer</button></div></sc-if>
+</sc-if>
+</div></div>
+</sc-if>
+<sc-if value="{{isR}}" hint-placeholder-val="{{ false }}">
+<div class="bub-u">O que anotei sobre idempotência?</div>
+<div class="bub-a"><span class="av r">R</span><div class="col" style="gap: 10px; min-width: 0">
+<div><sc-for list="{{words}}" as="w" hint-placeholder-count="0"><span class="w">{{w}} </span></sc-for><sc-if value="{{streaming}}" hint-placeholder-val="{{ false }}"><span class="rcaret"></span></sc-if></div>
+<sc-if value="{{showAct}}" hint-placeholder-val="{{ false }}">
+<div class="col rise" style="gap: 6px">
+<a class="b-embed" href="Pagina.dc.html" style="text-decoration: none; color: var(--text); padding: 8px 10px"><span class="cite">1</span><span class="col grow1"><span style="font-weight: 500; font-size: 13px">Dúvida sobre filas e retry</span><span style="font-size: 12px; color: var(--text-3)">Inbox · ontem</span></span></a>
+<a class="b-embed" href="Pagina.dc.html" style="text-decoration: none; color: var(--text); padding: 8px 10px"><span class="cite">2</span><span class="col grow1"><span style="font-weight: 500; font-size: 13px">Loja v2 · pagamentos</span><span style="font-size: 12px; color: var(--text-3)">Projetos · 12 nov</span></span></a>
+<div class="draft r"><span class="draft-t">Rascunho · organizar</span><span style="font-size: 13px">Mover a nota [1] para o projeto Loja v2 e marcar como #arquitetura.</span><div class="row" style="gap: 4px"><button class="btn btn-ink btn-sm" type="button">Aprovar</button><button class="btn btn-fan btn-sm" type="button">Editar</button><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Descartar</button></div></div>
+</div>
+</sc-if>
+</div></div>
+</sc-if>
+</div>
+</sc-if>
+
+<div class="chat-f">
+<div class="composer">
+<label for="chat-in" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Mensagem</label>
+<textarea id="chat-in" class="plain" rows="2" placeholder="{{placeholder}}" style="resize: none; outline: none; font-size: 14px; line-height: 20px; cursor: text"></textarea>
+<div class="row"><span style="font-size: 12px; color: var(--text-3)">{{dica}}</span><button class="btn btn-pri btn-ico btn-sm" type="button" aria-label="Enviar (↵)" style="margin-left: auto" onClick="{{reenviar}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button></div>
+</div>
+</div>
+</aside>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"assistente":{"editor":"enum","options":["hermes","renato"],"default":"hermes"},"embutida":{"editor":"boolean","default":false},"fechar":{"editor":null},"$preview":{"width":380,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { who: null, n: 0, hist: false, draft: 'pendente' };
+    this.txt = {
+      hermes: 'Você tem 2 tarefas atrasadas e a meta “Certificação” está 1 semana atrás do ritmo. Sugiro começar com a proposta, que destrava o freela, e reservar a tarde para revisão:'.split(' '),
+      renato: 'Encontrei 2 notas. Na primeira você anotou que o retry só pode ser ligado depois de o reprocessamento ser idempotente [1]. Na segunda, a ideia de usar uma chave de idempotência por pedido [2].'.split(' ')
+    };
+    this.iv = null;
+  }
+  componentDidMount() { this.stream(); }
+  componentWillUnmount() { if (this.iv) clearInterval(this.iv); }
+  who() { return this.state.who || this.props.assistente || 'hermes'; }
+  stream() {
+    if (this.iv) clearInterval(this.iv);
+    this.setState({ n: 0 });
+    this.iv = setInterval(() => {
+      const total = this.txt[this.who()].length;
+      const n = this.state.n + 1;
+      if (n >= total) { clearInterval(this.iv); this.iv = null; }
+      this.setState({ n: Math.min(n, total) });
+    }, 45);
+  }
+  renderVals() {
+    const s = this.state;
+    const who = this.who();
+    const words = this.txt[who];
+    const done = s.n >= words.length;
+    const emb = !!this.props.embutida;
+    const pick = (w) => () => { if (w !== who) { this.setState({ who: w, hist: false }); setTimeout(() => this.stream(), 0); } };
+    return {
+      rootCls: (emb ? '' : 'ds ') + 'chat',
+      rootStyle: emb ? '' : 'height: 100vh; width: 100%; border-left: 0',
+      segX: who === 'hermes' ? '0%' : '100%',
+      segH: 'seg-b' + (who === 'hermes' ? ' on' : ''),
+      segR: 'seg-b' + (who === 'renato' ? ' on' : ''),
+      hSel: who === 'hermes' ? 'true' : 'false',
+      rSel: who === 'renato' ? 'true' : 'false',
+      pickH: pick('hermes'),
+      pickR: pick('renato'),
+      isH: who === 'hermes',
+      isR: who === 'renato',
+      nome: who === 'hermes' ? 'Hermes' : 'Renato',
+      hist: s.hist,
+      conv: !s.hist,
+      histCls: 'btn btn-fan btn-ico btn-sm' + (s.hist ? ' on' : ''),
+      histPressed: s.hist ? 'true' : 'false',
+      toggleHist: () => this.setState({ hist: !s.hist }),
+      histList: who === 'hermes'
+        ? [{ t: 'Plano de amanhã', d: 'Hoje, 10:42' }, { t: 'Revisão do sábado', d: '15 nov' }, { t: 'Métricas da quinta', d: '13 nov' }, { t: 'Meta: certificação até março', d: '8 nov' }, { t: 'Rotina de estudo noturna', d: '2 nov' }]
+        : [{ t: 'O que anotei sobre idempotência?', d: 'Hoje, 10:51' }, { t: 'Organizar Inbox da semana', d: '16 nov' }, { t: 'Notas sobre Raft', d: '14 nov' }, { t: 'Links de Postgres', d: '10 nov' }],
+      words: words.slice(0, s.n),
+      streaming: !done,
+      showAct: done,
+      dPend: s.draft === 'pendente',
+      dOk: s.draft === 'aprovado',
+      dGone: s.draft === 'descartado',
+      aprovar: () => this.setState({ draft: 'aprovado' }),
+      descartar: () => this.setState({ draft: 'descartado' }),
+      reset: () => this.setState({ draft: 'pendente' }),
+      reenviar: () => { this.setState({ hist: false, draft: 'pendente' }); this.stream(); },
+      placeholder: who === 'hermes' ? 'Peça ao Hermes: tarefas, metas, rotina…' : 'Pergunte ao Renato: “o que anotei sobre…?”',
+      dica: who === 'hermes' ? 'Ações viram rascunho para aprovar' : 'Respostas citam suas notas',
+      fechar: () => { if (this.props.fechar) this.props.fechar(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

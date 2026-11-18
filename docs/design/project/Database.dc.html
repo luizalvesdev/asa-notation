@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Database · Leituras</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2590f76975385cdb25778d3ffab78687">
+<link rel="stylesheet" href="/_blob/335e30836f557937fcb80be5bf433af3">
+<link rel="stylesheet" href="/_blob/e230ac8d56d4195657d2089a41caea54">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootCls}}">
+<dc-import name="Sidebar" atual="database" embutida="{{ true }}" hint-size="248px,100%"></dc-import>
+<div class="main">
+<header class="tb">
+<button class="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick="{{openDrawer}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+<nav class="crumbs" aria-label="Caminho"><span class="cur">Leituras</span></nav>
+<div class="tb-r">
+<span class="sync desk"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; color: var(--success)"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Salvo</span>
+<a class="btn btn-fan btn-ico btn-sm desk" href="Busca.dc.html" aria-label="Buscar (⌘K)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></a>
+<button class="btn btn-fan btn-sm desk" type="button" onClick="{{openCap}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Capturar</button>
+<button class="{{chatBtn}}" type="button" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="desk">Assistentes</span></button>
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick="{{toggleTheme}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"></path></svg></button>
+<button class="tog desk" type="button" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="{{swNotes}}"><span class="knob"></span></span>Anotações</button>
+</div>
+</header>
+<div class="scroll">
+<div style="padding: 36px 40px 96px; max-width: 1400px">
+<div class="row" style="gap: 12px; align-items: flex-end; margin-bottom: 6px">
+<span style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-2); color: var(--cat-4); display: flex; align-items: center; justify-content: center"><svg class="ico lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M4 10h16M10 10v9"></path></svg></span>
+<h1 style="font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 42px; letter-spacing: -.02em">Leituras</h1>
+</div>
+<p class="muted" style="font-size: 14px; margin-bottom: 18px">Livros, artigos e cursos. Cada linha é uma página com propriedades.</p>
+
+<div class="row rel" style="justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin">1</span></sc-if>
+<div class="seg" role="tablist" aria-label="Views">
+<span class="seg-ind" style="width: calc((100% - 4px) / 4); transform: translateX({{segX}})"></span>
+<sc-for list="{{views}}" as="v" hint-placeholder-count="4"><button class="{{v.cls}}" type="button" role="tab" aria-selected="{{v.sel}}" onClick="{{v.pick}}">{{v.nome}}</button></sc-for>
+</div>
+<div class="row rel" style="gap: 4px; flex-wrap: wrap">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin r">2</span></sc-if>
+<button class="{{fBtn}}" type="button" aria-pressed="{{fPressed}}" onClick="{{toggleF}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 8v5l-4 2v-7z"></path></svg>Filtro</button>
+<button class="{{sBtn}}" type="button" onClick="{{toggleS}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"></path></svg>{{sLabel}}</button>
+<button class="{{gBtn}}" type="button" aria-pressed="{{gPressed}}" onClick="{{toggleG}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h10M4 19h6"></path></svg>Agrupar</button>
+<a class="btn btn-pri btn-sm" href="DatabaseLinha.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova</a>
+</div>
+</div>
+<sc-if value="{{filtered}}" hint-placeholder-val="{{ false }}">
+<div class="row enter" style="gap: 6px; padding: 10px 0 0; flex-wrap: wrap"><span class="badge ac" style="height: 28px; padding: 0 4px 0 10px">Status ≠ Lido<button class="btn" type="button" aria-label="Remover filtro" onClick="{{toggleF}}" style="width: 22px; height: 22px; padding: 0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">+ Adicionar filtro</button><span style="font-size: 12px; color: var(--text-3)">{{nRows}} de 8</span></div>
+</sc-if>
+
+<sc-if value="{{vTabela}}" hint-placeholder-val="{{ true }}">
+<div class="view rel" style="overflow-x: auto; margin-top: 8px">
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="pin" style="top: 6px; left: 4px">3</span></sc-if>
+<div class="dgrid" role="table" aria-label="Leituras" style="min-width: 1100px; --cols: minmax(300px, 2.6fr) 110px 110px 190px 70px 80px 76px 120px 140px">
+<div class="drow hd" role="row">
+<span class="th-in" role="columnheader"><span class="mi-ic">Aa</span>Título</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">◉</span>Tipo</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">◎</span>Status</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">☰</span>Tags</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">#</span>Nota</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">◷</span>Início</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">☑</span>Fichado</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">↗</span>Link</span>
+<span class="th-in" role="columnheader"><span class="mi-ic">⇄</span>Meta</span>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="1">
+<sc-if value="{{g.show}}" hint-placeholder-val="{{ false }}"><div class="drow grp enter" role="row"><span>{{g.nome}} · {{g.n}}</span></div></sc-if>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="8">
+<div class="{{r.trCls}}" role="row" onClick="{{r.open}}">
+<span class="row" style="gap: 8px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path></svg><button class="plain trunc" type="button" onClick="{{r.open}}" style="font-weight: 500">{{r.t}}</button></span>
+<span><span class="badge"><span class="{{r.tipoDot}}"></span>{{r.tipo}}</span></span>
+<span><span class="{{r.stCls}}">{{r.st}}</span></span>
+<span class="row" style="gap: 4px"><sc-for list="{{r.tags}}" as="tg" hint-placeholder-count="2"><span class="badge out">{{tg}}</span></sc-for></span>
+<span class="mono" style="color: var(--text-2)">{{r.nota}}</span>
+<span style="color: var(--text-2)">{{r.ini}}</span>
+<span><span class="{{r.cbCls}}"><svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1"></path></svg></span></span>
+<span style="color: var(--text-2)">{{r.url}}</span>
+<span><span class="mention" style="font-weight: 400">{{r.meta}}</span></span>
+</div>
+</sc-for>
+</sc-for>
+<div class="drow add"><span class="row"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova linha</span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{vKanban}}" hint-placeholder-val="{{ false }}">
+<div class="view rel" style="margin-top: 14px">
+<div class="row" style="margin-bottom: 10px; gap: 8px"><span style="font-size: 12px; color: var(--text-3)">Agrupado por Status</span><button class="btn btn-sec btn-sm" type="button" onClick="{{stepK}}">{{kLabel}}</button></div>
+<div class="kan">
+<sc-for list="{{kcols}}" as="c" hint-placeholder-count="3">
+<div class="{{c.cls}}">
+<div class="row" style="padding: 2px 4px 4px; font-size: 13px; font-weight: 600"><span class="{{c.badge}}">{{c.nome}}</span><span style="color: var(--text-3); font-weight: 400">{{c.n}}</span></div>
+<sc-if value="{{c.gapTop}}" hint-placeholder-val="{{ false }}"><div class="kgap on"></div></sc-if>
+<sc-for list="{{c.cards}}" as="k" hint-placeholder-count="3">
+<div class="{{k.cls}}" onClick="{{k.open}}" style="cursor: pointer"><span style="font-weight: 500">{{k.t}}</span><span class="row" style="gap: 4px; flex-wrap: wrap"><span class="badge"><span class="{{k.tipoDot}}"></span>{{k.tipo}}</span><sc-for list="{{k.tags}}" as="tg" hint-placeholder-count="1"><span class="badge out">{{tg}}</span></sc-for></span><span style="font-size: 12px; color: var(--text-3)">{{k.meta}}</span></div>
+</sc-for>
+<button class="plain mrow" type="button" style="color: var(--text-3)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Novo</button>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{vLista}}" hint-placeholder-val="{{ false }}">
+<div class="view" style="margin-top: 8px; display: flex; flex-direction: column">
+<sc-for list="{{flat}}" as="r" hint-placeholder-count="8">
+<button class="plain task" type="button" onClick="{{r.open}}" style="border-bottom: 1px solid var(--border); border-radius: 0; min-height: 52px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path></svg><span class="col grow1" style="gap: 2px"><span class="trunc" style="font-weight: 500">{{r.t}}</span><span style="font-size: 12px; color: var(--text-3)">{{r.autor}}</span></span><span class="meta"><span class="{{r.stCls}}">{{r.st}}</span><span class="hide-m">{{r.ini}}</span></span></button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{vCal}}" hint-placeholder-val="{{ false }}">
+<div class="view" style="margin-top: 14px">
+<div class="row" style="margin-bottom: 10px"><b style="font-weight: 600; font-size: 15px">Novembro de 2026</b><span style="font-size: 12px; color: var(--text-3); margin-left: 8px">por Início</span><span class="row" style="margin-left: auto; gap: 2px"><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Mês anterior"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><button class="btn btn-sec btn-sm" type="button">Hoje</button><button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Próximo mês"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></span></div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); font-size: 12px; color: var(--text-3); padding: 0 0 6px"><span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span></div>
+<div class="cal">
+<sc-for list="{{cal}}" as="d" hint-placeholder-count="35">
+<div style="background: {{d.bg}}"><span style="font-weight: {{d.fw}}; color: {{d.fg}}">{{d.n}}</span><sc-for list="{{d.evs}}" as="e" hint-placeholder-count="0"><button class="plain ev" type="button" onClick="{{e.open}}">{{e.t}}</button></sc-for></div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div class="{{peekCls}}" role="dialog" aria-label="Prévia da linha">
+<div class="row" style="height: 48px; padding: 0 10px; border-bottom: 1px solid var(--border); gap: 4px">
+<button class="btn btn-fan btn-ico btn-sm" type="button" aria-label="Fechar (esc)" onClick="{{closePeek}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 6l6 6-6 6M5 6l6 6-6 6"></path></svg></button>
+<a class="btn btn-fan btn-sm" href="DatabaseLinha.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7M4 4v7M20 20h-7M20 20v-7M4 4l7 7M20 20l-7-7"></path></svg>Abrir como página</a>
+<span style="margin-left: auto; font-size: 12px; color: var(--text-3)">↑↓ outra linha</span>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}"><span class="anota-n" style="margin-left: 8px">4</span></sc-if>
+</div>
+<div style="flex: 1; overflow: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px">
+<h2 style="font-family: var(--serif); font-weight: 500; font-size: 28px; line-height: 34px; letter-spacing: -.015em">{{pk.t}}</h2>
+<div class="props">
+<span class="pk"><span class="mi-ic">Aa</span>Autor</span><span class="pv">{{pk.autor}}</span>
+<span class="pk"><span class="mi-ic">◉</span>Tipo</span><span class="pv"><span class="badge"><span class="{{pk.tipoDot}}"></span>{{pk.tipo}}</span></span>
+<span class="pk"><span class="mi-ic">◎</span>Status</span><span class="pv"><span class="{{pk.stCls}}">{{pk.st}}</span></span>
+<span class="pk"><span class="mi-ic">☰</span>Tags</span><span class="pv"><sc-for list="{{pk.tags}}" as="tg" hint-placeholder-count="2"><span class="badge out">{{tg}}</span></sc-for></span>
+<span class="pk"><span class="mi-ic">#</span>Nota</span><span class="pv mono">{{pk.nota}}</span>
+<span class="pk"><span class="mi-ic">◷</span>Início</span><span class="pv">{{pk.ini}}</span>
+<span class="pk"><span class="mi-ic">⇄</span>Meta</span><span class="pv"><a class="mention" href="Metas.dc.html" style="font-weight: 400">{{pk.meta}}</a></span>
+</div>
+<div style="height: 1px; background: var(--border)"></div>
+<p class="b-p">{{pk.resumo}}</p>
+<div class="draft r"><span class="draft-t">Sugestão do Renato</span><span style="font-size: 13px">Gerar 8 cards de estudo a partir desta leitura e ligar à trilha “Sistemas distribuídos”.</span><div class="row" style="gap: 4px"><a class="btn btn-ink btn-sm" href="Estudo.dc.html">Ver cards</a><button class="btn btn-fan btn-sm" type="button" style="color: var(--text-2)">Agora não</button></div></div>
+</div>
+</div>
+<dc-import name="NavInferior" atual="none" embutida="{{ true }}" capturar="{{openCap}}" menu="{{openDrawer}}" hint-size="100%,0px"></dc-import>
+</div>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}"><dc-import name="PainelChat" assistente="renato" embutida="{{ true }}" fechar="{{closeChat}}" hint-size="380px,100%"></dc-import></sc-if>
+<sc-if value="{{notes}}" hint-placeholder-val="{{ true }}">
+<aside class="notes" aria-label="Anotações de design">
+<div class="notes-h"><b style="font-size: 13px">Anotações · Database</b><span class="spec" style="margin-left: auto">passo 3</span></div>
+<sc-for list="{{notesList}}" as="n" hint-placeholder-count="4">
+<div class="anota"><div class="anota-h"><span class="anota-n">{{n.n}}</span><span>{{n.t}}</span><span class="prio">{{n.p}}</span></div><p>{{n.txt}}</p><p><span class="lbl">Movimento</span> {{n.anim}}</p></div>
+</sc-for>
+</aside>
+</sc-if>
+<dc-import name="Captura" aberta="{{cap}}" embutida="{{ true }}" fechar="{{closeCap}}" hint-size="0px,0px"></dc-import>
+<div class="{{drawerCls}}">
+<button class="scr plain" type="button" aria-label="Fechar navegação" onClick="{{closeDrawer}}"></button>
+<div class="pane"><sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}"><dc-import name="Sidebar" atual="database" embutida="{{ true }}" hint-size="100%,100%"></dc-import></sc-if></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","escuro"],"default":"claro"},"anotacoes":{"editor":"boolean","default":true},"view":{"editor":"enum","options":["Tabela","Kanban","Lista","Calendário"],"default":"Tabela"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const vs = ['Tabela', 'Kanban', 'Lista', 'Calendário'];
+    this.state = { dark: null, notes: null, chat: false, cap: false, drawer: false, view: Math.max(0, vs.indexOf(props.view || 'Tabela')), f: false, sort: 0, grp: false, peek: null, k: 'idle' };
+    this.rows = [
+      { id: 1, t: 'In Search of an Understandable Consensus Algorithm', autor: 'Ongaro, Ousterhout', tipo: 'Artigo', st: 'Lido', tags: ['consenso', 'raft'], nota: 5, ini: '2 nov', d: 2, ok: true, url: 'raft.github.io', meta: 'Certificação', resumo: 'Artigo que apresenta o Raft. Separa eleição, replicação e segurança para ficar mais fácil de entender que o Paxos. Fichado em “Consenso com Raft”.' },
+      { id: 2, t: 'Designing Data-Intensive Applications', autor: 'Martin Kleppmann', tipo: 'Livro', st: 'Lendo', tags: ['dados', 'arquitetura'], nota: null, ini: '20 out', d: 0, ok: false, url: '—', meta: 'Certificação', resumo: 'No capítulo 9. Anotar as garantias de linearizabilidade e a comparação com consenso.' },
+      { id: 3, t: 'Paxos Made Simple', autor: 'Leslie Lamport', tipo: 'Artigo', st: 'Quero ler', tags: ['consenso'], nota: null, ini: '—', d: 0, ok: false, url: '—', meta: 'Certificação', resumo: 'Ler depois do Raft para comparar as abordagens.' },
+      { id: 4, t: 'Clean Architecture', autor: 'Robert C. Martin', tipo: 'Livro', st: 'Lido', tags: ['arquitetura'], nota: 4, ini: '3 set', d: 0, ok: true, url: '—', meta: '—', resumo: 'Fichado. Usado como referência na Loja v2.' },
+      { id: 5, t: 'PostgreSQL avançado', autor: 'Curso online', tipo: 'Curso', st: 'Lendo', tags: ['dados', 'postgres'], nota: null, ini: '5 nov', d: 5, ok: false, url: 'curso.exemplo', meta: '—', resumo: 'Módulo 4 de 9: índices parciais e planos de execução.' },
+      { id: 6, t: 'The Pragmatic Programmer', autor: 'Hunt, Thomas', tipo: 'Livro', st: 'Quero ler', tags: ['carreira'], nota: null, ini: '—', d: 0, ok: false, url: '—', meta: '—', resumo: 'Indicação de colega.' },
+      { id: 7, t: 'Raft Refloated', autor: 'Howard et al.', tipo: 'Artigo', st: 'Quero ler', tags: ['raft'], nota: null, ini: '23 nov', d: 23, ok: false, url: '—', meta: 'Certificação', resumo: 'Análise crítica e reprodução dos resultados do Raft.' },
+      { id: 8, t: 'Como escrever posts técnicos', autor: 'Blog', tipo: 'Artigo', st: 'Lido', tags: ['escrita'], nota: 3, ini: '12 nov', d: 12, ok: true, url: 'blog.exemplo', meta: '4 posts técnicos', resumo: 'Dicas de estrutura: problema, contexto, solução, resultado.' }
+    ];
+  }
+  renderVals() {
+    const s = this.state;
+    const p = this.props;
+    const dark = s.dark === null ? p.tema === 'escuro' : s.dark;
+    const notes = s.notes === null ? (p.anotacoes ?? true) : s.notes;
+    const stCls = { 'Lido': 'badge ok', 'Lendo': 'badge ac', 'Quero ler': 'badge' };
+    const tipoDot = { 'Artigo': 'dot c2', 'Livro': 'dot c1', 'Curso': 'dot c4' };
+    const vs = ['Tabela', 'Kanban', 'Lista', 'Calendário'];
+    let rows = this.rows.slice();
+    if (s.f) rows = rows.filter((r) => r.st !== 'Lido');
+    if (s.sort === 1) rows.sort((a, b) => (b.nota || 0) - (a.nota || 0));
+    if (s.sort === 2) rows.sort((a, b) => a.t.localeCompare(b.t));
+    const dec = (r) => Object.assign({}, r, {
+      stCls: stCls[r.st], tipoDot: tipoDot[r.tipo], nota: r.nota ? '★ ' + r.nota : '—',
+      cbCls: 'cb' + (r.ok ? ' on' : ''), trCls: 'drow click enter' + (s.peek === r.id ? ' selr' : ''),
+      open: () => this.setState({ peek: r.id })
+    });
+    const flat = rows.map(dec);
+    const groups = s.grp
+      ? ['Artigo', 'Livro', 'Curso'].map((g) => { const rs = flat.filter((r) => r.tipo === g); return { show: true, nome: g, n: rs.length, rows: rs }; }).filter((g) => g.rows.length)
+      : [{ show: false, nome: '', n: 0, rows: flat }];
+    const k = s.k;
+    const kcols = ['Quero ler', 'Lendo', 'Lido'].map((st) => {
+      let cards = flat.filter((r) => {
+        if (k === 'drop' && r.id === 3) return st === 'Lendo';
+        return r.st === st;
+      }).map((r) => Object.assign({}, r, { cls: 'kcard' + (k === 'drag' && r.id === 3 ? ' lift' : '') }));
+      return { nome: st, n: cards.length, badge: stCls[st], cards: cards, cls: 'kcol' + (k === 'drag' && st === 'Lendo' ? ' tgt' : ''), gapTop: k === 'drag' && st === 'Lendo' };
+    });
+    const cal = [];
+    for (let i = 0; i < 35; i++) {
+      const day = i + 1;
+      const inMonth = day <= 30;
+      const n = inMonth ? day : day - 30;
+      const evs = inMonth ? this.rows.filter((r) => r.d === day).map((r) => ({ t: r.t, open: () => this.setState({ peek: r.id }) })) : [];
+      if (inMonth && day === 18) evs.push({ t: 'Revisar cap. 9 · DDIA', open: () => this.setState({ peek: 2 }) });
+      cal.push({ n: n, evs: evs, bg: inMonth ? 'var(--surface)' : 'var(--bg-2)', fg: day === 18 ? 'var(--accent)' : (inMonth ? 'var(--text-2)' : 'var(--text-3)'), fw: day === 18 ? '700' : '400' });
+    }
+    const pk = dec(this.rows.find((r) => r.id === (s.peek || 1)));
+    return {
+      rootCls: 'ds app' + (dark ? ' escuro' : ''),
+      notes: notes, notesPressed: notes ? 'true' : 'false', swNotes: 'sw' + (notes ? ' on' : ''),
+      toggleNotes: () => this.setState({ notes: !notes }),
+      toggleTheme: () => this.setState({ dark: !dark }),
+      chat: s.chat, chatBtn: 'btn btn-fan btn-sm' + (s.chat ? ' on' : ''), toggleChat: () => this.setState({ chat: !s.chat }), closeChat: () => this.setState({ chat: false }),
+      cap: s.cap, openCap: () => this.setState({ cap: true }), closeCap: () => this.setState({ cap: false }),
+      drawer: s.drawer, drawerCls: 'drawer' + (s.drawer ? ' on' : ''), openDrawer: () => this.setState({ drawer: true }), closeDrawer: () => this.setState({ drawer: false }),
+      segX: (s.view * 100) + '%',
+      views: vs.map((v, i) => ({ nome: v, sel: s.view === i ? 'true' : 'false', cls: 'seg-b' + (s.view === i ? ' on' : ''), pick: () => this.setState({ view: i }) })),
+      vTabela: s.view === 0, vKanban: s.view === 1, vLista: s.view === 2, vCal: s.view === 3,
+      filtered: s.f, nRows: rows.length,
+      fBtn: 'btn btn-fan btn-sm' + (s.f ? ' on' : ''), fPressed: s.f ? 'true' : 'false', toggleF: () => this.setState({ f: !s.f }),
+      sBtn: 'btn btn-fan btn-sm' + (s.sort ? ' on' : ''), sLabel: ['Ordenar', 'Nota ↓', 'Título A–Z'][s.sort], toggleS: () => this.setState({ sort: (s.sort + 1) % 3 }),
+      gBtn: 'btn btn-fan btn-sm' + (s.grp ? ' on' : ''), gPressed: s.grp ? 'true' : 'false', toggleG: () => this.setState({ grp: !s.grp }),
+      groups: groups, flat: flat, kcols: kcols, cal: cal,
+      kLabel: k === 'idle' ? 'Simular arrastar “Paxos”' : (k === 'drag' ? 'Soltar em Lendo' : 'Reiniciar'),
+      stepK: () => this.setState({ k: k === 'idle' ? 'drag' : (k === 'drag' ? 'drop' : 'idle') }),
+      peekCls: 'peek' + (s.peek ? ' on' : ''), closePeek: () => this.setState({ peek: null }), pk: pk,
+      notesList: [
+        { n: '1', t: 'Views', p: 'P0', txt: 'Tabela, Kanban, Lista e Calendário sobre os mesmos dados. A view escolhida, filtros e ordenação ficam salvos por view. Atalhos 1–4 com a área focada.', anim: 'Indicador desliza (médio · padrão). Conteúdo antigo sai em opacidade rápida, novo entra com 6 px (médio · entrada).' },
+        { n: '2', t: 'Filtro, ordenação e agrupamento', p: 'P0', txt: 'Experimente: Filtro esconde “Lido”; Ordenar alterna Nota e Título; Agrupar separa por Tipo. Filtros aparecem como chips removíveis abaixo da barra, com a contagem.', anim: 'Linhas reposicionam com FLIP (médio · padrão); entram em opacidade + 6 px; saem em opacidade rápida.' },
+        { n: '3', t: 'Propriedades tipadas', p: 'P0', txt: 'Texto, número, seleção, multi-seleção, data, checkbox, status, URL e relação, cada uma com ícone fixo no cabeçalho. Clique no cabeçalho: renomear, tipo, ordenar, filtrar, esconder. Célula edita no lugar.', anim: 'Editor de célula abre como popover rápido · entrada.' },
+        { n: '4', t: 'Linha → peek e página cheia', p: 'P0', txt: 'Clique numa linha: abre o peek lateral com propriedades e corpo. “Abrir como página” leva à página cheia (2.2). Esc fecha; ↑↓ troca de linha sem fechar.', anim: 'Peek: lento · padrão, translateX 100% → 0; fecha rápido · saída. Página cheia: título compartilhado entre peek e cabeçalho.' },
+        { n: '5', t: 'Kanban', p: 'P0', txt: 'Na view Kanban use “Simular arrastar”: o cartão levanta, a coluna de destino ganha fundo tinta-suave e abre espaço; ao soltar, o Status muda.', anim: 'Levantar rápido; coluna abre espaço em médio; soltar com mola.' },
+        { n: '6', t: 'Estados', p: 'P0', txt: 'Vazio (“Nenhuma leitura. Nova linha ou importar do Notion”), vazio por filtro (“Nada com estes filtros · Limpar”), carregando (skeleton com as colunas reais), erro ao salvar célula (borda perigo + tooltip).', anim: 'Skeleton → conteúdo em cross-fade médio.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
