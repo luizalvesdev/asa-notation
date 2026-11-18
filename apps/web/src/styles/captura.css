@@ -1,0 +1,30 @@
+/* asa-notation · ajustes de celular v1 (vale quando o app tem até 720 px de largura) */
+@container app (max-width: 720px){
+.scroll > div:not(.modal){padding-left:20px !important;padding-right:20px !important}
+.tb .tog,.tb .sync{display:none !important}
+.tb .crumbs .cur{max-width:200px}
+.toasts{bottom:84px}
+.lx .drow{grid-template-columns:minmax(0,1fr) auto !important}
+.lx .drow > :nth-child(2),.lx .drow > :nth-child(3){display:none}
+.lx .drow > :first-child{padding-left:12px !important}
+.lx .drow .btn-fan{display:none}
+.hist-split{flex-direction:column !important;overflow:auto}
+.hist-split > .scroll{flex:none;overflow:visible}
+.hist-aside{width:auto !important;border-left:0 !important;border-top:1px solid var(--border);padding-bottom:72px}
+.hist-pop{left:8px !important;right:8px !important;width:auto !important}
+.mm-grid{grid-template-columns:minmax(0,1fr) !important}
+.cv-tools,.cv-props,.cv-undo{display:none !important}
+.cv-zoomctl{bottom:80px !important}
+.cv-stage{transform:scale(.4)}
+.mm-stage{transform:scale(.42)}
+.imp-src{grid-template-columns:minmax(0,1fr) !important}
+.imp-modal{margin:16px auto 96px !important}
+.bulk-row{flex-wrap:wrap;justify-content:flex-end}
+.bulk-row > b{margin-right:auto}
+}
+@container (max-width: 720px){
+.pal-grid{grid-template-columns:minmax(0,1fr) !important;min-height:0 !important}
+.pal-prev{display:none !important}
+.pal-keys{flex-wrap:wrap;row-gap:6px}
+.busca-ov{padding-top:12px !important}
+}

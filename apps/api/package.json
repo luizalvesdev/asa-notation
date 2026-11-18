@@ -1,0 +1,24 @@
+{
+  "name": "@asa/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "esbuild src/dev-server.ts --bundle --platform=node --format=esm --target=es2022 --external:@electric-sql/pglite --outfile=../../.dev/dev-server.mjs --log-level=warning --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && node ../../.dev/dev-server.mjs",
+    "typecheck": "tsc --noEmit",
+    "migrate": "node scripts/migrate.ts",
+    "set-password": "node scripts/set-password.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.1161.0",
+    "@neondatabase/serverless": "^1.2.0",
+    "fractional-indexing": "^4.0.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
+    "@types/aws-lambda": "^8.10.163",
+    "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2",
+    "pg": "^8.23.1"
+  }
+}

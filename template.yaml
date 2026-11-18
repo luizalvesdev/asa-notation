@@ -18,17 +18,6 @@ Parameters:
     Type: String
     Default: /asa/prod/auth/session-secret
     Description: Nome do parâmetro SecureString com o segredo que assina sessões (mínimo 32 caracteres)
-  BootstrapTokenParam:
-    Type: String
-    Default: /asa/prod/auth/bootstrap-token
-    Description: Nome do parâmetro SecureString com o token do primeiro cadastro de passkey (mínimo 24 caracteres)
-  RpId:
-    Type: String
-    Default: localhost
-    Description: Domínio da passkey (RP ID). Trocar invalida as passkeys já cadastradas
-  RpName:
-    Type: String
-    Default: asa-notation
   AllowedOrigins:
     Type: String
     Default: http://localhost:5173
@@ -68,9 +57,6 @@ Resources:
         Variables:
           DATABASE_URL_PARAM: !Ref DatabaseUrlParam
           SESSION_SECRET_PARAM: !Ref SessionSecretParam
-          BOOTSTRAP_TOKEN_PARAM: !Ref BootstrapTokenParam
-          RP_ID: !Ref RpId
-          RP_NAME: !Ref RpName
           ALLOWED_ORIGINS: !Ref AllowedOrigins
       Policies:
         - Statement:
@@ -81,7 +67,6 @@ Resources:
               Resource:
                 - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${DatabaseUrlParam}"
                 - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionSecretParam}"
-                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${BootstrapTokenParam}"
       Events:
         AnyRoute:
           Type: HttpApi

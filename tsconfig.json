@@ -8,8 +8,6 @@
     "noImplicitOverride": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "types": ["node", "aws-lambda"]
-  },
-  "include": ["apps/api/src", "apps/api/test", "packages/*/src", "packages/*/test", "scripts"]
+    "noEmit": true
+  }
 }

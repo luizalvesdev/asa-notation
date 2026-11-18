@@ -6,7 +6,7 @@ capabilities = ["CAPABILITY_IAM"]
 resolve_s3 = true
 confirm_changeset = false
 fail_on_empty_changeset = false
-parameter_overrides = "RpId=duduc2056whpm.cloudfront.net AllowedOrigins=https://duduc2056whpm.cloudfront.net"
+parameter_overrides = "AllowedOrigins=https://duduc2056whpm.cloudfront.net"
 
 [default.global.parameters]
 region = "sa-east-1"

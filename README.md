@@ -1,63 +1,35 @@
 # asa-notation
 
-Workspace estilo Notion (páginas aninhadas, editor de blocos, busca) para Linux e celular. O desenho completo está em [docs/design.md](docs/design.md).
+Hub único de anotações, estudo e assistentes (Hermes e Renato). Planejamento em [docs/features.md](docs/features.md), design em [docs/design/](docs/design/README.md).
+
+O projeto recomeçou do zero. O código anterior (API, web com Tiptap, migrações, SAM) está em `legacy/`, só como referência. O rascunho de arquitetura em [docs/design.md](docs/design.md) ainda precisa ser revisado nas etapas de modelo de dados e backend.
 
 ## Estrutura
 
 ```
-apps/api        API (Lambda + HTTP API) e servidor local de desenvolvimento
-apps/web        App web (Vite + React + Tiptap)
-packages/core   Tipos e utilitários compartilhados
-scripts/        Migração do Neon e smoke test
-template.yaml   SAM: Lambda + HTTP API
+apps/web    App web (Vite + React + TypeScript), baseado no design do Claude Design
+apps/api    API (Lambda + Postgres): login por senha e páginas. Ver docs/api.md
+docs/       Funcionalidades, arquitetura e design exportado
+legacy/     Código anterior, não mantido
 ```
 
-## Desenvolvimento local
+`apps/web/src/styles/` guarda o CSS do design system exportado (`base.css`, `telas.css`, `captura.css`). `overrides.css` tem os ajustes da implementação.
 
-O servidor local usa um Postgres embutido (PGlite) em `.dev/pgdata`. Não toca o Neon nem o SSM.
+## Estado
 
-```bash
-npm install
-
-# terminal 1: API em http://localhost:8787
-npm run dev:api
-
-# terminal 2: app em http://localhost:5173 (o proxy /api aponta para a API)
-npm run dev -w @asa/web
-```
-
-Primeiro acesso: cadastre a passkey com o token de bootstrap que a API imprime ao iniciar. O navegador precisa de um autenticador com verificação de usuário (Chrome no Linux usa celular ou chave de segurança).
-
-Para testar a interface sem passkey, suba a API com `DEV_LOGIN=1 npm run dev:api` e abra `http://localhost:8787/dev/login`. Essa rota existe só no servidor local, nunca na Lambda.
-
-Para recomeçar do zero, apague `.dev/`.
+- Design system (tokens, tema claro e escuro, movimento) portado.
+- Login só com senha, com erro, carregando, bloqueio com contagem e offline.
+- Shell: barra lateral (recolhível com ⌘\), barra superior, gaveta no celular, troca de tema.
+- Backend: login por senha (sessão em cookie, bloqueio por falhas), árvore de páginas, edição com detecção de conflito, mover, lixeira, busca e backlinks. Detalhes em [docs/api.md](docs/api.md).
+- As telas do web ainda são placeholders; só o login fala com a API.
 
 ## Comandos
 
 ```bash
-npm run typecheck   # api, scripts e web
-npm test            # vitest (inclui Postgres real em memória via PGlite)
-npm run build       # sam build
-npm run build -w @asa/web
-npm run migrate     # aplica apps/api/migrations no Neon (URL lida do SSM)
-npm run smoke:db    # confere o Neon em modo somente leitura
+npm install
+npm run dev -w @asa/api   # API local em :8787 (imprime a senha de dev na primeira vez)
+npm run dev               # web em http://localhost:5173 (proxy /api para 127.0.0.1:8787)
+npm run typecheck
+npm test
+npm run build
 ```
-
-## Segredos (SSM, `sa-east-1`)
-
-| Parâmetro | Conteúdo |
-|---|---|
-| `/asa/prod/neon/database-url` | connection string do Neon |
-| `/asa/prod/auth/session-secret` | segredo que assina as sessões |
-| `/asa/prod/auth/bootstrap-token` | token do primeiro cadastro de passkey |
-
-## Deploy
-
-App e API saem do mesmo CloudFront (`/api/*` vai para o API Gateway), então o cookie de sessão é first-party e o endereço do CloudFront é o RP ID da passkey. Produção: https://duduc2056whpm.cloudfront.net
-
-```bash
-npm run build && sam deploy   # API (RpId e AllowedOrigins ficam em samconfig.toml)
-./scripts/deploy-web.sh       # build do app, upload no S3 e invalidação do index.html
-```
-
-Trocar o RP ID (por exemplo, ao recriar a distribuição ou usar um domínio próprio) invalida as passkeys cadastradas: depois do deploy, cadastre de novo com o token de bootstrap.

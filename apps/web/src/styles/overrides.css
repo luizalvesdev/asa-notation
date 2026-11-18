@@ -1,0 +1,51 @@
+/* asa-notation · ajustes da implementação sobre o design system exportado */
+
+/* A folha do design esconde .app .side porque o protótipo monta a barra lateral por <dc-import>.
+   No app real ela é filha direta de .app. */
+.app > .side {
+  display: flex;
+}
+
+@container app (max-width: 720px) {
+  .app > .side {
+    display: none;
+  }
+}
+
+/* Erro de senha: campo treme 2 vezes em 4 px. Com movimento reduzido só a borda muda. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+}
+
+.inp.err {
+  animation: shake var(--rapido) var(--padrao) 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inp.err {
+    animation: none;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.ds.full {
+  min-height: 100%;
+}
