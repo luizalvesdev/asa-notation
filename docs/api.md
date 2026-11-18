@@ -66,6 +66,18 @@ Todas exigem sessão. Meta: `{ id, title, description, dueDate, done, createdAt,
 | DELETE | `/goals/:id` | Lixeira. As tarefas ficam soltas até a meta voltar |
 | POST | `/goals/:id/restore` | Restaura a meta e religa as tarefas |
 
+## Capturas (Inbox)
+
+Todas exigem sessão. Captura: `{ id, text, kind, tags, createdAt }`. `kind` é `idea`, `study`, `work`, `project`, `reference` ou `null`. As tags vêm das `#hashtags` do texto. Arquivadas e movidas saem da Inbox.
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/captures?kind=` | `{ items, counts }`. `kind`: um tipo, `none` (sem tipo) ou omitido. `counts` é sempre da Inbox inteira |
+| POST | `/captures` | `{ text, kind?, id?, createdAt? }`. Com `id` do cliente, reenviar não duplica (fila offline). `createdAt` do futuro é ignorado. 201 |
+| PATCH | `/captures/:id` | `text` e/ou `kind` (`null` limpa) |
+| POST | `/captures/bulk` | `{ ids, action }`: `archive`, `restore` ou `kind` (com `kind`). Até 200 ids |
+| POST | `/captures/:id/move` | `{ parentId }`. Cria uma página (1ª linha vira o título) e tira a captura da Inbox. 409 se já foi movida |
+
 ## Limites conhecidos
 
 - O destaque do trecho na busca só marca o termo quando ele é digitado com o mesmo acento do texto.

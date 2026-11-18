@@ -159,3 +159,19 @@
     padding: 20px 16px 120px !important;
   }
 }
+
+/* Inbox */
+.inbox-card .row-action {
+  opacity: 0;
+  transition: opacity var(--instante) var(--padrao);
+}
+
+.inbox-card:hover .row-action,
+.inbox-card:focus-within .row-action {
+  opacity: 1;
+}
+
+button.badge {
+  cursor: pointer;
+  border: 0;
+}

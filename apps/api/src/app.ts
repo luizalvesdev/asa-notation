@@ -1,3 +1,5 @@
+import { captureRoutes } from "./captures/routes.js";
+import { PgCaptureStore } from "./captures/store.js";
 import { goalRoutes } from "./goals/routes.js";
 import { PgGoalStore } from "./goals/store.js";
 import { PgAuthStore } from "./auth/store.js";
@@ -25,11 +27,13 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
+  const pageStore = new PgPageStore(sql, now);
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
-    ...pageRoutes(new PgPageStore(sql, now)),
+    ...pageRoutes(pageStore),
     ...taskRoutes(taskStore),
     ...goalRoutes(new PgGoalStore(sql, now), taskStore),
+    ...captureRoutes(new PgCaptureStore(sql, now), pageStore),
   ];
 
   return async function handle(incoming: ApiRequest): Promise<ApiResponse> {

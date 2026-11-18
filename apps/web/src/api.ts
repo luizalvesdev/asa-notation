@@ -1,4 +1,6 @@
 import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-types";
+import { NetworkError } from "./capture-outbox";
+import type { Capture, Counts, Kind, KindFilter } from "./captures-types";
 import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
@@ -19,12 +21,18 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/api${path}`, {
-    method,
-    credentials: "same-origin",
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, {
+      method,
+      credentials: "same-origin",
+      headers: body === undefined ? undefined : { "content-type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    // fetch só rejeita quando não há conexão com o servidor.
+    throw new NetworkError("offline");
+  }
   const data: unknown = await res.json().catch(() => null);
   if (res.status === 401) onUnauthorized?.();
   if (!res.ok) throw new ApiError(res.status, data);
@@ -64,6 +72,16 @@ export const goalsApi = {
   update: (id: string, patch: GoalPatch) => request<{ goal: Goal }>("PATCH", `/goals/${id}`, patch).then((r) => r.goal),
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/goals/${id}`),
   restore: (id: string) => request<{ goal: Goal }>("POST", `/goals/${id}/restore`).then((r) => r.goal),
+};
+
+export const capturesApi = {
+  list: (filter: KindFilter = "all") =>
+    request<{ items: Capture[]; counts: Counts }>("GET", filter === "all" ? "/captures" : `/captures?kind=${filter}`),
+  create: (input: { id?: string; text: string; kind?: Kind | null; createdAt?: string }) =>
+    request<{ capture: Capture }>("POST", "/captures", input).then((r) => r.capture),
+  bulk: (ids: string[], op: { action: "archive" } | { action: "restore" } | { action: "kind"; kind: Kind | null }) =>
+    request<{ updated: number }>("POST", "/captures/bulk", { ids, ...op }),
+  move: (id: string, parentId: string | null) => request<{ page: Page }>("POST", `/captures/${id}/move`, { parentId }).then((r) => r.page),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {
