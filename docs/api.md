@@ -39,6 +39,20 @@ Links `[[Título]]` são extraídos do texto do corpo ao salvar e casam por tít
 
 `rev` vem de uma sequência global e cresce a cada escrita. Serve para detectar conflito de edição (`baseRev`) e, mais tarde, para sincronização offline.
 
+## Tarefas
+
+Todas exigem sessão. Datas são `AAAA-MM-DD` (o dia local de quem usa) e horas `HH:MM`. Uma tarefa é `{ id, title, date, time, recurrence, done, subtasks }`.
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/tasks?from=&to=&today=` | Intervalo de até 63 dias. `days`: tarefas com data no intervalo, recorrentes já expandidas por dia. `late`: simples, não concluídas, antes de `today`. `undated`: sem data e não concluídas |
+| POST | `/tasks` | `{ title, date?, time?, recurrence?, parentId? }`. `recurrence`: `daily`, `weekdays` ou `weekly`. Hora e recorrência exigem data; subtarefa (`parentId`) não tem data. 201 |
+| PATCH | `/tasks/:id` | Qualquer de `title, date, time, recurrence`. `date: null` limpa também hora e recorrência |
+| POST | `/tasks/:id/done` | `{ done, date? }`. Em recorrente, `date` é obrigatório e conclui só aquele dia |
+| POST | `/tasks/reschedule` | `{ ids, date }`. Muda a data de tarefas simples (ignora recorrentes e subtarefas). `{ updated: n }` |
+| DELETE | `/tasks/:id` | Lixeira (com as subtarefas) |
+| POST | `/tasks/:id/restore` | Restaura a tarefa e as subtarefas apagadas junto com ela |
+
 ## Limites conhecidos
 
 - O destaque do trecho na busca só marca o termo quando ele é digitado com o mesmo acento do texto.

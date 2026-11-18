@@ -1,4 +1,5 @@
 import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-types";
+import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
 export class ApiError extends Error {
   constructor(
@@ -40,6 +41,19 @@ export const pagesApi = {
   restore: (id: string) => request<{ page: Page }>("POST", `/pages/${id}/restore`).then((r) => r.page),
   trash: () => request<{ items: TrashItem[] }>("GET", "/pages/trash").then((r) => r.items),
   search: (q: string) => request<{ hits: SearchHit[] }>("GET", `/pages/search?q=${encodeURIComponent(q)}&limit=20`).then((r) => r.hits),
+};
+
+export const tasksApi = {
+  list: (from: string, to: string, today: string) =>
+    request<TaskList>("GET", `/tasks?from=${from}&to=${to}&today=${today}`),
+  create: (input: NewTaskInput) => request<{ task: TaskItem }>("POST", "/tasks", input).then((r) => r.task),
+  update: (id: string, patch: { title?: string; date?: string | null; time?: string | null }) =>
+    request<{ task: TaskItem }>("PATCH", `/tasks/${id}`, patch).then((r) => r.task),
+  setDone: (id: string, done: boolean, date: string | null) =>
+    request<{ done: boolean }>("POST", `/tasks/${id}/done`, date ? { done, date } : { done }),
+  reschedule: (ids: string[], date: string) => request<{ updated: number }>("POST", "/tasks/reschedule", { ids, date }),
+  remove: (id: string) => request<{ deleted: number }>("DELETE", `/tasks/${id}`),
+  restore: (id: string) => request<{ task: TaskItem }>("POST", `/tasks/${id}/restore`).then((r) => r.task),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {

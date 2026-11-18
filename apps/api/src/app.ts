@@ -5,6 +5,8 @@ import { verifyToken } from "./auth/tokens.js";
 import type { ApiRequest, ApiResponse } from "./http.js";
 import { pageRoutes } from "./pages/routes.js";
 import { PgPageStore } from "./pages/store.js";
+import { taskRoutes } from "./tasks/routes.js";
+import { PgTaskStore } from "./tasks/store.js";
 import { forbidden, json, notFound, unauthorized, type Route } from "./routing.js";
 import type { SqlClient } from "./sql.js";
 
@@ -23,6 +25,7 @@ export function createApp({ sql, config, now = Date.now }: AppDeps): Api {
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(new PgPageStore(sql, now)),
+    ...taskRoutes(new PgTaskStore(sql, now)),
   ];
 
   return async function handle(incoming: ApiRequest): Promise<ApiResponse> {

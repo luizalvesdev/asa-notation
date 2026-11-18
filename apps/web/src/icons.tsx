@@ -21,6 +21,8 @@ const ICONS = {
   chevron: ["M9 6l6 6-6 6"],
   star: ["M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9z"],
   more: ["M5 12h.01M12 12h.01M19 12h.01"],
+  close: ["M6 6l12 12M18 6L6 18"],
+  repeat: ["M17 2l3 3-3 3", "M4 11V9a4 4 0 0 1 4-4h12", "M7 22l-3-3 3-3", "M20 13v2a4 4 0 0 1-4 4H4"],
 } satisfies Record<string, Shape[]>;
 
 export type IconName = keyof typeof ICONS;

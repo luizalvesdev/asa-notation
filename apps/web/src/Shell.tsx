@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError } from "./api";
 import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
+import { HojeView } from "./HojeView";
 import { PageView } from "./PageView";
 import { SearchPalette } from "./SearchPalette";
+import { SemanaView } from "./SemanaView";
 import { TrashView } from "./TrashView";
 import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
 import type { Page } from "./pages-types";
 import { Sidebar } from "./Sidebar";
+import type { Toast } from "./toast";
 import { usePages } from "./use-pages";
 
 interface ShellProps {
@@ -15,11 +18,6 @@ interface ShellProps {
   route: Route;
   onToggleTheme: () => void;
   onLogout: () => void;
-}
-
-interface Toast {
-  text: string;
-  action?: { label: string; run: () => void };
 }
 
 export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
@@ -176,6 +174,10 @@ export function Shell({ dark, route, onToggleTheme, onLogout }: ShellProps) {
         <main className="scroll">
           {route.kind === "pagina" ? (
             <PageView key={route.pageId} pageId={route.pageId} onSaved={pages.applySaved} onDelete={(page) => void deletePage(page)} />
+          ) : route.id === "hoje" ? (
+            <HojeView onToast={setToast} />
+          ) : route.id === "semana" ? (
+            <SemanaView onToast={setToast} />
           ) : route.id === "lixeira" ? (
             <TrashView onRestored={onRestored} />
           ) : (

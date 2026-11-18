@@ -5,6 +5,7 @@ import "./styles/base.css";
 import "./styles/telas.css";
 import "./styles/captura.css";
 import "./styles/editor.css";
+import "./styles/tasks.css";
 import "./styles/overrides.css";
 
 createRoot(document.getElementById("root")!).render(
