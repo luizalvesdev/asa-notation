@@ -171,6 +171,60 @@ export function pageRoutes(store: PgPageStore): Route[] {
     },
     {
       method: "GET",
+      pattern: new RegExp(`^/pages/${ID}/versions$`),
+      access: "session",
+      handle: async ({ match }) => ((await store.get(match[1]!)) ? json(200, { versions: await store.versions(match[1]!) }) : notFound()),
+    },
+    {
+      method: "GET",
+      pattern: new RegExp(`^/pages/${ID}/versions/(\\d{1,15})$`),
+      access: "session",
+      handle: async ({ match }) => {
+        const version = await store.version(match[1]!, Number(match[2]));
+        return version ? json(200, { version }) : notFound();
+      },
+    },
+    {
+      method: "POST",
+      pattern: new RegExp(`^/pages/${ID}/versions/(\\d{1,15})/restore$`),
+      access: "session",
+      handle: async ({ match }) => {
+        const page = await store.restoreVersion(match[1]!, Number(match[2]));
+        return page ? json(200, { page }) : notFound();
+      },
+    },
+    {
+      method: "GET",
+      pattern: new RegExp(`^/pages/${ID}/share$`),
+      access: "session",
+      handle: async ({ match }) => json(200, { share: await store.shareOf(match[1]!) }),
+    },
+    {
+      method: "POST",
+      pattern: new RegExp(`^/pages/${ID}/share$`),
+      access: "session",
+      handle: async ({ match }) => {
+        const share = await store.share(match[1]!);
+        return share ? json(200, { share }) : notFound();
+      },
+    },
+    {
+      method: "DELETE",
+      pattern: new RegExp(`^/pages/${ID}/share$`),
+      access: "session",
+      handle: async ({ match }) => ((await store.unshare(match[1]!)) ? json(200, { unshared: 1 }) : notFound()),
+    },
+    {
+      method: "GET",
+      pattern: /^\/public\/([A-Za-z0-9_-]{8,32})$/,
+      access: "public",
+      handle: async ({ match }) => {
+        const page = await store.publicPage(match[1]!);
+        return page ? json(200, { page }) : notFound();
+      },
+    },
+    {
+      method: "GET",
       pattern: new RegExp(`^/pages/${ID}/backlinks$`),
       access: "session",
       handle: async ({ match }) => json(200, { pages: await store.backlinks(match[1]!) }),

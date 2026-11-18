@@ -73,3 +73,25 @@ export interface MoveTarget {
   before?: string;
   after?: string;
 }
+
+export interface VersionItem {
+  id: number;
+  title: string;
+  createdAt: string;
+  excerpt: string;
+}
+
+export interface VersionFull {
+  id: number;
+  title: string;
+  body: unknown;
+  createdAt: string;
+}
+
+/** O que um leitor de link público enxerga: sem ids, sem pai, sem subpáginas. */
+export interface PublicPage {
+  title: string;
+  icon: string | null;
+  body: unknown | null;
+  updatedAt: string;
+}

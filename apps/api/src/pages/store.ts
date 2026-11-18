@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { generateKeyBetween } from "fractional-indexing";
 import type { Row, SqlClient } from "../sql.js";
 import type {
@@ -11,6 +12,9 @@ import type {
   TrashItem,
   TreeNode,
   UpdateResult,
+  PublicPage,
+  VersionFull,
+  VersionItem,
 } from "./model.js";
 import { extractLinks, extractText, normalizeTitle } from "./text.js";
 
@@ -123,6 +127,88 @@ export class PgPageStore {
     return toPage(rows[0]!);
   }
 
+  /**
+   * Guarda o estado atual da página como versão, no máximo a cada 10 minutos de edição e só se o conteúdo
+   * vai mudar. O histórico fica com as últimas 100 versões.
+   */
+  private async snapshot(id: string, newBody: unknown, baseRev: number | undefined): Promise<void> {
+    const now = this.nowIso();
+    const inserted = await this.sql.query(
+      `insert into page_versions (page_id, title, body, body_text, created_at)
+       select id, title, body, body_text, $2 from pages
+        where id = $1 and deleted_at is null and body is not null and body is distinct from $3::jsonb
+          and ($4::bigint is null or rev = $4::bigint)
+          and not exists (select 1 from page_versions v where v.page_id = pages.id and v.created_at > $2::timestamptz - interval '10 minutes')
+       returning id`,
+      [id, now, JSON.stringify(newBody), baseRev ?? null],
+    );
+    if (inserted.length > 0) {
+      await this.sql.query(`delete from page_versions where page_id = $1 and id not in (select id from page_versions where page_id = $1 order by id desc limit 100)`, [id]);
+    }
+  }
+
+  async versions(pageId: string): Promise<VersionItem[]> {
+    const rows = await this.sql.query(
+      `select id, title, created_at, left(body_text, 140) as excerpt from page_versions where page_id = $1 order by id desc limit 50`,
+      [pageId],
+    );
+    return rows.map((r) => ({ id: Number(r.id), title: r.title as string, createdAt: iso(r.created_at), excerpt: r.excerpt as string }));
+  }
+
+  async version(pageId: string, versionId: number): Promise<VersionFull | null> {
+    const rows = await this.sql.query(`select id, title, body, created_at from page_versions where page_id = $1 and id = $2`, [pageId, versionId]);
+    const r = rows[0];
+    return r ? { id: Number(r.id), title: r.title as string, body: r.body, createdAt: iso(r.created_at) } : null;
+  }
+
+  /** Volta a página para uma versão. O estado de agora vira uma versão antes, para dar para desfazer. */
+  async restoreVersion(pageId: string, versionId: number): Promise<Page | null> {
+    const version = await this.version(pageId, versionId);
+    if (!version || !(await this.get(pageId))) return null;
+    const now = this.nowIso();
+    await this.sql.query(
+      `insert into page_versions (page_id, title, body, body_text, created_at)
+       select id, title, body, body_text, $2 from pages where id = $1 and body is not null`,
+      [pageId, now],
+    );
+    const result = await this.update(pageId, { title: version.title, body: version.body });
+    return result.kind === "ok" ? result.page : null;
+  }
+
+  // ---- link público ------------------------------------------------------------
+
+  async share(pageId: string): Promise<{ slug: string; views: number } | null> {
+    if (!(await this.get(pageId))) return null;
+    const slug = randomBytes(9).toString("base64url");
+    const rows = await this.sql.query(
+      `insert into page_shares (page_id, slug, created_at) values ($1, $2, $3)
+       on conflict (page_id) do update set page_id = page_shares.page_id returning slug, views`,
+      [pageId, slug, this.nowIso()],
+    );
+    return { slug: rows[0]!.slug as string, views: Number(rows[0]!.views) };
+  }
+
+  async shareOf(pageId: string): Promise<{ slug: string; views: number } | null> {
+    const rows = await this.sql.query(`select slug, views from page_shares where page_id = $1`, [pageId]);
+    return rows[0] ? { slug: rows[0].slug as string, views: Number(rows[0].views) } : null;
+  }
+
+  async unshare(pageId: string): Promise<boolean> {
+    return (await this.sql.query(`delete from page_shares where page_id = $1 returning page_id`, [pageId])).length > 0;
+  }
+
+  /** Página pelo slug público, contando a visita. Só devolve o que um leitor externo pode ver. */
+  async publicPage(slug: string): Promise<PublicPage | null> {
+    const rows = await this.sql.query(
+      `with s as (update page_shares set views = views + 1 where slug = $1
+                    and exists (select 1 from pages p where p.id = page_id and p.deleted_at is null) returning page_id)
+       select p.title, p.icon, p.body, p.updated_at from pages p join s on s.page_id = p.id`,
+      [slug],
+    );
+    const r = rows[0];
+    return r ? { title: r.title as string, icon: (r.icon as string | null) ?? null, body: r.body ?? null, updatedAt: iso(r.updated_at) } : null;
+  }
+
   async update(id: string, patch: PagePatch, baseRev?: number): Promise<UpdateResult> {
     const sets: string[] = ["rev = nextval('change_seq')", "updated_at = $2"];
     const params: unknown[] = [id, this.nowIso(), baseRev ?? null];
@@ -136,6 +222,7 @@ export class PgPageStore {
 
     let links: string[] | null = null;
     if (patch.body !== undefined) {
+      await this.snapshot(id, patch.body, baseRev);
       const text = extractText(patch.body);
       links = extractLinks(text);
       add("body", JSON.stringify(patch.body), "::jsonb");
