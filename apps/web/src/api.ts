@@ -5,6 +5,7 @@ import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import type { Candidate, Deck, NewCardInput, Overview, QueueCard, ReviewResponse, Stats, StudyCard } from "./study-types";
 import type { ApiToken, Settings } from "./settings-types";
 import type { Notification, ProgressData, RoutineWeek, WeeklyReview } from "./routine-types";
+import type { Agent, ChatMessage, Conversation } from "./chat-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
 export class ApiError extends Error {
@@ -143,6 +144,22 @@ export const routineApi = {
   saveReview: (weekStart: string, patch: { rating?: number | null; worked?: string; blocked?: string; focus?: string[] }) =>
     request<{ review: WeeklyReview }>("PUT", "/routine/review", { weekStart, ...patch }).then((r) => r.review),
   apply: (weekStart: string) => request<{ created: number; date: string }>("POST", "/routine/review/apply", { weekStart }),
+};
+
+export const aiApi = {
+  status: () => request<{ configured: boolean; last4: string | null; model: string }>("GET", "/ai/status"),
+  setKey: (key: string) => request<{ configured: boolean; last4: string }>("PUT", "/ai/key", { key }),
+  removeKey: () => request<{ removed: number }>("DELETE", "/ai/key"),
+};
+
+export const chatApi = {
+  conversations: (agent: Agent) => request<{ conversations: Conversation[] }>("GET", `/chat/conversations?agent=${agent}`).then((r) => r.conversations),
+  open: (id: string) => request<{ conversation: Conversation; messages: ChatMessage[] }>("GET", `/chat/conversations/${id}`),
+  remove: (id: string) => request<{ deleted: number }>("DELETE", `/chat/conversations/${id}`),
+  send: (agent: Agent, text: string, conversationId: string | null) =>
+    request<{ conversation: Conversation; messages: ChatMessage[] }>("POST", "/chat/send", conversationId ? { agent, text, conversationId } : { agent, text }),
+  approve: (id: string) => request<{ status: "approved"; result: Record<string, unknown> }>("POST", `/chat/drafts/${id}/approve`),
+  discard: (id: string) => request<{ status: "discarded" }>("POST", `/chat/drafts/${id}/discard`),
 };
 
 export const progressApi = {

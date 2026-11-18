@@ -70,3 +70,17 @@ body,
 [data-reduce-motion="1"] .rise {
   animation: none !important;
 }
+
+/* O botão "ink" perdia a cor do texto para .btn (mesma especificidade, definido antes). */
+.ds .btn.btn-ink {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.ds .btn.btn-ink:hover {
+  opacity: 0.88;
+}
+
+.chat-body {
+  overflow-x: hidden;
+}

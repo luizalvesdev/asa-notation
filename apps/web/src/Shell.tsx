@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, capturesApi } from "./api";
+import { ChatPanel } from "./ChatPanel";
 import { CapturePanel } from "./CapturePanel";
 import { ImportView } from "./ImportView";
 import { InboxView } from "./InboxView";
@@ -47,6 +48,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const [toast, setToast] = useState<Toast | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [captureTick, setCaptureTick] = useState(0);
   const [online, setOnline] = useState(() => navigator.onLine);
   const pending = usePending();
@@ -69,6 +71,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       if ((event.metaKey || event.ctrlKey) && event.key === "\\") {
         event.preventDefault();
         setCollapsed((v) => !v);
+      } else if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        setChatOpen((v) => !v);
       } else if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCaptureOpen(true);
@@ -235,6 +240,11 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
               Capturar
               <span className="kbd">⌘⇧K</span>
             </button>
+            <button className={`btn btn-fan btn-sm${chatOpen ? " on" : ""}`} type="button" aria-pressed={chatOpen} onClick={() => setChatOpen((v) => !v)}>
+              <svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>
+              <span className="desk">Assistentes</span>
+              <span className="kbd desk">⌘J</span>
+            </button>
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick={onToggleTheme}>
               <ThemeIcon />
             </button>
@@ -290,6 +300,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           )}
         </main>
       </div>
+      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />}
       <div className={`drawer${drawer ? " on" : ""}`} aria-hidden={!drawer}>
         <div className="scr" onClick={() => setDrawer(false)} />
         <div className="pane">

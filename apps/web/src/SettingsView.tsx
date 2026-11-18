@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { ApiError, accountApi, settingsApi, tokensApi } from "./api";
+import { ApiError, accountApi, aiApi, settingsApi, tokensApi } from "./api";
 import { downloadFile } from "./download";
 import { buildMarkdownZip } from "./export-zip";
 import { routeHash } from "./nav";
@@ -17,7 +17,7 @@ interface SettingsViewProps {
   onToast: (toast: Toast) => void;
 }
 
-const TABS = ["Geral", "Rotina", "API", "Dados", "Aplicativo", "Conta"] as const;
+const TABS = ["Geral", "Rotina", "Assistentes", "API", "Dados", "Aplicativo", "Conta"] as const;
 type Tab = (typeof TABS)[number];
 
 const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" } as const;
@@ -141,6 +141,68 @@ function Routine({ settings, save }: { settings: Settings; save: ReturnType<type
         <span>até</span>
         <TimeField label="Fim do silêncio" value={settings.quiet.end} onSave={(v) => void save({ quiet: { end: v } })} />
       </div>
+    </div>
+  );
+}
+
+function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
+  const [status, setStatus] = useState<{ configured: boolean; last4: string | null; model: string } | null>(null);
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    aiApi.status().then((s) => live && setStatus(s)).catch(() => live && setStatus({ configured: false, last4: null, model: "" }));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const save = async () => {
+    if (busy || key.trim() === "") return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await aiApi.setKey(key.trim());
+      setStatus((s) => ({ configured: true, last4: res.last4, model: s?.model ?? "" }));
+      setKey("");
+      onToast({ text: "Chave testada e salva" });
+    } catch (err) {
+      const code = err instanceof ApiError && typeof err.body === "object" && err.body !== null ? (err.body as { error?: string }).error : undefined;
+      setError(code === "key_rejected" ? "O provedor recusou esta chave." : code === "invalid_key" ? "Formato de chave inválido." : err instanceof ApiError && err.status === 429 ? "Limite de uso do provedor. Tente daqui a pouco." : "Não foi possível testar a chave agora.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="col enter" style={{ gap: 14 }}>
+      <p className="muted" style={{ fontSize: 14 }}>Hermes e Renato usam o Claude (Anthropic) com a sua chave. Ela fica cifrada no servidor e nunca volta inteira para a tela.</p>
+      {status?.configured && (
+        <div className="card" style={{ padding: "14px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <span className="col grow1" style={{ minWidth: 200 }}>
+            <b style={{ fontWeight: 600, fontSize: 14 }}>Anthropic</b>
+            <span className="mono" style={{ fontSize: 12, color: "var(--text-2)" }}>••••••••{status.last4}</span>
+          </span>
+          <span className="badge ok">ativa</span>
+          {confirm ? (
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => void aiApi.removeKey().then(() => { setStatus({ configured: false, last4: null, model: status.model }); setConfirm(false); }).catch(() => onToast({ text: "Não foi possível remover." }))}>Confirmar remoção</button>
+          ) : (
+            <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => setConfirm(true)}>Remover</button>
+          )}
+        </div>
+      )}
+      <form className="field" onSubmit={(e) => { e.preventDefault(); void save(); }}>
+        <label className="label" htmlFor="ai-key">{status?.configured ? "Trocar a chave" : "Adicionar chave"}</label>
+        <div className="row" style={{ gap: 8 }}>
+          <input id="ai-key" className="inp mono" type="password" autoComplete="off" spellCheck={false} placeholder="Cole a chave do provedor" value={key} onChange={(e) => setKey(e.target.value)} />
+          <button className="btn btn-pri" type="submit" disabled={busy || key.trim() === ""}>{busy ? "Testando…" : "Testar e salvar"}</button>
+        </div>
+        <span className="help" style={error ? { color: "var(--danger)" } : undefined} role={error ? "alert" : undefined}>{error ?? "Testamos a chave com uma chamada mínima antes de salvar."}</span>
+      </form>
+      {status?.model && <span className="help">Modelo: {status.model}</span>}
     </div>
   );
 }
@@ -345,6 +407,7 @@ export function SettingsView({ preference, onPreference, onLogout, onToast }: Se
       {needsSettings && failed && <div className="card" role="alert" style={{ padding: 16, fontSize: 14 }}>Não foi possível carregar as configurações.</div>}
       {tab === "Geral" && settings && <General key="g" settings={s} save={save} preference={preference} onPreference={onPreference} />}
       {tab === "Rotina" && settings && <Routine key="r" settings={s} save={save} />}
+      {tab === "Assistentes" && <Assistants onToast={onToast} />}
       {tab === "API" && <Tokens onToast={onToast} />}
       {tab === "Dados" && <Data onToast={onToast} />}
       {tab === "Aplicativo" && <App />}
