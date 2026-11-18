@@ -88,6 +88,14 @@ function block(node: Node): string {
       const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
       return src ? `![${alt}](${src})` : "";
     }
+    case "columns":
+      // Markdown não tem colunas: o conteúdo vem em sequência, coluna por coluna.
+      return (node.content ?? []).map((col) => blocks(col.content)).filter(Boolean).join("\n\n");
+    case "embed": {
+      const url = typeof node.attrs?.url === "string" ? node.attrs.url : "";
+      const label = typeof node.attrs?.title === "string" && node.attrs.title ? node.attrs.title : url;
+      return url ? `[${label}](${url})` : "";
+    }
     case "mermaid":
       return `\`\`\`mermaid\n${String(node.attrs?.code ?? "")}\n\`\`\``;
     default:

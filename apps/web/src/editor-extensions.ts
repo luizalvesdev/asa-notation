@@ -4,7 +4,7 @@ import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import type { Extensions } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Callout, Mermaid, Ui } from "./editor-nodes";
+import { Callout, Column, Columns, Embed, Mermaid, Ui } from "./editor-nodes";
 
 /** Os blocos que a página sabe desenhar. Vale para edição e para leitura (histórico, link público). */
 export function contentExtensions(): Extensions {
@@ -22,6 +22,9 @@ export function contentExtensions(): Extensions {
     TableCell,
     Image.configure({ allowBase64: false }),
     Callout,
+    Column,
+    Columns,
+    Embed,
     Mermaid,
     Ui,
   ];

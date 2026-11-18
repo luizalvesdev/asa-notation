@@ -55,6 +55,14 @@ describe("blocos novos", () => {
     const d = { type: "details", content: [{ type: "detailsSummary", content: [t("Resumo")] }, { type: "detailsContent", content: [p(t("conteúdo"))] }] };
     expect(docToMarkdown(doc(d))).toBe("<details>\n<summary>Resumo</summary>\n\nconteúdo\n\n</details>\n");
   });
+  it("colunas viram texto em sequência e o cartão vira link", () => {
+    const col = (text: string) => ({ type: "column", content: [p(t(text))] });
+    expect(docToMarkdown(doc({ type: "columns", content: [col("esquerda"), col("direita")] }))).toBe("esquerda\n\ndireita\n");
+    expect(docToMarkdown(doc({ type: "embed", attrs: { url: "https://x.dev/a", title: "Artigo" } }))).toBe("[Artigo](https://x.dev/a)\n");
+    expect(docToMarkdown(doc({ type: "embed", attrs: { url: "https://x.dev/a", title: "" } }))).toBe("[https://x.dev/a](https://x.dev/a)\n");
+    expect(docToMarkdown(doc({ type: "embed", attrs: { url: "", title: "" } }))).toBe("");
+  });
+
   it("imagem e diagrama", () => {
     expect(docToMarkdown(doc({ type: "image", attrs: { src: "https://x.dev/a.png", alt: "foto" } }))).toBe("![foto](https://x.dev/a.png)\n");
     expect(docToMarkdown(doc({ type: "mermaid", attrs: { code: "graph TD\n A-->B" } }))).toBe("```mermaid\ngraph TD\n A-->B\n```\n");

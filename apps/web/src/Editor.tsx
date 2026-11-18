@@ -25,6 +25,7 @@ const GRIP = "M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01";
 export function Editor({ initial, onChange, focusSignal, pages, selfId }: EditorProps) {
   const [target, setTarget] = useState<{ pos: number; size: number } | null>(null);
   const [askingImage, setAskingImage] = useState(false);
+  const [askingEmbed, setAskingEmbed] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -56,6 +57,7 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
     if (!editor) return;
     uiOf(editor).pages = linkable;
     uiOf(editor).askImage = () => setAskingImage(true);
+    uiOf(editor).askEmbed = () => setAskingEmbed(true);
   }, [editor, linkable]);
 
   useEffect(() => {
@@ -93,6 +95,18 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
       )}
       {editor && <FormatMenu editor={editor} />}
       <EditorContent editor={editor} />
+      {askingEmbed && editor && (
+        <UrlDialog
+          title="Inserir link com cartão"
+          label="Endereço do site"
+          withTitle
+          onCancel={() => setAskingEmbed(false)}
+          onInsert={(url, title) => {
+            editor.chain().focus().insertContent({ type: "embed", attrs: { url, title } }).run();
+            setAskingEmbed(false);
+          }}
+        />
+      )}
       {askingImage && editor && (
         <ImageDialog
           onCancel={() => setAskingImage(false)}
@@ -117,6 +131,10 @@ export function validImageUrl(value: string): string | null {
 }
 
 function ImageDialog({ onInsert, onCancel }: { onInsert: (src: string, alt: string) => void; onCancel: () => void }) {
+  return <UrlDialog title="Inserir imagem" label="Endereço da imagem" altLabel="Descrição (opcional)" hint="A imagem continua no site de origem." onInsert={onInsert} onCancel={onCancel} />;
+}
+
+function UrlDialog({ title, label, altLabel, withTitle, hint, onInsert, onCancel }: { title: string; label: string; altLabel?: string; withTitle?: boolean; hint?: string; onInsert: (url: string, second: string) => void; onCancel: () => void }) {
   const [value, setValue] = useState("");
   const [alt, setAlt] = useState("");
   const url = validImageUrl(value);
@@ -125,7 +143,7 @@ function ImageDialog({ onInsert, onCancel }: { onInsert: (src: string, alt: stri
       <form
         className="modal card ds"
         role="dialog"
-        aria-label="Inserir imagem"
+        aria-label={title}
         style={{ padding: 18, width: 420, maxWidth: "calc(100% - 24px)", display: "flex", flexDirection: "column", gap: 12 }}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
         onSubmit={(e) => {
@@ -133,16 +151,18 @@ function ImageDialog({ onInsert, onCancel }: { onInsert: (src: string, alt: stri
           if (url) onInsert(url, alt.trim());
         }}
       >
-        <b style={{ fontWeight: 600 }}>Inserir imagem</b>
+        <b style={{ fontWeight: 600 }}>{title}</b>
         <div className="field">
-          <label className="label" htmlFor="img-url">Endereço da imagem</label>
+          <label className="label" htmlFor="img-url">{label}</label>
           <input id="img-url" className={`inp${value && !url ? " err" : ""}`} autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder="https://…" />
-          <span className="help">{value && !url ? "Use um endereço começando com http:// ou https://." : "A imagem continua no site de origem."}</span>
+          <span className="help">{value && !url ? "Use um endereço começando com http:// ou https://." : hint ?? "Só endereços http:// ou https://."}</span>
         </div>
-        <div className="field">
-          <label className="label" htmlFor="img-alt">Descrição (opcional)</label>
-          <input id="img-alt" className="inp" value={alt} onChange={(e) => setAlt(e.target.value)} />
-        </div>
+        {(altLabel || withTitle) && (
+          <div className="field">
+            <label className="label" htmlFor="img-alt">{altLabel ?? "Título (opcional)"}</label>
+            <input id="img-alt" className="inp" value={alt} onChange={(e) => setAlt(e.target.value)} />
+          </div>
+        )}
         <div className="row" style={{ gap: 8, justifyContent: "flex-end" }}>
           <button className="btn btn-fan btn-sm" type="button" onClick={onCancel}>Cancelar</button>
           <button className="btn btn-pri btn-sm" type="submit" disabled={!url}>Inserir</button>

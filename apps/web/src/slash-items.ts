@@ -17,6 +17,16 @@ export interface SlashItem {
 
 const chain = (editor: Editor) => editor.chain().focus();
 
+/** Insere as colunas no lugar do parágrafo atual e deixa o cursor dentro da primeira. */
+function insertColumns(editor: Editor, n: number): void {
+  const start = editor.state.selection.$from.before();
+  // início do bloco de colunas + coluna + parágrafo = dentro do primeiro parágrafo
+  editor.chain().focus().insertContent(columns(n)).setTextSelection(start + 3).run();
+}
+
+/** `n` colunas, cada uma com um parágrafo vazio. */
+export const columns = (n: number) => ({ type: "columns", content: Array.from({ length: n }, () => ({ type: "column", content: [{ type: "paragraph" }] })) });
+
 export const SLASH_ITEMS: SlashItem[] = [
   { id: "text", group: "Básico", title: "Texto", description: "Parágrafo simples", keywords: ["paragrafo", "text", "p"], run: (e) => chain(e).setParagraph().run() },
   { id: "h1", group: "Básico", title: "Título 1", description: "Título grande", shortcut: "#", keywords: ["h1", "heading", "titulo"], run: (e) => chain(e).setHeading({ level: 1 }).run() },
@@ -30,6 +40,9 @@ export const SLASH_ITEMS: SlashItem[] = [
   { id: "callout", group: "Blocos", title: "Destaque", description: "Caixa de aviso ou nota", keywords: ["callout", "destaque", "aviso", "nota", "caixa"], run: (e) => chain(e).toggleWrap("callout").run() },
   { id: "toggle", group: "Blocos", title: "Bloco recolhível", description: "Esconde e mostra conteúdo", keywords: ["toggle", "details", "recolhivel", "expandir", "sanfona"], run: (e) => chain(e).setDetails().run() },
   { id: "table", group: "Blocos", title: "Tabela", description: "Tabela simples de 3 colunas", keywords: ["table", "tabela", "grade"], run: (e) => chain(e).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { id: "columns2", group: "Blocos", title: "2 colunas", description: "Conteúdo lado a lado", keywords: ["colunas", "columns", "lado", "duas"], run: (e) => insertColumns(e, 2) },
+  { id: "columns3", group: "Blocos", title: "3 colunas", description: "Três blocos lado a lado", keywords: ["colunas", "columns", "tres", "três"], run: (e) => insertColumns(e, 3) },
+  { id: "embed", group: "Mídia", title: "Link com cartão", description: "Marcador de um site", keywords: ["embed", "link", "marcador", "site", "bookmark"], run: (e) => uiOf(e).askEmbed?.() },
   { id: "mermaid", group: "Mídia", title: "Diagrama (Mermaid)", description: "Fluxo, sequência e mais, com código", keywords: ["mermaid", "diagrama", "fluxograma", "grafico"], run: (e) => chain(e).insertContent({ type: "mermaid", attrs: { code: DEFAULT_DIAGRAM } }).run() },
   { id: "image", group: "Mídia", title: "Imagem", description: "Imagem a partir de um endereço", keywords: ["image", "imagem", "foto", "figura"], run: (e) => uiOf(e).askImage?.() },
   { id: "divider", group: "Blocos", title: "Divisor", description: "Linha horizontal", shortcut: "---", keywords: ["divider", "hr", "linha", "separador"], run: (e) => chain(e).setHorizontalRule().run() },

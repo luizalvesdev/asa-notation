@@ -539,3 +539,50 @@ input.p-title::placeholder {
   border-radius: 4px;
   padding: 2px 6px;
 }
+
+/* Colunas */
+.ProseMirror .doc-cols {
+  display: flex;
+  gap: 16px;
+}
+
+.ProseMirror .doc-col {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.ProseMirror .doc-col > * + * {
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .ProseMirror .doc-cols {
+    flex-direction: column;
+  }
+}
+
+/* Cartão de link */
+.ProseMirror .b-embed {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.ProseMirror .b-embed .embed-link {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.ProseMirror .b-embed .embed-link:hover {
+  text-decoration: underline;
+}
+
+.ProseMirror .b-embed .embed-host {
+  font-size: 12px;
+  color: var(--text-3);
+}
