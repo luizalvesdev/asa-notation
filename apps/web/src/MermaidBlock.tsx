@@ -25,13 +25,12 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
     setView((v) => zoomAt(v, factor, px, py));
   };
 
-  // A roda só dá zoom com Ctrl/⌘ (ou pinça no trackpad): sem isso a página deixaria de rolar com o mouse sobre o diagrama.
-  // Precisa de um ouvinte nativo não passivo para poder impedir a rolagem.
+  // A roda do mouse dá zoom ao redor do cursor (pinça no trackpad também). Com o mouse sobre o diagrama a página não rola:
+  // é a escolha do produto. Precisa de um ouvinte nativo não passivo para poder impedir a rolagem.
   useEffect(() => {
     const el = frame.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
       const box = el.getBoundingClientRect();
       zoomBy(wheelFactor(e.deltaY, e.deltaMode), { x: e.clientX - box.left, y: e.clientY - box.top });
@@ -69,11 +68,11 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
         )}
         {svg && !error && (
           <span className="row" style={{ marginLeft: "auto", gap: 2 }}>
-            <button className="btn btn-fan btn-sm" type="button" title="Diminuir (Ctrl + roda do mouse)" aria-label="Diminuir o diagrama" onClick={() => zoomBy(1 / 1.25)}>−</button>
+            <button className="btn btn-fan btn-sm" type="button" title="Diminuir (roda do mouse)" aria-label="Diminuir o diagrama" onClick={() => zoomBy(1 / 1.25)}>−</button>
             <button className="btn btn-fan btn-sm" type="button" title="Ajustar à tela" aria-label="Ajustar o diagrama" onClick={() => setView(INITIAL_VIEW)} disabled={isInitial(view)} style={{ minWidth: 48 }}>
               {Math.round(view.scale * 100)}%
             </button>
-            <button className="btn btn-fan btn-sm" type="button" title="Aumentar (Ctrl + roda do mouse)" aria-label="Aumentar o diagrama" onClick={() => zoomBy(1.25)}>+</button>
+            <button className="btn btn-fan btn-sm" type="button" title="Aumentar (roda do mouse)" aria-label="Aumentar o diagrama" onClick={() => zoomBy(1.25)}>+</button>
             <button className="btn btn-fan btn-sm" type="button" title="Salvar como SVG" onClick={() => downloadFile("diagrama.svg", standaloneSvg(svg), "image/svg+xml")}>SVG</button>
             <button
               className="btn btn-fan btn-sm"
@@ -108,7 +107,7 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
         <div
           ref={frame}
           className={`mermaid-view${grabbing ? " is-grabbing" : ""}`}
-          title="Arraste para mover · Ctrl + roda para zoom · duplo clique para ajustar"
+          title="Arraste para mover · roda do mouse para zoom · duplo clique para ajustar"
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             drag.current = { x: e.clientX, y: e.clientY };

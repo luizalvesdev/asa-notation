@@ -502,7 +502,7 @@ input.p-title::placeholder {
   resize: vertical;
 }
 
-/* Quadro do diagrama: pontilhado discreto, arrasto para mover, Ctrl + roda para zoom. */
+/* Quadro do diagrama: pontilhado discreto, arrasto para mover, roda do mouse para zoom. */
 .mermaid-view {
   position: relative;
   overflow: hidden;
