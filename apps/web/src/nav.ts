@@ -42,7 +42,7 @@ export const NAV_FOOTER: NavItem[] = [
 
 export const DEFAULT_ROUTE: RouteId = "hoje";
 
-export type Route = { kind: "tela"; id: RouteId } | { kind: "pagina"; pageId: string };
+export type Route = { kind: "tela"; id: RouteId; sub?: string } | { kind: "pagina"; pageId: string };
 
 /** Telas que não aparecem na barra lateral. Pertencem a uma tela principal (a que fica marcada). */
 const HIDDEN: (NavItem & { parent: RouteId; slug: string })[] = [
@@ -58,6 +58,7 @@ export function parseRoute(hash: string): Route {
   const [head, second] = path.split("/");
   const hidden = HIDDEN.find((entry) => entry.slug === `${head}/${second}`);
   if (hidden) return { kind: "tela", id: hidden.id };
+  if (head === "rotina" && (second === "quinta" || second === "sabado")) return { kind: "tela", id: "rotina", sub: second };
   if (head === "p" && second && UUID.test(second)) return { kind: "pagina", pageId: second.toLowerCase() };
   const item = ALL.find((entry) => entry.id === head);
   return { kind: "tela", id: item ? item.id : DEFAULT_ROUTE };

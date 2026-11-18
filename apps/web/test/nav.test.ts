@@ -8,6 +8,9 @@ describe("nav", () => {
     expect(parseRoute("#/semana")).toEqual({ kind: "tela", id: "semana" });
     expect(parseRoute("#/estudo/revisao")).toEqual({ kind: "tela", id: "revisao" });
     expect(parseRoute("#/estudo/estatisticas")).toEqual({ kind: "tela", id: "estudo-stats" });
+    expect(parseRoute("#/rotina/sabado")).toEqual({ kind: "tela", id: "rotina", sub: "sabado" });
+    expect(parseRoute("#/rotina/quinta")).toEqual({ kind: "tela", id: "rotina", sub: "quinta" });
+    expect(parseRoute("#/rotina/x")).toEqual({ kind: "tela", id: "rotina" });
     expect(parseRoute("#/estudo/outra")).toEqual({ kind: "tela", id: "estudo" });
     expect(parseRoute("#semana")).toEqual({ kind: "tela", id: "semana" });
   });

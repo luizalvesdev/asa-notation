@@ -42,7 +42,7 @@ async function generate({ store, settings, tasks, sql, now }: Deps): Promise<voi
       const rows = await sql.query(`select count(*)::int as n from cards where deleted_at is null and state <> 0 and due_at <= $1`, [new Date(now()).toISOString()]);
       cards = Number(rows[0]?.n ?? 0);
     }
-    await store.create({ kind: item.kind, ...content(item.kind, todayCount, lateCount, cards), dedupeKey: item.dedupeKey, createdAt: new Date(now()).toISOString() });
+    await store.create({ kind: item.kind, ...content(item.kind, todayCount, lateCount, cards), dedupeKey: item.dedupeKey, createdAt: new Date(now() - item.daysAgo * 24 * 3_600_000).toISOString() });
   }
 }
 

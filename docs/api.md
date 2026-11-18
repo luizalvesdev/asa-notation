@@ -110,6 +110,23 @@ Todas exigem sessão. Cards são `basic` (frente e verso) ou `cloze` (`front` co
 
 **Token de API**: cabeçalho `Authorization: Bearer asa_…`. Token `read` só faz GET; `write` faz tudo, menos senha, configurações e tokens (que exigem a sessão do dono). Como o token não é enviado sozinho pelo navegador, não precisa do cabeçalho `Origin`.
 
+## Notificações, rotina e progresso
+
+Todas exigem sessão (ou token).
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/notifications?filter=` | `all` ou `unread`. Antes de responder, gera os check-ins que já passaram do horário (plano do dia só para hoje; quinta e sábado também de ontem), sem repetir. `{ items, unread }` |
+| GET | `/notifications/count` | `{ unread }` (gera check-ins como a lista) |
+| PATCH | `/notifications/:id` | `{ read }` |
+| POST | `/notifications/read-all` | Marca todas |
+| GET | `/routine/week?start=&tz=` | Métricas da semana (7 dias a partir de `start`): tarefas concluídas e planejadas, tempo de estudo, cards, dias ativos; avaliação por regra (`verdict`, `score`); e a `review` salva, se houver |
+| PUT | `/routine/review` | `{ weekStart, rating?, worked?, blocked?, focus? }` (`rating` 1 a 5, até 3 itens de `focus`). Cada chamada atualiza só o que veio |
+| POST | `/routine/review/apply` | `{ weekStart }`. Cria uma tarefa por item de `focus` na segunda seguinte. 409 se já foi aplicada |
+| GET | `/progress?today=&tz=&weeks=` | Até 26 semanas terminando na de `today`: soma por semana, atividade por dia e a sequência de dias seguidos |
+
+Avaliação da semana: 60% taxa de tarefas concluídas + 40% dias com atividade. 70 pontos ou mais é "forte", 40 a 69 "boa", abaixo disso "abaixo do ritmo".
+
 ## Limites conhecidos
 
 - O destaque do trecho na busca só marca o termo quando ele é digitado com o mesmo acento do texto.

@@ -6,6 +6,8 @@ import { Icon, ThemeIcon } from "./icons";
 import { pageHash, routeHash, routeTitle, type Route } from "./nav";
 import { HojeView } from "./HojeView";
 import { MetasView } from "./MetasView";
+import { NotificationsView } from "./NotificationsView";
+import { ProgressoView } from "./ProgressoView";
 import { ReviewView } from "./ReviewView";
 import { StatsView } from "./StatsView";
 import { StudyView } from "./StudyView";
@@ -16,10 +18,12 @@ import { TrashView } from "./TrashView";
 import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
 import type { Page } from "./pages-types";
 import { Sidebar } from "./Sidebar";
+import { RotinaView } from "./RotinaView";
 import { SettingsView } from "./SettingsView";
 import type { Preference } from "./theme";
 import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
+import { useUnread } from "./use-notifications";
 import { usePages } from "./use-pages";
 
 interface ShellProps {
@@ -42,6 +46,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const [captureTick, setCaptureTick] = useState(0);
   const [online, setOnline] = useState(() => navigator.onLine);
   const pending = usePending();
+  const { unread, refresh: refreshUnread } = useUnread();
 
   const tree = useMemo(() => buildTree(pages.nodes), [pages.nodes]);
   const pageId = route.kind === "pagina" ? route.pageId : null;
@@ -185,6 +190,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     onCreatePage: (parentId: string | null) => void createPage(parentId),
     onRetryTree: pages.reload,
     onOpenSearch: () => setSearchOpen(true),
+    badges: { notificacoes: unread },
   };
 
   const onRestored = useCallback(
@@ -247,6 +253,12 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
                 setToast({ text: "Movida para uma página", action: { label: "Abrir", run: () => { setToast(null); location.hash = pageHash(page.id); } } });
               }}
             />
+          ) : route.id === "notificacoes" ? (
+            <NotificationsView onChanged={refreshUnread} onToast={setToast} />
+          ) : route.id === "rotina" ? (
+            <RotinaView sub={route.sub} onToast={setToast} />
+          ) : route.id === "progresso" ? (
+            <ProgressoView />
           ) : route.id === "configuracoes" ? (
             <SettingsView preference={preference} onPreference={onPreference} onLogout={onLogout} onToast={setToast} />
           ) : route.id === "estudo" ? (

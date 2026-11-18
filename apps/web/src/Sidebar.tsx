@@ -1,5 +1,5 @@
 import { Icon, isIconName } from "./icons";
-import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, navParent, routeHash, type NavItem, type Route } from "./nav";
+import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, navParent, routeHash, type NavItem, type Route, type RouteId } from "./nav";
 import { PageTree } from "./PageTree";
 import type { TreeItem } from "./pages-tree";
 
@@ -16,9 +16,11 @@ interface SidebarProps {
   onToggleCollapsed: () => void;
   onNavigate?: () => void;
   inDrawer?: boolean;
+  /** Contadores ao lado de itens da barra (ex.: notificações não lidas). */
+  badges?: Partial<Record<RouteId, number>>;
 }
 
-function NavLink({ item, route, onNavigate, onOpenSearch }: { item: NavItem; route: Route; onNavigate?: () => void; onOpenSearch: () => void }) {
+function NavLink({ item, route, onNavigate, onOpenSearch, badge }: { item: NavItem; route: Route; onNavigate?: () => void; onOpenSearch: () => void; badge?: number }) {
   const selected = route.kind === "tela" && item.id === navParent(route.id);
   if (item.id === "busca") {
     return (
@@ -46,11 +48,16 @@ function NavLink({ item, route, onNavigate, onOpenSearch }: { item: NavItem; rou
       {isIconName(item.icon) && <Icon name={item.icon} />}
       <span className="lab">{item.label}</span>
       {item.shortcut && <span className="k">{item.shortcut}</span>}
+      {badge !== undefined && badge > 0 && (
+        <span className="badge ac lab" style={{ height: 18, padding: "0 6px", fontSize: 11 }} aria-label={`${badge} não lidas`}>
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
     </a>
   );
 }
 
-export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer }: SidebarProps) {
+export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
@@ -113,7 +120,7 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
       </div>
       <div style={{ flex: "none", padding: 8, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 1 }}>
         {NAV_FOOTER.map((item) => (
-          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
+          <NavLink key={item.id} item={item} route={route} onNavigate={onNavigate} onOpenSearch={onOpenSearch} badge={badges?.[item.id]} />
         ))}
       </div>
     </nav>

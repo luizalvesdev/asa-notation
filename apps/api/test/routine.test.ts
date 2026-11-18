@@ -28,13 +28,13 @@ describe("dueCheckins", () => {
   const settings = DEFAULT_SETTINGS; // plano 08:30, quinta 18:00, sábado 10:00, São Paulo
   const keys = (iso: string, s = settings) => dueCheckins(at(iso), s).map((d) => d.dedupeKey);
 
-  it("quarta de manhã: plano de hoje e de ontem", () => {
-    expect(keys("2026-11-18T12:00:00Z")).toEqual(["plan:2026-11-17", "plan:2026-11-18"]);
+  it("quarta de manhã: só o plano de hoje", () => {
+    expect(keys("2026-11-18T12:00:00Z")).toEqual(["plan:2026-11-18"]);
   });
 
   it("antes do horário, o de hoje ainda não vence", () => {
     // 10:00 UTC = 07:00 BRT
-    expect(keys("2026-11-18T10:00:00Z")).toEqual(["plan:2026-11-17"]);
+    expect(keys("2026-11-18T10:00:00Z")).toEqual([]);
   });
 
   it("quinta depois das 18h inclui as métricas", () => {
@@ -88,7 +88,10 @@ describe("notificações", () => {
     await call("POST", "/tasks", { body: { title: "A", date: "2026-11-18" } });
     await call("POST", "/tasks", { body: { title: "Atrasada", date: "2026-11-16" } });
     const first = await list();
-    const plan = first.items.find((n) => n.title === "Plano do dia" && n.body.includes("1 tarefa hoje"));
+    expect(first.items).toHaveLength(1);
+    const plan = first.items[0];
+    expect(plan?.title).toBe("Plano do dia");
+    expect(plan?.body).toContain("1 tarefa hoje");
     expect(plan?.body).toContain("1 atrasada");
     expect(plan?.link).toBe("#/hoje");
     expect(first.unread).toBe(first.items.length);

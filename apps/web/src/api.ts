@@ -4,6 +4,7 @@ import type { Capture, Counts, Kind, KindFilter } from "./captures-types";
 import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import type { Candidate, Deck, NewCardInput, Overview, QueueCard, ReviewResponse, Stats, StudyCard } from "./study-types";
 import type { ApiToken, Settings } from "./settings-types";
+import type { Notification, ProgressData, RoutineWeek, WeeklyReview } from "./routine-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
 
 export class ApiError extends Error {
@@ -103,7 +104,7 @@ export const studyApi = {
 
 export const settingsApi = {
   get: () => request<{ settings: Settings }>("GET", "/settings").then((r) => r.settings),
-  patch: (patch: Partial<Settings> | { checkins?: Partial<Settings["checkins"]>; quiet?: Partial<Settings["quiet"]> }) =>
+  patch: (patch: { timezone?: string; weekStart?: 0 | 1; checkins?: Partial<Settings["checkins"]>; checkinsEnabled?: Partial<Settings["checkinsEnabled"]>; quiet?: Partial<Settings["quiet"]> }) =>
     request<{ settings: Settings }>("PATCH", "/settings", patch).then((r) => r.settings),
 };
 
@@ -116,6 +117,24 @@ export const tokensApi = {
 export const accountApi = {
   changePassword: (currentPassword: string, newPassword: string) => request<{ ok: true }>("POST", "/auth/password/change", { currentPassword, newPassword }),
   exportAll: () => request<{ pages: { id: string; parent_id: string | null; title: string; body: unknown }[] } & Record<string, unknown>>("GET", "/export"),
+};
+
+export const notificationsApi = {
+  list: (filter: "all" | "unread") => request<{ items: Notification[]; unread: number }>("GET", `/notifications?filter=${filter}`),
+  count: () => request<{ unread: number }>("GET", "/notifications/count").then((r) => r.unread),
+  setRead: (id: string, read: boolean) => request<{ read: boolean }>("PATCH", `/notifications/${id}`, { read }),
+  readAll: () => request<{ updated: number }>("POST", "/notifications/read-all"),
+};
+
+export const routineApi = {
+  week: (start: string, tz: string) => request<RoutineWeek>("GET", `/routine/week?start=${start}&tz=${encodeURIComponent(tz)}`),
+  saveReview: (weekStart: string, patch: { rating?: number | null; worked?: string; blocked?: string; focus?: string[] }) =>
+    request<{ review: WeeklyReview }>("PUT", "/routine/review", { weekStart, ...patch }).then((r) => r.review),
+  apply: (weekStart: string) => request<{ created: number; date: string }>("POST", "/routine/review/apply", { weekStart }),
+};
+
+export const progressApi = {
+  get: (today: string, tz: string, weeks: number) => request<ProgressData>("GET", `/progress?today=${today}&tz=${encodeURIComponent(tz)}&weeks=${weeks}`),
 };
 
 export function isConflict(err: unknown): err is ApiError & { body: { page: Page } } {
