@@ -46,7 +46,7 @@ export function SlashMenu<T extends MenuItem>({ items, selected, label = "Blocos
           >
             <span className="col grow1" style={{ alignItems: "flex-start", gap: 0, minWidth: 0 }}>
               <span className="trunc" style={{ maxWidth: "100%" }}>{item.title}</span>
-              <span className="trunc subtle" style={{ fontSize: 11, lineHeight: "14px", maxWidth: "100%" }}>{item.description}</span>
+              <span className="trunc subtle" style={{ fontSize: "calc(11px * var(--fs, 1))", lineHeight: "calc(14px * var(--fs, 1))", maxWidth: "100%" }}>{item.description}</span>
             </span>
             {item.shortcut && <span className="k">{item.shortcut}</span>}
           </button>

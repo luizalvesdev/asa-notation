@@ -239,8 +239,8 @@ export function CanvasView({ page, onSaved, onDelete }: CanvasViewProps) {
       <div style={{ padding: "12px 24px 0" }}>
         <Cover cover={cover} height={120} />
         <div className="row" style={{ gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <input className="p-title" value={title} placeholder="Sem título" aria-label="Título do quadro" maxLength={500} onChange={(e) => { setTitle(e.target.value); saver.current?.queue({ title: e.target.value }); }} style={{ fontSize: 28, lineHeight: "34px", flex: 1, minWidth: 160 }} />
-          <span className="save-state" role="status" style={{ fontSize: 12, color: "var(--text-3)" }}>{SAVE_LABEL[saveState]}</span>
+          <input className="p-title" value={title} placeholder="Sem título" aria-label="Título do quadro" maxLength={500} onChange={(e) => { setTitle(e.target.value); saver.current?.queue({ title: e.target.value }); }} style={{ fontSize: "calc(28px * var(--fs, 1))", lineHeight: "calc(34px * var(--fs, 1))", flex: 1, minWidth: 160 }} />
+          <span className="save-state" role="status" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{SAVE_LABEL[saveState]}</span>
           <IconPicker icon={icon} onChange={(next) => { setIcon(next); saver.current?.queue({ icon: next }); }} />
           <CoverPicker cover={cover} onChange={(next) => { setCover(next); saver.current?.queue({ cover: next }); }} />
           <span style={{ position: "relative" }}>
@@ -297,12 +297,12 @@ export function CanvasView({ page, onSaved, onDelete }: CanvasViewProps) {
               }
             }}
             rows={2}
-            style={{ position: "absolute", left: editing.x * view.zoom + view.x, top: editing.y * view.zoom + view.y, minWidth: 140, zIndex: 6, fontSize: 14 }}
+            style={{ position: "absolute", left: editing.x * view.zoom + view.x, top: editing.y * view.zoom + view.y, minWidth: 140, zIndex: 6, fontSize: "calc(14px * var(--fs, 1))" }}
           />
         )}
 
         {shapes.length === 0 && !draft && !editing && (
-          <p className="muted" style={{ position: "absolute", left: 0, right: 0, bottom: 20, textAlign: "center", fontSize: 13, pointerEvents: "none" }}>
+          <p className="muted" style={{ position: "absolute", left: 0, right: 0, bottom: 20, textAlign: "center", fontSize: "calc(13px * var(--fs, 1))", pointerEvents: "none" }}>
             Escolha uma ferramenta e desenhe. Atalhos: P caneta, R retângulo, O elipse, L linha, A seta, T texto, V selecionar.
           </p>
         )}

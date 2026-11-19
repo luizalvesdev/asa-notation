@@ -65,7 +65,7 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "36px 32px 120px", display: "flex", flexDirection: "column", gap: 16 }}>
       <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" }}>Notificações</h1>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Notificações</h1>
         <div className="seg" role="tablist" aria-label="Filtro" style={{ marginLeft: "auto" }}>
           <span className="seg-ind" style={{ width: "calc((100% - 4px) / 2)", transform: `translateX(${filter === "all" ? 0 : 100}%)` }} />
           <button className={`seg-b${filter === "all" ? " on" : ""}`} type="button" role="tab" aria-selected={filter === "all"} onClick={() => setFilter("all")}>Todas</button>
@@ -78,8 +78,8 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
         <div className="card enter" style={{ padding: "14px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent-soft)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="bell" /></span>
           <span className="col grow1" style={{ minWidth: 220 }}>
-            <b style={{ fontWeight: 600, fontSize: 14 }}>Avisos do sistema neste dispositivo?</b>
-            <span style={{ fontSize: 13, color: "var(--text-2)" }}>Com a permissão, o app avisa quando chega um check-in e a aba está em segundo plano. Funciona com o app aberto.</span>
+            <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>Avisos do sistema neste dispositivo?</b>
+            <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Com a permissão, o app avisa quando chega um check-in e a aba está em segundo plano. Funciona com o app aberto.</span>
           </span>
           <button className="btn btn-pri btn-sm" type="button" onClick={() => void enable()}>Ativar</button>
         </div>
@@ -104,7 +104,7 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
       )}
       {state.status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar as notificações.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as notificações.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={() => setAttempt((a) => a + 1)} style={{ marginLeft: "auto" }}>Tentar de novo</button>
         </div>
       )}
@@ -119,11 +119,11 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
                   <span className="av h">H</span>
                   <div className="col grow1" style={{ gap: 4, minWidth: 0 }}>
                     <span className="row" style={{ gap: 8 }}>
-                      <b className="trunc" style={{ fontWeight: 600, fontSize: 14 }}>{n.title}</b>
+                      <b className="trunc" style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>{n.title}</b>
                       {!n.read && <span className="dot" style={{ background: "var(--accent)" }} aria-label="não lida" />}
-                      <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(n.createdAt)}</span>
+                      <span style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(n.createdAt)}</span>
                     </span>
-                    <span style={{ fontSize: 13, lineHeight: "19px", color: "var(--text-2)" }}>{n.body}</span>
+                    <span style={{ fontSize: "calc(13px * var(--fs, 1))", lineHeight: "calc(19px * var(--fs, 1))", color: "var(--text-2)" }}>{n.body}</span>
                     <span className="row" style={{ gap: 4, marginTop: 2 }}>
                       {n.link && <a className="btn btn-sec btn-sm" href={n.link} onClick={() => !n.read && void toggleRead(n)}>Abrir</a>}
                       <button className="btn btn-fan btn-sm" type="button" onClick={() => void toggleRead(n)} style={{ color: "var(--text-2)" }}>{n.read ? "Marcar como não lida" : "Marcar como lida"}</button>
@@ -136,7 +136,7 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
           {state.items.length === 0 && (
             <div className="col enter" style={{ alignItems: "center", gap: 6, padding: 40, textAlign: "center", color: "var(--text-2)" }}>
               <b style={{ fontWeight: 600, color: "var(--text)" }}>{filter === "unread" ? "Tudo lido" : "Nada por aqui"}</b>
-              <span style={{ fontSize: 13 }}>Novos check-ins e avisos aparecem aqui.</span>
+              <span style={{ fontSize: "calc(13px * var(--fs, 1))" }}>Novos check-ins e avisos aparecem aqui.</span>
             </div>
           )}
         </div>

@@ -45,8 +45,8 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
         }}
         style={{ position: "absolute", left: 0, right: 0, top: 72, width: "min(520px, calc(100% - 24px))", margin: "0 auto", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, boxShadow: "var(--e3)", padding: 14, display: "flex", flexDirection: "column", gap: 12, transformOrigin: "50% 0" }}
       >
-        <div className="row" style={{ fontSize: 12, color: "var(--text-2)" }}>
-          <span className="av r" style={{ width: 18, height: 18, fontSize: 11, borderRadius: 5 }}>
+        <div className="row" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>
+          <span className="av r" style={{ width: 18, height: 18, fontSize: "calc(11px * var(--fs, 1))", borderRadius: 5 }}>
             R
           </span>
           Captura rápida · vai para a Inbox
@@ -68,7 +68,7 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
           value={text}
           placeholder="Escreva uma ideia, link ou tarefa…"
           onChange={(e) => setText(e.target.value)}
-          style={{ fontSize: 15, lineHeight: "23px", minHeight: 84 }}
+          style={{ fontSize: "calc(15px * var(--fs, 1))", lineHeight: "calc(23px * var(--fs, 1))", minHeight: 84 }}
         />
         <div className="row" style={{ flexWrap: "wrap", gap: 6, minHeight: 22 }}>
           {tags.map((tag) => (
@@ -76,13 +76,13 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
               #{tag}
             </span>
           ))}
-          <span style={{ fontSize: 12, color: failed ? "var(--danger)" : "var(--text-3)" }} role={failed ? "alert" : undefined}>
+          <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: failed ? "var(--danger)" : "var(--text-3)" }} role={failed ? "alert" : undefined}>
             {failed ? "Não foi possível salvar. Tente de novo." : "Use #tags no texto. Classifique depois, na Inbox."}
           </span>
         </div>
         <div className="row">
           <span className="kbd">⌘⇧K</span>
-          <span style={{ fontSize: 12, color: "var(--text-3)" }}>de qualquer tela</span>
+          <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>de qualquer tela</span>
           <button className="btn btn-fan btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={onClose}>
             Cancelar <span className="kbd">esc</span>
           </button>

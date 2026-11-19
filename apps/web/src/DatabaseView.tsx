@@ -122,7 +122,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
       {db.status === "carregando" && <span className="sk" style={{ height: 180, borderRadius: 10, display: "block" }} aria-busy="true" aria-label="Carregando as linhas" />}
       {db.status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar as linhas.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as linhas.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={db.reload} style={{ marginLeft: "auto" }}>Tentar de novo</button>
         </div>
       )}
@@ -132,7 +132,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
           {view!.type === "kanban" && <KanbanView {...viewProps} />}
           {view!.type === "list" && <ListView {...viewProps} />}
           {view!.type === "calendar" && <CalendarView {...viewProps} weekStart={weekStart} />}
-          {db.rows.length > 0 && rows.length === 0 && <p className="muted" style={{ fontSize: 14, marginTop: 8 }}>Nenhuma linha passa pelos filtros desta view.</p>}
+          {db.rows.length > 0 && rows.length === 0 && <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", marginTop: 8 }}>Nenhuma linha passa pelos filtros desta view.</p>}
         </div>
       )}
 

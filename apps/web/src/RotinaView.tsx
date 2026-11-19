@@ -51,11 +51,11 @@ function Metrics({ week }: { week: RoutineWeek }) {
         <span className="av h">H</span>
         <div className="col" style={{ gap: 6 }}>
           <span className="row" style={{ gap: 8 }}>
-            <b style={{ fontWeight: 600, fontSize: 14 }}>{verdict.title}</b>
+            <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>{verdict.title}</b>
             <span className={`badge ${week.verdict === "forte" ? "ok" : week.verdict === "boa" ? "ac" : "warn"}`} style={{ height: 20 }}>{week.score} pontos</span>
           </span>
-          <p style={{ fontSize: 14, lineHeight: "21px" }}>{verdict.text}</p>
-          <span style={{ fontSize: 12, color: "var(--text-3)" }}>Avaliação por regra: 60% tarefas concluídas, 40% dias com atividade.</span>
+          <p style={{ fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(21px * var(--fs, 1))" }}>{verdict.text}</p>
+          <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>Avaliação por regra: 60% tarefas concluídas, 40% dias com atividade.</span>
         </div>
       </div>
     </>
@@ -99,12 +99,12 @@ function Review({ start, review, onSaved, onToast }: { start: string; review: We
   return (
     <div className="col enter" style={{ gap: 18 }}>
       <div className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-        <b style={{ fontWeight: 600, fontSize: 15 }}>Como você avalia a semana?</b>
+        <b style={{ fontWeight: 600, fontSize: "calc(15px * var(--fs, 1))" }}>Como você avalia a semana?</b>
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }} role="radiogroup" aria-label="Avaliação de 1 a 5">
           {NOTES.map((n) => (
-            <button key={n.v} className={`btn ${rating === n.v ? "btn-pri" : "btn-sec"}`} type="button" role="radio" aria-checked={rating === n.v} onClick={() => { setRating(n.v); void save({ rating: n.v }); }} style={{ width: 56, height: 56, flexDirection: "column", gap: 0, fontSize: 18, fontFamily: "var(--serif)" }}>
+            <button key={n.v} className={`btn ${rating === n.v ? "btn-pri" : "btn-sec"}`} type="button" role="radio" aria-checked={rating === n.v} onClick={() => { setRating(n.v); void save({ rating: n.v }); }} style={{ width: 56, height: 56, flexDirection: "column", gap: 0, fontSize: "calc(18px * var(--fs, 1))", fontFamily: "var(--serif)" }}>
               {n.v}
-              <span style={{ font: "500 10px/12px var(--sans)", opacity: 0.8 }}>{n.l}</span>
+              <span style={{ font: "500 calc(10px * var(--fs, 1))/calc(12px * var(--fs, 1)) var(--sans)", opacity: 0.8 }}>{n.l}</span>
             </button>
           ))}
         </div>
@@ -113,7 +113,7 @@ function Review({ start, review, onSaved, onToast }: { start: string; review: We
       <div className="field"><label className="label" htmlFor="r2">O que travou?</label><textarea id="r2" className="inp" rows={2} value={blocked} onChange={(e) => setBlocked(e.target.value)} onBlur={() => blocked !== (review?.blocked ?? "") && void save({ blocked })} /></div>
       <div className="draft">
         <span className="draft-t">Foco da próxima semana</span>
-        <span style={{ fontSize: 13, color: "var(--text-2)" }}>Até três prioridades. Elas viram tarefas na segunda-feira.</span>
+        <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Até três prioridades. Elas viram tarefas na segunda-feira.</span>
         {focus.map((value, i) => (
           <input key={i} className="inp" aria-label={`Foco ${i + 1}`} placeholder={`Prioridade ${i + 1}`} value={value} disabled={applied} onChange={(e) => setFocus(focus.map((f, j) => (j === i ? e.target.value : f)))} onBlur={() => saveFocus(focus)} />
         ))}
@@ -182,8 +182,8 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
     <div style={{ display: "flex", flexWrap: "wrap", gap: 32, padding: "36px 40px 120px", maxWidth: 1200 }}>
       <div style={{ flex: "999 1 520px", minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
         <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-          <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" }}>Rotina</h1>
-          <span className="muted" style={{ fontSize: 14, paddingBottom: 4 }}>{formatWeekRange(start)}</span>
+          <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Rotina</h1>
+          <span className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", paddingBottom: 4 }}>{formatWeekRange(start)}</span>
           <span className="row" style={{ marginLeft: "auto", gap: 2 }}>
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Semana anterior" onClick={() => setStart(addDays(start, -7))}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
             <button className="btn btn-sec btn-sm" type="button" disabled={start === weekStart(today)} onClick={() => setStart(weekStart(today))}>Esta semana</button>
@@ -199,7 +199,7 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
         {status === "carregando" && <span className="sk" style={{ height: 160, borderRadius: 12 }} aria-busy="true" aria-label="Carregando a semana" />}
         {status === "erro" && (
           <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 14 }}>Não foi possível carregar a semana.</span>
+            <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar a semana.</span>
             <button className="btn btn-sec btn-sm" type="button" onClick={() => setAttempt((a) => a + 1)} style={{ marginLeft: "auto" }}>Tentar de novo</button>
           </div>
         )}
@@ -220,14 +220,14 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
       <aside style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
         <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 4 }}>
           <div className="row" style={{ paddingBottom: 8 }}>
-            <b style={{ fontWeight: 600, fontSize: 13 }}>Check-ins agendados</b>
-            <a href={routeHash("configuracoes")} style={{ marginLeft: "auto", fontSize: 12 }}>Horários</a>
+            <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Check-ins agendados</b>
+            <a href={routeHash("configuracoes")} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Horários</a>
           </div>
           {CHECKINS.map((c) => (
             <div key={c.key} className="row" style={{ gap: 10, minHeight: 44, borderTop: "1px solid var(--border)" }}>
               <span className="col grow1">
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{c.title}</span>
-                <span style={{ fontSize: 12, color: "var(--text-3)" }}>{c.when}, {s.checkins[c.key]}</span>
+                <span style={{ fontSize: "calc(13px * var(--fs, 1))", fontWeight: 500 }}>{c.title}</span>
+                <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{c.when}, {s.checkins[c.key]}</span>
               </span>
               <button className="tog" type="button" role="switch" aria-checked={s.checkinsEnabled[c.key]} aria-label={`Ligar ${c.title}`} disabled={!settings} onClick={() => void toggleCheckin(c.key)} style={{ padding: "0 4px" }}>
                 <span className={`sw${s.checkinsEnabled[c.key] ? " on" : ""}`}><span className="knob" /></span>
@@ -236,8 +236,8 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
           ))}
         </div>
         <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6 }}>
-          <b style={{ fontWeight: 600, fontSize: 13 }}>Lembretes semanais</b>
-          <span style={{ fontSize: 13, color: "var(--text-2)", lineHeight: "19px" }}>Para um lembrete que se repete, crie uma tarefa com <code>/semanal</code> no fim (ex.: “17:00 Backup /semanal”).</span>
+          <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Lembretes semanais</b>
+          <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", lineHeight: "calc(19px * var(--fs, 1))" }}>Para um lembrete que se repete, crie uma tarefa com <code>/semanal</code> no fim (ex.: “17:00 Backup /semanal”).</span>
         </div>
       </aside>
     </div>

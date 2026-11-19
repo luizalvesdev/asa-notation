@@ -16,7 +16,7 @@ const BUTTONS: Button[] = [
   { label: "B", title: "Negrito (Ctrl+B)", active: (e) => e.isActive("bold"), run: (e) => e.chain().focus().toggleBold().run(), style: { fontWeight: 700 } },
   { label: "I", title: "Itálico (Ctrl+I)", active: (e) => e.isActive("italic"), run: (e) => e.chain().focus().toggleItalic().run(), style: { fontStyle: "italic" } },
   { label: "S", title: "Riscado", active: (e) => e.isActive("strike"), run: (e) => e.chain().focus().toggleStrike().run(), style: { textDecoration: "line-through" } },
-  { label: "</>", title: "Código", active: (e) => e.isActive("code"), run: (e) => e.chain().focus().toggleCode().run(), style: { fontFamily: "var(--mono)", fontSize: 12 } },
+  { label: "</>", title: "Código", active: (e) => e.isActive("code"), run: (e) => e.chain().focus().toggleCode().run(), style: { fontFamily: "var(--mono)", fontSize: "calc(12px * var(--fs, 1))" } },
   { label: "H1", title: "Título 1", active: (e) => e.isActive("heading", { level: 1 }), run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run() },
   { label: "H2", title: "Título 2", active: (e) => e.isActive("heading", { level: 2 }), run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run() },
 ];

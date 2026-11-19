@@ -16,7 +16,7 @@ interface MetasViewProps {
 type Tab = "ativas" | "concluidas";
 
 function Title({ children }: { children: string }) {
-  return <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" }}>{children}</h1>;
+  return <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>{children}</h1>;
 }
 
 function GoalCard({ goal, today, selected, onPick }: { goal: Goal; today: string; selected: boolean; onPick: () => void }) {
@@ -31,7 +31,7 @@ function GoalCard({ goal, today, selected, onPick }: { goal: Goal; today: string
       style={{ display: "flex", flexDirection: "column", gap: 10, padding: "14px 16px", textAlign: "left", borderRadius: 10, cursor: "pointer", boxShadow: selected ? "inset 0 0 0 2px var(--accent)" : "none" }}
     >
       <span className="row" style={{ gap: 8 }}>
-        <span className="grow1" style={{ fontWeight: 600, fontSize: 14 }}>
+        <span className="grow1" style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>
           {goal.title}
         </span>
         <span className={STATUS_BADGE[status]}>{STATUS_LABEL[status]}</span>
@@ -39,7 +39,7 @@ function GoalCard({ goal, today, selected, onPick }: { goal: Goal; today: string
       <span className="bar" style={{ width: "100%" }}>
         <span style={{ width: `${pct}%` }} />
       </span>
-      <span className="row" style={{ gap: 12, fontSize: 12, color: "var(--text-2)" }}>
+      <span className="row" style={{ gap: 12, fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>
         <span>{pct}%</span>
         <span>{tasksLabel(goal)}</span>
         <span style={{ marginLeft: "auto" }}>{goal.dueDate ? formatDate(goal.dueDate) : "sem prazo"}</span>
@@ -70,12 +70,12 @@ function NewGoalForm({ onCreate, onCancel }: { onCreate: (title: string, dueDate
       onKeyDown={(e) => e.key === "Escape" && onCancel()}
     >
       <input className="add-task-input" autoFocus value={title} placeholder="Nome da meta" aria-label="Nome da meta" onChange={(e) => setTitle(e.target.value)} />
-      <label className="row" style={{ gap: 8, fontSize: 13, color: "var(--text-2)" }}>
+      <label className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
         Prazo
         <input className="add-task-input" type="date" value={due} onChange={(e) => setDue(e.target.value)} style={{ width: "auto", height: 30 }} />
       </label>
       {failed && (
-        <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>
+        <span role="alert" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--danger)" }}>
           Não foi possível criar a meta.
         </span>
       )}
@@ -175,7 +175,7 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
 
       <div className="col" style={{ gap: 2 }}>
         <div className="row" style={{ paddingBottom: 6 }}>
-          <b style={{ fontWeight: 600, fontSize: 13 }}>Tarefas ligadas</b>
+          <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Tarefas ligadas</b>
         </div>
         {detail.status === "carregando" && (
           <div className="col" style={{ gap: 12 }} aria-busy="true" aria-label="Carregando as tarefas">
@@ -184,7 +184,7 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
           </div>
         )}
         {detail.status === "erro" && (
-          <div role="alert" className="row" style={{ gap: 12, fontSize: 14 }}>
+          <div role="alert" className="row" style={{ gap: 12, fontSize: "calc(14px * var(--fs, 1))" }}>
             Não foi possível carregar as tarefas.
             <button className="btn btn-sec btn-sm" type="button" onClick={detail.reload}>
               Tentar de novo
@@ -194,7 +194,7 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
         {detail.status === "pronto" && (
           <>
             {detail.tasks.length === 0 && (
-              <p className="muted" style={{ fontSize: 14, padding: "4px 10px 8px" }}>
+              <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", padding: "4px 10px 8px" }}>
                 Nenhuma tarefa ligada ainda. O progresso da meta vem delas.
               </p>
             )}
@@ -302,14 +302,14 @@ export function MetasView({ onToast }: MetasViewProps) {
           )}
           {goals.status === "erro" && (
             <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 14 }}>Não foi possível carregar as metas.</span>
+              <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as metas.</span>
               <button className="btn btn-sec btn-sm" type="button" onClick={goals.reload} style={{ marginLeft: "auto" }}>
                 Tentar de novo
               </button>
             </div>
           )}
           {ready && shown.length === 0 && !creating && (
-            <p className="muted" style={{ fontSize: 14 }}>
+            <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>
               {tab === "ativas" ? "Nenhuma meta ativa. Crie uma para acompanhar tarefas e prazo no mesmo lugar." : "Nenhuma meta concluída ainda."}
             </p>
           )}

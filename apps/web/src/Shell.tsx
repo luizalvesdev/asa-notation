@@ -413,8 +413,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             <TrashView onRestored={onRestored} />
           ) : (
             <div style={{ padding: "40px 40px 120px", maxWidth: 1180 }}>
-              <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>{routeTitle(route.id)}</h1>
-              <p className="muted" style={{ marginTop: 12, fontSize: 15 }}>
+              <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>{routeTitle(route.id)}</h1>
+              <p className="muted" style={{ marginTop: 12, fontSize: "calc(15px * var(--fs, 1))" }}>
                 Tela em construção.
               </p>
             </div>

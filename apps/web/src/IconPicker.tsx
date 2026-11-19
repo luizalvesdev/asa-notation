@@ -34,7 +34,7 @@ export function IconPicker({ icon, onChange }: IconPickerProps) {
           <div role="dialog" aria-label="Escolher ícone" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 2 }}>
               {EMOJIS.map((e) => (
-                <button key={e} className="btn btn-fan btn-ico btn-sm" type="button" aria-label={e} onClick={() => pick(e)} style={{ fontSize: 16 }}>{e}</button>
+                <button key={e} className="btn btn-fan btn-ico btn-sm" type="button" aria-label={e} onClick={() => pick(e)} style={{ fontSize: "calc(16px * var(--fs, 1))" }}>{e}</button>
               ))}
             </div>
             <form className="row" style={{ gap: 6 }} onSubmit={(ev) => { ev.preventDefault(); if (validIcon(custom)) pick(custom.trim()); }}>

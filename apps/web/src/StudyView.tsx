@@ -15,7 +15,7 @@ interface StudyViewProps {
   onToast: (toast: Toast) => void;
 }
 
-const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" } as const;
+const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" } as const;
 
 function CardText({ card }: { card: Pick<StudyCard, "kind" | "front" | "back"> }) {
   if (card.kind === "cloze") {
@@ -61,13 +61,13 @@ function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; on
   };
 
   if (cards === null) return <span className="sk" style={{ height: 16, width: "60%" }} aria-label="Carregando os cards" />;
-  if (cards.length === 0) return <p className="muted" style={{ fontSize: 14 }}>Nenhum card ainda. Adicione abaixo ou extraia de uma página.</p>;
+  if (cards.length === 0) return <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Nenhum card ainda. Adicione abaixo ou extraia de uma página.</p>;
   return (
     <div className="col">
       {cards.map((card) => (
         <div key={card.id} className="row" style={{ gap: 12, minHeight: 44, borderTop: "1px solid var(--border)", padding: "6px 0", alignItems: "flex-start" }}>
-          <span className="badge out" style={{ height: 18, fontSize: 11 }}>{card.kind === "basic" ? "básico" : "lacuna"}</span>
-          <span className="grow1" style={{ fontSize: 14, minWidth: 0, overflowWrap: "anywhere" }}>
+          <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{card.kind === "basic" ? "básico" : "lacuna"}</span>
+          <span className="grow1" style={{ fontSize: "calc(14px * var(--fs, 1))", minWidth: 0, overflowWrap: "anywhere" }}>
             <CardText card={card} />
           </span>
           {confirm === card.id ? (
@@ -173,18 +173,18 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
   return (
     <div className="draft r">
       <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-        <span className="av r" style={{ width: 18, height: 18, fontSize: 11 }}>R</span>
+        <span className="av r" style={{ width: 18, height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>R</span>
         <span className="draft-t">Extrair cards de uma página</span>
-        {pageId && <a href={pageHash(pageId)} style={{ marginLeft: "auto", fontSize: 12 }}>Ver página</a>}
+        {pageId && <a href={pageHash(pageId)} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Ver página</a>}
       </div>
-      <p style={{ fontSize: 13, color: "var(--text-2)" }}>
+      <p style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
         Na página, escreva <code>Pergunta :: resposta</code> para um card básico ou <code>texto com {"{{lacuna}}"}</code> para um card de lacuna.
       </p>
       <select className="add-task-input" aria-label="Página" value={pageId} onChange={(e) => void extract(e.target.value)} style={{ height: 32 }}>
         <option value="">Escolha uma página…</option>
         {sorted.map((n) => <option key={n.id} value={n.id}>{displayTitle(n.title)}</option>)}
       </select>
-      {candidates && candidates.length === 0 && <p style={{ fontSize: 13, color: "var(--text-2)" }}>Nenhum card encontrado nesta página.</p>}
+      {candidates && candidates.length === 0 && <p style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Nenhum card encontrado nesta página.</p>}
       {candidates && candidates.length > 0 && (
         <>
           {candidates.map((c) => {
@@ -194,10 +194,10 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
                 <span className={`cb${on ? " on" : ""}`}><svg className="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1" /></svg></span>
                 <span className="col grow1" style={{ gap: 4 }}>
                   <span className="row" style={{ gap: 6 }}>
-                    <span className="badge out" style={{ height: 18, fontSize: 11 }}>{c.kind === "basic" ? "básico" : "lacuna"}</span>
-                    {c.exists && <span className="badge ok" style={{ height: 18, fontSize: 11 }}>já adicionado</span>}
+                    <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{c.kind === "basic" ? "básico" : "lacuna"}</span>
+                    {c.exists && <span className="badge ok" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>já adicionado</span>}
                   </span>
-                  <span style={{ fontSize: 14 }}><CardText card={c} /></span>
+                  <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}><CardText card={c} /></span>
                 </span>
               </button>
             );
@@ -223,14 +223,14 @@ function NewDeckForm({ goals, onCreate, onCancel }: { goals: Goal[]; onCreate: (
   return (
     <form className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }} onKeyDown={(e) => e.key === "Escape" && onCancel()} onSubmit={(e) => { e.preventDefault(); if (title.trim()) void onCreate(title.trim(), goalId || null).then((ok) => setFailed(!ok)); }}>
       <input className="add-task-input" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nome da trilha" aria-label="Nome da trilha" />
-      <label className="row" style={{ gap: 8, fontSize: 13, color: "var(--text-2)" }}>
+      <label className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
         Meta
         <select className="add-task-input" value={goalId} onChange={(e) => setGoalId(e.target.value)} style={{ width: "auto", height: 30 }}>
           <option value="">Sem meta</option>
           {goals.filter((g) => !g.done).map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
         </select>
       </label>
-      {failed && <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>Não foi possível criar a trilha.</span>}
+      {failed && <span role="alert" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--danger)" }}>Não foi possível criar a trilha.</span>}
       <div className="row" style={{ gap: 6 }}>
         <button className="btn btn-pri btn-sm" type="submit" disabled={title.trim() === ""}>Criar trilha</button>
         <button className="btn btn-fan btn-sm" type="button" onClick={onCancel}>Cancelar</button>
@@ -277,7 +277,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
       {status === "carregando" && <div className="col" style={{ gap: 12 }} aria-busy="true" aria-label="Carregando o estudo"><span className="sk" style={{ height: 120, borderRadius: 12 }} /><span className="sk" style={{ height: 80, borderRadius: 12 }} /></div>}
       {status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar o estudo.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar o estudo.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={retry} style={{ marginLeft: "auto" }}>Tentar de novo</button>
         </div>
       )}
@@ -289,13 +289,13 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
               <span className="eyebrow" style={{ color: "var(--accent)" }}>Revisão de hoje</span>
               {total === 0 ? (
                 <>
-                  <span style={{ fontFamily: "var(--serif)", fontSize: 30, lineHeight: "36px" }}>Nada para revisar agora</span>
-                  <span style={{ fontSize: 13, color: "var(--text-2)" }}>{overview.totalCards === 0 ? "Crie cards abaixo para começar." : "Volte mais tarde: o FSRS avisa quando um card precisar de revisão."}</span>
+                  <span style={{ fontFamily: "var(--serif)", fontSize: "calc(30px * var(--fs, 1))", lineHeight: "calc(36px * var(--fs, 1))" }}>Nada para revisar agora</span>
+                  <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{overview.totalCards === 0 ? "Crie cards abaixo para começar." : "Volte mais tarde: o FSRS avisa quando um card precisar de revisão."}</span>
                 </>
               ) : (
                 <>
-                  <span style={{ fontFamily: "var(--serif)", fontSize: 30, lineHeight: "36px" }}>{total} {total === 1 ? "card" : "cards"} · cerca de {estimateMinutes(total, overview.avgSeconds)} min</span>
-                  <span style={{ fontSize: 13, color: "var(--text-2)" }}>{reviewCount} de revisão e {newCount} {newCount === 1 ? "novo" : "novos"}</span>
+                  <span style={{ fontFamily: "var(--serif)", fontSize: "calc(30px * var(--fs, 1))", lineHeight: "calc(36px * var(--fs, 1))" }}>{total} {total === 1 ? "card" : "cards"} · cerca de {estimateMinutes(total, overview.avgSeconds)} min</span>
+                  <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{reviewCount} de revisão e {newCount} {newCount === 1 ? "novo" : "novos"}</span>
                   <a className="btn btn-pri" href={routeHash("revisao")} style={{ alignSelf: "flex-start", marginTop: 4 }}>Começar revisão</a>
                 </>
               )}
@@ -303,15 +303,15 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
             <div className="card" style={{ flex: "1 1 260px", padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
               <span className="eyebrow">Pontos fracos</span>
               {overview.weak.length === 0 ? (
-                <span style={{ fontSize: 14, lineHeight: "21px", color: "var(--text-2)" }}>Nenhum card foi errado duas vezes esta semana.</span>
+                <span style={{ fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(21px * var(--fs, 1))", color: "var(--text-2)" }}>Nenhum card foi errado duas vezes esta semana.</span>
               ) : (
                 <>
-                  <span style={{ fontSize: 14, lineHeight: "21px" }}>{overview.weak.length} {overview.weak.length === 1 ? "card errado" : "cards errados"} 2 vezes ou mais esta semana:</span>
+                  <span style={{ fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(21px * var(--fs, 1))" }}>{overview.weak.length} {overview.weak.length === 1 ? "card errado" : "cards errados"} 2 vezes ou mais esta semana:</span>
                   <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
                     <button className="btn btn-sec btn-sm" type="button" onClick={() => openChat({ agent: "tutor", prompt: "Me faça um quiz nos meus pontos fracos, uma pergunta por vez." })}>Quiz nos pontos fracos</button>
                     <button className="btn btn-fan btn-sm" type="button" onClick={() => openChat({ agent: "tutor", prompt: "Quero uma sessão guiada: me ensine os meus pontos fracos com perguntas." })}>Sessão guiada com tutor</button>
                   </div>
-                  {overview.weak.map((w) => <span key={w.id} className="trunc" style={{ fontSize: 13, color: "var(--text-2)" }}>· {w.kind === "cloze" ? w.front.replace(/\{\{|\}\}/g, "") : w.front} <span className="badge bad" style={{ height: 18, fontSize: 11 }}>{w.lapses}×</span></span>)}
+                  {overview.weak.map((w) => <span key={w.id} className="trunc" style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>· {w.kind === "cloze" ? w.front.replace(/\{\{|\}\}/g, "") : w.front} <span className="badge bad" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{w.lapses}×</span></span>)}
                 </>
               )}
             </div>
@@ -319,8 +319,8 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
 
           <div className="col" style={{ gap: 12 }}>
             <div className="row">
-              <h2 style={{ font: "600 18px/26px var(--sans)" }}>Trilhas</h2>
-              <span style={{ fontSize: 13, color: "var(--text-3)", marginLeft: 8 }}>ligadas às metas</span>
+              <h2 style={{ font: "600 calc(18px * var(--fs, 1))/calc(26px * var(--fs, 1)) var(--sans)" }}>Trilhas</h2>
+              <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-3)", marginLeft: 8 }}>ligadas às metas</span>
               <button className="btn btn-fan btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={() => setCreating(true)}>Nova trilha</button>
             </div>
             {creating && (
@@ -344,16 +344,16 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
               {decks.map((d) => (
                 <button key={d.id} className="plain card" type="button" aria-pressed={activeId === d.id} onClick={() => setSelected(d.id)} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, textAlign: "left", cursor: "pointer", boxShadow: activeId === d.id ? "inset 0 0 0 2px var(--accent)" : "none" }}>
                   <span className="row" style={{ gap: 8 }}>
-                    <b className="grow1" style={{ fontWeight: 600, fontSize: 14 }}>{d.title}</b>
-                    <span style={{ fontSize: 12, color: "var(--text-3)" }}>{d.cards} {d.cards === 1 ? "card" : "cards"}{d.due > 0 ? ` · ${d.due} para revisar` : ""}</span>
+                    <b className="grow1" style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>{d.title}</b>
+                    <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{d.cards} {d.cards === 1 ? "card" : "cards"}{d.due > 0 ? ` · ${d.due} para revisar` : ""}</span>
                   </span>
                   <span className="bar" style={{ width: "100%" }}><span style={{ width: `${d.cards === 0 ? 0 : Math.round((d.learned / d.cards) * 100)}%` }} /></span>
-                  <span style={{ fontSize: 12, color: "var(--text-2)" }}>{d.goalTitle ? `Meta: ${d.goalTitle}` : "Sem meta"} · {d.learned} de {d.cards} aprendidos</span>
+                  <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>{d.goalTitle ? `Meta: ${d.goalTitle}` : "Sem meta"} · {d.learned} de {d.cards} aprendidos</span>
                 </button>
               ))}
               <button className="plain card" type="button" aria-pressed={activeId === "none"} onClick={() => setSelected("none")} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, textAlign: "left", cursor: "pointer", boxShadow: activeId === "none" ? "inset 0 0 0 2px var(--accent)" : "none" }}>
-                <b style={{ fontWeight: 600, fontSize: 14 }}>Sem trilha</b>
-                <span style={{ fontSize: 12, color: "var(--text-2)" }}>Cards que não pertencem a nenhuma trilha</span>
+                <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>Sem trilha</b>
+                <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>Cards que não pertencem a nenhuma trilha</span>
               </button>
             </div>
             <div className="card enter" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }} key={`${activeId}-${cardsVersion}`}>
@@ -364,7 +364,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
           </div>
 
           <div className="col" style={{ gap: 12 }}>
-            <h2 style={{ font: "600 18px/26px var(--sans)" }}>Cards extraídos das páginas</h2>
+            <h2 style={{ font: "600 calc(18px * var(--fs, 1))/calc(26px * var(--fs, 1)) var(--sans)" }}>Cards extraídos das páginas</h2>
             <Extractor nodes={nodes} decks={decks} onCreated={changed} onToast={onToast} />
           </div>
         </>

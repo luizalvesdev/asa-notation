@@ -82,7 +82,7 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
         <div className={`kids${open ? " on" : ""}`}>
           <div style={{ paddingLeft: 32 }}>
             {item.subtasks.map((sub) => (
-              <button key={sub.id} className="plain task kid" type="button" role="checkbox" aria-checked={sub.done} tabIndex={open ? 0 : -1} onClick={() => onToggleSubtask(sub.id, !sub.done)} style={{ minHeight: 34, fontSize: 13 }}>
+              <button key={sub.id} className="plain task kid" type="button" role="checkbox" aria-checked={sub.done} tabIndex={open ? 0 : -1} onClick={() => onToggleSubtask(sub.id, !sub.done)} style={{ minHeight: 34, fontSize: "calc(13px * var(--fs, 1))" }}>
                 <Check on={sub.done} small />
                 <span className={sub.done ? "done-txt" : undefined}>{sub.title}</span>
               </button>

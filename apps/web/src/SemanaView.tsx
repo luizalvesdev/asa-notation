@@ -38,7 +38,7 @@ function WeekCard({ item, onToggle, onDragStart, onDragEnd }: { item: TaskItem; 
           <span className={item.done ? "done-txt" : undefined}>{item.title}</span>
         </span>
         {(item.time || item.recurrence || item.subtasks.length > 0 || item.goalTitle) && (
-          <span className="row" style={{ gap: 6, fontSize: 11, color: "var(--text-3)", paddingLeft: 24 }}>
+          <span className="row" style={{ gap: 6, fontSize: "calc(11px * var(--fs, 1))", color: "var(--text-3)", paddingLeft: 24 }}>
             {item.time && <span className="mono">{item.time}</span>}
             {item.recurrence && <Icon name="repeat" className="sm" />}
             {item.goalTitle && <span className="trunc">{item.goalTitle}</span>}
@@ -127,8 +127,8 @@ export function SemanaView({ onToast }: SemanaViewProps) {
   return (
     <div style={{ padding: "36px 32px 120px" }}>
       <div className="row" style={{ flexWrap: "wrap", gap: 12, alignItems: "flex-end", marginBottom: 18 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>Semana</h1>
-        <span className="muted" style={{ fontSize: 15, paddingBottom: 4 }}>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Semana</h1>
+        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>
           {formatWeekRange(start)}
         </span>
         <span className="row" style={{ marginLeft: "auto", gap: 2 }}>
@@ -148,7 +148,7 @@ export function SemanaView({ onToast }: SemanaViewProps) {
 
       {tasks.status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar a semana.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar a semana.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={tasks.reload} style={{ marginLeft: "auto" }}>
             Tentar de novo
           </button>
@@ -157,7 +157,7 @@ export function SemanaView({ onToast }: SemanaViewProps) {
 
       {ready && tasks.list.late.length > 0 && (
         <div className="row" style={{ gap: 8, flexWrap: "wrap", padding: "10px 12px", borderRadius: 10, background: "var(--danger-soft)", marginBottom: 14 }}>
-          <b style={{ fontWeight: 600, fontSize: 13, color: "var(--danger)" }}>Atrasadas · {tasks.list.late.length}</b>
+          <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))", color: "var(--danger)" }}>Atrasadas · {tasks.list.late.length}</b>
           {tasks.list.late.map((t) => (
             <span key={t.id} className="badge" style={{ background: "var(--surface)" }}>
               {t.title} · {t.date ? formatWhen(t.date, today) : ""}
@@ -187,10 +187,10 @@ export function SemanaView({ onToast }: SemanaViewProps) {
               const done = items.filter((t) => t.done).length;
               return (
                 <section key={date} className={`wkd${date === today ? " today" : ""}${over === date ? " over" : ""}`} aria-label={`${weekdayShort(date)} ${dayOfMonth(date)}`} {...dropZone(date)}>
-                  <div className="row" style={{ padding: "2px 4px 6px", fontSize: 13 }}>
+                  <div className="row" style={{ padding: "2px 4px 6px", fontSize: "calc(13px * var(--fs, 1))" }}>
                     <b style={{ fontWeight: 600 }}>{weekdayShort(date)}</b>
                     <span style={{ color: "var(--text-3)" }}>{dayOfMonth(date)}</span>
-                    <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-3)" }}>{items.length > 0 ? `${done}/${items.length}` : ""}</span>
+                    <span style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{items.length > 0 ? `${done}/${items.length}` : ""}</span>
                   </div>
                   {items.map((item) => (
                     <WeekCard key={`${item.id}-${item.date}`} item={item} {...cardProps} />
@@ -206,8 +206,8 @@ export function SemanaView({ onToast }: SemanaViewProps) {
       {ready && (
         <div style={{ marginTop: 18, padding: 12, borderRadius: 12, border: "1px dashed var(--border-2)" }}>
           <div className="row" style={{ marginBottom: 8 }}>
-            <b style={{ fontWeight: 600, fontSize: 13 }}>Sem prazo</b>
-            <span style={{ fontSize: 12, color: "var(--text-3)" }}>arraste para um dia</span>
+            <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Sem prazo</b>
+            <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>arraste para um dia</span>
           </div>
           <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}>
             {tasks.list.undated.map((item) => (

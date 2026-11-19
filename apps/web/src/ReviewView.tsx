@@ -19,7 +19,7 @@ function Front({ card }: { card: QueueCard }) {
   return (
     <>
       {clozeSegments(card.front).map((seg, i) =>
-        seg.blank ? <span key={i} className="cloze" style={{ fontFamily: "var(--sans)", fontSize: 20 }}>[...]</span> : <span key={i}>{seg.text}</span>,
+        seg.blank ? <span key={i} className="cloze" style={{ fontFamily: "var(--sans)", fontSize: "calc(20px * var(--fs, 1))" }}>[...]</span> : <span key={i}>{seg.text}</span>,
       )}
     </>
   );
@@ -30,7 +30,7 @@ function Back({ card }: { card: QueueCard }) {
   return (
     <>
       {clozeSegments(card.front).map((seg, i) =>
-        seg.blank ? <span key={i} className="cloze" style={{ fontFamily: "var(--sans)", fontSize: 20 }}>{seg.text}</span> : <span key={i}>{seg.text}</span>,
+        seg.blank ? <span key={i} className="cloze" style={{ fontFamily: "var(--sans)", fontSize: "calc(20px * var(--fs, 1))" }}>{seg.text}</span> : <span key={i}>{seg.text}</span>,
       )}
     </>
   );
@@ -131,7 +131,7 @@ export function ReviewView() {
   if (s.total === 0) {
     return (
       <div className="col rise" style={{ padding: "80px 20px", maxWidth: 640, margin: "0 auto", alignItems: "center", gap: 12, textAlign: "center" }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 34, lineHeight: "40px" }}>Nada para revisar</h1>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(34px * var(--fs, 1))", lineHeight: "calc(40px * var(--fs, 1))" }}>Nada para revisar</h1>
         <p className="muted">Todos os cards estão em dia. Volte mais tarde.</p>
         <a className="btn btn-pri" href={routeHash("estudo")}>Voltar ao Estudo</a>
       </div>
@@ -147,7 +147,7 @@ export function ReviewView() {
           <span style={{ width: 52, height: 52, borderRadius: 16, background: "var(--success-soft)", color: "var(--success)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 26, height: 26, strokeWidth: 2 }}><path d="M5 12.5l4.5 4.5L19 7" /></svg>
           </span>
-          <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 34, lineHeight: "40px" }}>Sessão concluída</h1>
+          <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(34px * var(--fs, 1))", lineHeight: "calc(40px * var(--fs, 1))" }}>Sessão concluída</h1>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(130px, 100%), 1fr))", gap: 8 }}>
           <div className="stat card" style={{ padding: 14 }}><span className="v">{sum.cards}</span><br /><span className="l">cards</span></div>
@@ -156,10 +156,10 @@ export function ReviewView() {
           <div className="stat card" style={{ padding: 14 }}><span className="v">{sum.struggled.length}</span><br /><span className="l">para reforçar</span></div>
         </div>
         <div className="card" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-          <b style={{ fontWeight: 600, fontSize: 13 }}>Para reforçar</b>
-          {sum.struggled.length === 0 && <span style={{ fontSize: 13, color: "var(--text-2)" }}>Nada para reforçar. Nenhum card foi marcado como “De novo”.</span>}
+          <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Para reforçar</b>
+          {sum.struggled.length === 0 && <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Nada para reforçar. Nenhum card foi marcado como “De novo”.</span>}
           {sum.struggled.map((front) => (
-            <div key={front} className="row" style={{ fontSize: 13, gap: 8, minHeight: 32, borderTop: "1px solid var(--border)" }}>
+            <div key={front} className="row" style={{ fontSize: "calc(13px * var(--fs, 1))", gap: 8, minHeight: 32, borderTop: "1px solid var(--border)" }}>
               <span className="badge bad" style={{ height: 20 }}>De novo</span>
               <span className="grow1 trunc">{front.replace(/\{\{|\}\}/g, "")}</span>
             </div>
@@ -181,7 +181,7 @@ export function ReviewView() {
       <div className="row" style={{ gap: 12, width: "100%", maxWidth: 620 }}>
         {back}
         <div className="bar grow1" role="progressbar" aria-valuemin={0} aria-valuemax={s.total} aria-valuenow={done} aria-label="Progresso da sessão"><span style={{ width: `${pct}%`, animation: "none", transition: "width var(--medio) var(--padrao)" }} /></div>
-        <span className="mono" style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap" }}>{Math.min(done + 1, s.total)} de {s.total}</span>
+        <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)", whiteSpace: "nowrap" }}>{Math.min(done + 1, s.total)} de {s.total}</span>
       </div>
       <div className={s.revealed ? "flipon" : ""} style={{ width: "100%", maxWidth: 620, display: "flex", flexDirection: "column", gap: 22 }}>
         <div className="rise flipwrap" style={{ height: 300 }} key={`${card.id}-${s.results.length}`}>
@@ -191,33 +191,33 @@ export function ReviewView() {
                 <span className="badge out" style={{ height: 20 }}>{card.kind === "basic" ? "básico" : "lacuna"}</span>
                 {card.state === 0 && <span className="badge ac" style={{ height: 20 }}>novo</span>}
               </div>
-              <div style={{ fontFamily: "var(--serif)", fontSize: 28, lineHeight: "36px", textWrap: "balance", overflowWrap: "anywhere" }}><Front card={card} /></div>
+              <div style={{ fontFamily: "var(--serif)", fontSize: "calc(28px * var(--fs, 1))", lineHeight: "calc(36px * var(--fs, 1))", textWrap: "balance", overflowWrap: "anywhere" }}><Front card={card} /></div>
             </div>
             <div className="face back" aria-hidden={!s.revealed}>
               <div className="row" style={{ gap: 8 }}>
                 <span className="badge ok" style={{ height: 20 }}>resposta</span>
-                {card.sourcePageId && <a href={pageHash(card.sourcePageId)} style={{ fontSize: 12, marginLeft: "auto" }}>Fonte: {card.sourceTitle ?? "página"}</a>}
+                {card.sourcePageId && <a href={pageHash(card.sourcePageId)} style={{ fontSize: "calc(12px * var(--fs, 1))", marginLeft: "auto" }}>Fonte: {card.sourceTitle ?? "página"}</a>}
               </div>
-              <div style={{ fontFamily: "var(--serif)", fontSize: 26, lineHeight: "34px", textWrap: "balance", overflowWrap: "anywhere" }}><Back card={card} /></div>
-              {card.kind === "cloze" && <span style={{ fontSize: 13, color: "var(--text-2)" }}>{clozeAnswers(card.front)}</span>}
+              <div style={{ fontFamily: "var(--serif)", fontSize: "calc(26px * var(--fs, 1))", lineHeight: "calc(34px * var(--fs, 1))", textWrap: "balance", overflowWrap: "anywhere" }}><Back card={card} /></div>
+              {card.kind === "cloze" && <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{clozeAnswers(card.front)}</span>}
             </div>
           </div>
         </div>
         {!s.revealed && (
-          <button className="btn btn-pri" type="button" onClick={flip} style={{ height: 48, fontSize: 15 }}>
+          <button className="btn btn-pri" type="button" onClick={flip} style={{ height: 48, fontSize: "calc(15px * var(--fs, 1))" }}>
             Mostrar resposta <span className="kbd" style={{ background: "transparent", color: "inherit", borderColor: "currentColor" }}>espaço</span>
           </button>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
           {RATES.map((r, i) => (
             <button key={r.grade} className="rate" type="button" disabled={!s.revealed || busy} tabIndex={s.revealed ? 0 : -1} onClick={() => void grade(r.grade)} style={{ transitionDelay: `${i * 30}ms` }}>
-              <span style={{ font: "600 14px/18px var(--sans)", color: r.color }}>{r.name}</span>
+              <span style={{ font: "600 calc(14px * var(--fs, 1))/calc(18px * var(--fs, 1)) var(--sans)", color: r.color }}>{r.name}</span>
               <span>{formatInterval(now, card.preview[r.grade])}</span>
               <span className="kpad" style={{ marginTop: 2 }}>{r.grade}</span>
             </button>
           ))}
         </div>
-        {failed && <span role="alert" style={{ fontSize: 13, color: "var(--danger)", textAlign: "center" }}>Não foi possível salvar a avaliação. Tente de novo.</span>}
+        {failed && <span role="alert" style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--danger)", textAlign: "center" }}>Não foi possível salvar a avaliação. Tente de novo.</span>}
       </div>
     </div>
   );

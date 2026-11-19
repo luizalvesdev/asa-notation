@@ -48,14 +48,14 @@ export function ProgressoView() {
   return (
     <div style={{ padding: "36px 40px 120px", maxWidth: 1120, display: "flex", flexDirection: "column", gap: 24 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>Progresso</h1>
-        <span className="muted" style={{ fontSize: 15, paddingBottom: 4 }}>últimas {WEEKS} semanas</span>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Progresso</h1>
+        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>últimas {WEEKS} semanas</span>
       </div>
 
       {load.status === "carregando" && <span className="sk" style={{ height: 200, borderRadius: 12 }} aria-busy="true" aria-label="Carregando o progresso" />}
       {load.status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar o progresso.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar o progresso.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={() => setAttempt((a) => a + 1)} style={{ marginLeft: "auto" }}>Tentar de novo</button>
         </div>
       )}
@@ -71,19 +71,19 @@ export function ProgressoView() {
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
             <div className="card" style={{ flex: "1 1 320px", padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-              <b style={{ fontWeight: 600, fontSize: 13 }}>Tarefas concluídas por semana</b>
+              <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Tarefas concluídas por semana</b>
               <WeekBars color="var(--accent)" label="Tarefas concluídas por semana" values={data.weeks.map((w) => ({ key: w.start, value: w.tasks, title: `Semana de ${formatDate(w.start)}: ${w.tasks}` }))} />
             </div>
             <div className="card" style={{ flex: "1 1 320px", padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-              <b style={{ fontWeight: 600, fontSize: 13 }}>Cards revisados por semana</b>
+              <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Cards revisados por semana</b>
               <WeekBars color="var(--hermes)" label="Cards revisados por semana" values={data.weeks.map((w) => ({ key: w.start, value: w.reviews, title: `Semana de ${formatDate(w.start)}: ${w.reviews}` }))} />
             </div>
           </div>
 
           <div className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="row">
-              <b style={{ fontWeight: 600, fontSize: 13 }}>Constância</b>
-              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-3)" }}>{totals.activeDays} de {WEEKS * 7} dias com atividade</span>
+              <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Constância</b>
+              <span style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{totals.activeDays} de {WEEKS * 7} dias com atividade</span>
             </div>
             <div role="img" aria-label="Mapa de constância: um quadrado por dia, de segunda a domingo, por semana" style={{ display: "grid", gridTemplateColumns: `repeat(${WEEKS}, 22px)`, gridTemplateRows: "repeat(7, 22px)", gridAutoFlow: "column", gap: 4, maxWidth: "100%", overflowX: "auto" }}>
               {data.days.map((d) => {
@@ -94,15 +94,15 @@ export function ProgressoView() {
           </div>
 
           <div className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div className="row"><b style={{ fontWeight: 600, fontSize: 13 }}>Metas</b><a href={routeHash("metas")} style={{ marginLeft: "auto", fontSize: 12 }}>Ver todas</a></div>
-            {load.goals.filter((g) => !g.done).length === 0 && <span style={{ fontSize: 14, color: "var(--text-2)" }}>Nenhuma meta ativa.</span>}
+            <div className="row"><b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Metas</b><a href={routeHash("metas")} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Ver todas</a></div>
+            {load.goals.filter((g) => !g.done).length === 0 && <span style={{ fontSize: "calc(14px * var(--fs, 1))", color: "var(--text-2)" }}>Nenhuma meta ativa.</span>}
             {load.goals.filter((g) => !g.done).map((g) => {
               const status = goalStatus(g, today);
               return (
                 <a key={g.id} href={routeHash("metas")} className="col" style={{ gap: 6, textDecoration: "none", color: "var(--text)" }}>
-                  <span className="row" style={{ fontSize: 13 }}><span className="grow1 trunc">{g.title}</span><span className={STATUS_BADGE[status]} style={{ height: 20 }}>{STATUS_LABEL[status]}</span></span>
+                  <span className="row" style={{ fontSize: "calc(13px * var(--fs, 1))" }}><span className="grow1 trunc">{g.title}</span><span className={STATUS_BADGE[status]} style={{ height: 20 }}>{STATUS_LABEL[status]}</span></span>
                   <div className="bar"><span style={{ width: `${goalPct(g)}%` }} /></div>
-                  <span style={{ fontSize: 12, color: "var(--text-3)" }}>{goalPct(g)}% · {tasksLabel(g)}{g.dueDate ? ` · prazo ${formatDate(g.dueDate)}` : ""}</span>
+                  <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{goalPct(g)}% · {tasksLabel(g)}{g.dueDate ? ` · prazo ${formatDate(g.dueDate)}` : ""}</span>
                 </a>
               );
             })}

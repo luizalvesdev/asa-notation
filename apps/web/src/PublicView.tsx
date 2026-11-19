@@ -43,7 +43,7 @@ export function PublicView({ slug, onToggleTheme }: PublicViewProps) {
     <div className="app" style={{ display: "block", height: "100%", overflow: "auto" }}>
       <header className="tb" style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)" }}>
         <span className="av u" style={{ width: 24, height: 24 }}>a</span>
-        <span style={{ fontWeight: 600, fontSize: 13 }}>asa-notation</span>
+        <span style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>asa-notation</span>
         <span className="badge out" style={{ marginLeft: 8 }}>somente leitura</span>
         <div className="tb-r">
           <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick={onToggleTheme}>
@@ -63,13 +63,13 @@ export function PublicView({ slug, onToggleTheme }: PublicViewProps) {
         )}
         {load.status === "ausente" && (
           <>
-            <h1 className="p-title" style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "46px" }}>Página indisponível</h1>
+            <h1 className="p-title" style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(46px * var(--fs, 1))" }}>Página indisponível</h1>
             <p className="muted" style={{ marginTop: 12 }}>Este link não existe mais ou deixou de ser compartilhado.</p>
           </>
         )}
         {load.status === "erro" && (
           <>
-            <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 32 }}>Não foi possível abrir</h1>
+            <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(32px * var(--fs, 1))" }}>Não foi possível abrir</h1>
             <button className="btn btn-sec" type="button" onClick={() => setAttempt((a) => a + 1)} style={{ marginTop: 12 }}>
               Tentar de novo
             </button>
@@ -78,7 +78,7 @@ export function PublicView({ slug, onToggleTheme }: PublicViewProps) {
         {load.status === "pronto" && (
           <article>
             <Cover cover={load.page.cover} />
-            <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "46px", letterSpacing: "-0.02em" }}>
+            <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(46px * var(--fs, 1))", letterSpacing: "-0.02em" }}>
               {load.page.icon ? `${load.page.icon} ` : ""}
               {load.page.title.trim() || "Sem título"}
             </h1>

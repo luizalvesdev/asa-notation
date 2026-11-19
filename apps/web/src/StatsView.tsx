@@ -40,15 +40,15 @@ export function StatsView() {
   return (
     <div style={{ padding: "36px 40px 120px", maxWidth: 1120, display: "flex", flexDirection: "column", gap: 24 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>Estatísticas</h1>
-        <span className="muted" style={{ fontSize: 15, paddingBottom: 4 }}>últimos {DAYS} dias</span>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Estatísticas</h1>
+        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>últimos {DAYS} dias</span>
         <a className="btn btn-fan btn-sm" href={routeHash("estudo")} style={{ marginLeft: "auto" }}>Voltar ao Estudo</a>
       </div>
 
       {load.status === "carregando" && <span className="sk" style={{ height: 200, borderRadius: 12 }} aria-busy="true" aria-label="Carregando as estatísticas" />}
       {load.status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar as estatísticas.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as estatísticas.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={() => setAttempt((a) => a + 1)} style={{ marginLeft: "auto" }}>Tentar de novo</button>
         </div>
       )}
@@ -71,9 +71,9 @@ export function StatsView() {
             </div>
 
             <div className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-              <b style={{ fontWeight: 600, fontSize: 13 }}>Revisões por dia</b>
+              <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Revisões por dia</b>
               {s.reviews === 0 ? (
-                <span style={{ fontSize: 14, color: "var(--text-2)" }}>Ainda não há revisões neste período.</span>
+                <span style={{ fontSize: "calc(14px * var(--fs, 1))", color: "var(--text-2)" }}>Ainda não há revisões neste período.</span>
               ) : (
                 <Bars label="Revisões por dia nos últimos 30 dias" values={days.map((d) => ({ key: d.day, value: d.reviews, title: `${d.day}: ${d.reviews} ${d.reviews === 1 ? "revisão" : "revisões"}` }))} />
               )}
@@ -81,14 +81,14 @@ export function StatsView() {
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               <div className="card" style={{ flex: "1 1 320px", padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <b style={{ fontWeight: 600, fontSize: 13 }}>Próximos 7 dias</b>
+                <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Próximos 7 dias</b>
                 <Bars color="var(--hermes)" label="Cards a revisar nos próximos 7 dias" values={upcoming.map((u) => ({ key: u.day, value: u.due, title: `${u.day}: ${u.due} para revisar` }))} />
-                <span style={{ fontSize: 12, color: "var(--text-3)" }}>Hoje inclui os cards atrasados.</span>
+                <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>Hoje inclui os cards atrasados.</span>
               </div>
               <div className="card" style={{ flex: "1 1 320px", padding: 18, display: "flex", flexDirection: "column", gap: 8 }}>
-                <b style={{ fontWeight: 600, fontSize: 13 }}>Estado dos cards</b>
+                <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Estado dos cards</b>
                 {([["Novos", s.states.new], ["Aprendendo", s.states.learning], ["Em revisão", s.states.review], ["Reaprendendo", s.states.relearning]] as const).map(([label, n]) => (
-                  <div key={label} className="row" style={{ gap: 12, fontSize: 13 }}>
+                  <div key={label} className="row" style={{ gap: 12, fontSize: "calc(13px * var(--fs, 1))" }}>
                     <span style={{ width: 110 }}>{label}</span>
                     <div className="bar grow1"><span style={{ width: `${totalCards === 0 ? 0 : (n / totalCards) * 100}%`, animation: "none" }} /></div>
                     <span className="mono" style={{ width: 28, textAlign: "right" }}>{n}</span>
@@ -98,10 +98,10 @@ export function StatsView() {
             </div>
 
             <div className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 8 }}>
-              <b style={{ fontWeight: 600, fontSize: 13 }}>Cards mais errados</b>
-              {s.hardest.length === 0 && <span style={{ fontSize: 14, color: "var(--text-2)" }}>Nenhum erro registrado no período.</span>}
+              <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Cards mais errados</b>
+              {s.hardest.length === 0 && <span style={{ fontSize: "calc(14px * var(--fs, 1))", color: "var(--text-2)" }}>Nenhum erro registrado no período.</span>}
               {s.hardest.map((h) => (
-                <div key={h.id} className="row" style={{ gap: 8, fontSize: 13, minHeight: 32, borderTop: "1px solid var(--border)" }}>
+                <div key={h.id} className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", minHeight: 32, borderTop: "1px solid var(--border)" }}>
                   <span className="badge bad" style={{ height: 20 }}>{h.lapses}×</span>
                   <span className="grow1 trunc">{h.front.replace(/\{\{|\}\}/g, "")}</span>
                 </div>

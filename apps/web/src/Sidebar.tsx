@@ -57,7 +57,7 @@ function NavLink({ item, route, onNavigate, onOpenSearch, badge }: { item: NavIt
       <span className="lab">{item.label}</span>
       {item.shortcut && <span className="k">{item.shortcut}</span>}
       {badge !== undefined && badge > 0 && (
-        <span className="badge ac lab" style={{ height: 18, padding: "0 6px", fontSize: 11 }} aria-label={`${badge} não lidas`}>
+        <span className="badge ac lab" style={{ height: 18, padding: "0 6px", fontSize: "calc(11px * var(--fs, 1))" }} aria-label={`${badge} não lidas`}>
           {badge > 99 ? "99+" : badge}
         </span>
       )}
@@ -83,7 +83,7 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
         <span className="av u" style={{ width: 24, height: 24 }}>
           a
         </span>
-        <span className="lab" style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>
+        <span className="lab" style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))", flex: 1 }}>
           asa-notation
         </span>
         {!inDrawer && (
@@ -136,7 +136,7 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
           </div>
         )}
         {treeStatus === "erro" && (
-          <div className="col" style={{ gap: 6, padding: "4px 8px", fontSize: 12 }}>
+          <div className="col" style={{ gap: 6, padding: "4px 8px", fontSize: "calc(12px * var(--fs, 1))" }}>
             <span className="muted">Não foi possível carregar as páginas.</span>
             <button className="btn btn-sec btn-sm" type="button" onClick={onRetryTree} style={{ alignSelf: "flex-start" }}>
               Tentar de novo

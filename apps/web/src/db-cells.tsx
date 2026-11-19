@@ -234,8 +234,8 @@ export function ValueView({ prop, value }: { prop: Property; value: PropValue })
   }
   if (prop.type === "multiselect") return <>{prop.options.filter((o) => Array.isArray(value) && value.includes(o.id)).map((o) => <OptionBadge key={o.id} option={o} />)}</>;
   if (prop.type === "checkbox") return value === true ? <span className="badge ok" style={{ height: 20 }}>{prop.name}</span> : null;
-  if (prop.type === "date") return <span className="mono" style={{ fontSize: 12 }}>{String(value).split("-").reverse().join("/")}</span>;
-  if (prop.type === "url") return <a href={String(value)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12 }}>{String(value).replace(/^https?:\/\//, "")}</a>;
+  if (prop.type === "date") return <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{String(value).split("-").reverse().join("/")}</span>;
+  if (prop.type === "url") return <a href={String(value)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{String(value).replace(/^https?:\/\//, "")}</a>;
   if (prop.type === "relation") return <>{(Array.isArray(value) ? value : []).map((id) => <span key={id} className="mention">{displayTitle(rows?.find((r) => r.id === id)?.title ?? "…")}</span>)}</>;
-  return <span style={{ fontSize: 13 }}>{String(value)}</span>;
+  return <span style={{ fontSize: "calc(13px * var(--fs, 1))" }}>{String(value)}</span>;
 }

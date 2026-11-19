@@ -142,7 +142,7 @@ export function SearchPalette({ nodes, onClose, onOpenPage, onCreatePage, onOpen
             placeholder="Buscar páginas, conteúdo e ações…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ fontSize: 16, outline: "none", cursor: "text" }}
+            style={{ fontSize: "calc(16px * var(--fs, 1))", outline: "none", cursor: "text" }}
           />
           <span className="kbd">esc</span>
         </div>
@@ -189,7 +189,7 @@ export function SearchPalette({ nodes, onClose, onOpenPage, onCreatePage, onOpen
                     <span className="col grow1" style={{ gap: 2, alignItems: "flex-start", minWidth: 0 }}>
                       <span className="trunc" style={{ maxWidth: "100%" }}>{row.kind === "action" ? row.label : displayTitle(row.title)}</span>
                       {row.kind === "content" && (
-                        <span className="subtle trunc" style={{ fontSize: 12, maxWidth: "100%" }}>
+                        <span className="subtle trunc" style={{ fontSize: "calc(12px * var(--fs, 1))", maxWidth: "100%" }}>
                           …
                           {splitSnippet(row.snippet).map((part, i) => (part.hit ? <mark key={i}>{part.text}</mark> : <span key={i}>{part.text}</span>))}
                           …
@@ -203,7 +203,7 @@ export function SearchPalette({ nodes, onClose, onOpenPage, onCreatePage, onOpen
           ))}
         </div>
 
-        <div className="row" style={{ gap: 16, padding: "8px 14px", borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--text-3)" }}>
+        <div className="row" style={{ gap: 16, padding: "8px 14px", borderTop: "1px solid var(--border)", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>
           <span className="row" style={{ gap: 4 }}>
             <span className="kbd">↑</span>
             <span className="kbd">↓</span> navegar

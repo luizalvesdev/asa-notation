@@ -68,7 +68,7 @@ function DraftCard({ draft, agent, onChange, onDataChanged, onToast }: { draft: 
   return (
     <div className={`draft${agent === "renato" ? " r" : ""} rise`}>
       <span className="draft-t">{view.title}</span>
-      <div className="col" style={{ gap: 4, fontSize: 13 }}>
+      <div className="col" style={{ gap: 4, fontSize: "calc(13px * var(--fs, 1))" }}>
         {view.lines.map((line, i) => <span key={i} style={{ overflowWrap: "anywhere" }}>{line}</span>)}
       </div>
       {view.preview && (
@@ -244,7 +244,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           <span className="seg-ind" style={{ width: "calc((100% - 4px) / 3)", transform: `translateX(${AGENTS.indexOf(agent) * 100}%)` }} />
           {AGENTS.map((a) => (
             <button key={a} className={`seg-b${agent === a ? " on" : ""}`} type="button" role="tab" aria-selected={agent === a} onClick={() => switchAgent(a)}>
-              <span className={`av ${AVATAR[a]}`} style={{ width: 16, height: 16, fontSize: 10, borderRadius: 4 }}>{AGENT_NAME[a][0]}</span>
+              <span className={`av ${AVATAR[a]}`} style={{ width: 16, height: 16, fontSize: "calc(10px * var(--fs, 1))", borderRadius: 4 }}>{AGENT_NAME[a][0]}</span>
               {AGENT_NAME[a]}
             </button>
           ))}
@@ -265,8 +265,8 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
             <button key={a} className="plain mrow" type="button" onClick={() => setHistoryView(a)} style={{ height: "auto", padding: 10, gap: 10, alignItems: "center", textAlign: "left" }}>
               <span className={`av ${AVATAR[a]}`}>{AGENT_NAME[a][0]}</span>
               <span className="col grow1" style={{ minWidth: 0 }}>
-                <span style={{ fontWeight: 500, fontSize: 14 }}>{AGENT_NAME[a]}</span>
-                <span style={{ fontSize: 12, color: "var(--text-3)" }}>{histories[a] === null ? "Carregando…" : historySummary(histories[a], formatAgo)}</span>
+                <span style={{ fontWeight: 500, fontSize: "calc(14px * var(--fs, 1))" }}>{AGENT_NAME[a]}</span>
+                <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{histories[a] === null ? "Carregando…" : historySummary(histories[a], formatAgo)}</span>
               </span>
               <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "var(--text-3)" }}><path d="M9 6l6 6-6 6" /></svg>
             </button>
@@ -276,16 +276,16 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
         <div className="chat-body enter" style={{ gap: 4 }}>
           <div className="row" style={{ gap: 4, padding: "0 0 6px", alignItems: "center" }}>
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Voltar para os assistentes" onClick={() => setHistoryView("agents")}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
-            <span className={`av ${AVATAR[historyView]}`} style={{ width: 20, height: 20, fontSize: 11 }}>{AGENT_NAME[historyView][0]}</span>
+            <span className={`av ${AVATAR[historyView]}`} style={{ width: 20, height: 20, fontSize: "calc(11px * var(--fs, 1))" }}>{AGENT_NAME[historyView][0]}</span>
             <span className="eyebrow">Conversas com {AGENT_NAME[historyView]}</span>
           </div>
           {histories[historyView] === null && <span className="sk" style={{ height: 14, display: "block" }} aria-label="Carregando as conversas" />}
-          {histories[historyView]?.length === 0 && <span style={{ fontSize: 13, color: "var(--text-2)", padding: "0 6px" }}>Nenhuma conversa ainda.</span>}
+          {histories[historyView]?.length === 0 && <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", padding: "0 6px" }}>Nenhuma conversa ainda.</span>}
           {histories[historyView]?.map((c) => (
             <div key={c.id} className="row" style={{ gap: 2 }}>
               <button className="plain mrow grow1" type="button" onClick={() => open(c)} style={{ height: "auto", padding: 8, alignItems: "flex-start", flexDirection: "column", gap: 2, textAlign: "left" }}>
-                <span className="trunc" style={{ fontWeight: 500, fontSize: 13, maxWidth: "100%" }}>{c.title || "Sem título"}</span>
-                <span style={{ fontSize: 12, color: "var(--text-3)" }}>{formatAgo(c.updatedAt)}</span>
+                <span className="trunc" style={{ fontWeight: 500, fontSize: "calc(13px * var(--fs, 1))", maxWidth: "100%" }}>{c.title || "Sem título"}</span>
+                <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{formatAgo(c.updatedAt)}</span>
               </button>
               <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Apagar a conversa ${c.title}`} onClick={() => void chatApi.remove(c.id).then(() => { setHistories((h) => ({ ...h, [c.agent]: h[c.agent]?.filter((x) => x.id !== c.id) ?? null })); if (conversation?.id === c.id) newConversation(); }).catch(() => onToast({ text: "Não foi possível apagar." }))}><Icon name="trash" /></button>
             </div>
@@ -295,8 +295,8 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
         <div className="chat-body" ref={body} aria-live="polite">
           {configured === false && messages.length === 0 && (
             <div className="card enter" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <b style={{ fontWeight: 600, fontSize: 14 }}>Conecte uma chave de IA</b>
-              <span style={{ fontSize: 13, color: "var(--text-2)", lineHeight: "19px" }}>Hermes e Renato usam o Claude com a sua chave. Ela fica cifrada no servidor e você pode removê-la quando quiser.</span>
+              <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>Conecte uma chave de IA</b>
+              <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", lineHeight: "calc(19px * var(--fs, 1))" }}>Hermes e Renato usam o Claude com a sua chave. Ela fica cifrada no servidor e você pode removê-la quando quiser.</span>
               <a className="btn btn-pri btn-sm" href={routeHash("configuracoes")} style={{ alignSelf: "flex-start" }} onClick={onClose}>Abrir configurações</a>
             </div>
           )}
@@ -331,7 +331,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
               <span className={`av ${AVATAR[agent]}`}>{name[0]}</span>
               <div className="col" style={{ gap: 6, minWidth: 0, flex: 1 }}>
                 {streamText && <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{streamText}</div>}
-                {working && <span style={{ fontSize: 12, color: "var(--text-3)" }} aria-live="polite">{working}</span>}
+                {working && <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }} aria-live="polite">{working}</span>}
                 <span className={agent === "renato" ? "rcaret" : "hcaret"} />
               </div>
             </div>
@@ -366,7 +366,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           />
           <button className="btn btn-pri btn-sm" type="submit" disabled={sending || text.trim() === "" || configured === false}>Enviar</button>
         </div>
-        <span style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6, display: "block" }}>{agent === "tutor" ? `${name} só conversa e lê suas notas: não altera nada.` : autoApply ? `${name} cria e edita na hora; apagar sempre pede a sua aprovação.` : `${name} propõe e você aprova: nada é alterado sem o seu OK.`} Enter envia, Shift+Enter quebra a linha.</span>
+        <span style={{ fontSize: "calc(11px * var(--fs, 1))", color: "var(--text-3)", marginTop: 6, display: "block" }}>{agent === "tutor" ? `${name} só conversa e lê suas notas: não altera nada.` : autoApply ? `${name} cria e edita na hora; apagar sempre pede a sua aprovação.` : `${name} propõe e você aprova: nada é alterado sem o seu OK.`} Enter envia, Shift+Enter quebra a linha.</span>
       </form>
     </aside>
   );

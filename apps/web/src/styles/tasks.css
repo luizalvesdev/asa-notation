@@ -23,7 +23,7 @@
 .task.add-task.compact {
   min-height: 30px;
   padding: 4px 6px;
-  font-size: 12px;
+  font-size: calc(12px * var(--fs, 1));
   opacity: 0.7;
 }
 
@@ -43,7 +43,7 @@
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs, 1));
   outline: none;
 }
 
@@ -57,11 +57,11 @@
 
 .add-task-form.compact .add-task-input {
   height: 30px;
-  font-size: 12px;
+  font-size: calc(12px * var(--fs, 1));
 }
 
 .add-task-hint {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs, 1));
   color: var(--text-3);
 }
 
@@ -91,13 +91,13 @@
   color: var(--text);
   font-family: var(--serif);
   font-weight: 500;
-  font-size: 30px;
-  line-height: 36px;
+  font-size: calc(30px * var(--fs, 1));
+  line-height: calc(36px * var(--fs, 1));
   letter-spacing: -0.015em;
 }
 
 .ds input.goal-title {
-  font: 500 30px/36px var(--serif);
+  font: 500 calc(30px * var(--fs, 1))/calc(36px * var(--fs, 1)) var(--serif);
 }
 
 .goal-date {
@@ -122,8 +122,8 @@
   background: transparent;
   color: var(--text-2);
   font: inherit;
-  font-size: 15px;
-  line-height: 25px;
+  font-size: calc(15px * var(--fs, 1));
+  line-height: calc(25px * var(--fs, 1));
   outline: none;
 }
 

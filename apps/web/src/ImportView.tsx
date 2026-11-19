@@ -79,14 +79,14 @@ export function ImportView({ onImported }: { onImported: () => void }) {
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "36px 32px 120px", display: "flex", flexDirection: "column", gap: 18 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" }}>Importar</h1>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Importar</h1>
         <a className="btn btn-fan btn-sm" href={routeHash("configuracoes")} style={{ marginLeft: "auto" }}>Voltar às configurações</a>
       </div>
 
       <div className="card" style={{ overflow: "hidden" }}>
         <ol className="row" style={{ gap: 18, padding: "16px 20px", borderBottom: "1px solid var(--border)", flexWrap: "wrap", listStyle: "none", margin: 0 }} aria-label="Passos">
           {STEPS.map((name, i) => (
-            <li key={name} aria-current={i === step ? "step" : undefined} className="row" style={{ gap: 8, fontSize: 13, color: i === step ? "var(--text)" : "var(--text-3)", fontWeight: i === step ? 600 : 400 }}>
+            <li key={name} aria-current={i === step ? "step" : undefined} className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", color: i === step ? "var(--text)" : "var(--text-3)", fontWeight: i === step ? 600 : 400 }}>
               <span className="kpad" style={i <= step ? { background: "var(--accent)", color: "var(--on-accent)" } : undefined}>{i < step ? "✓" : i + 1}</span>
               {name}
             </li>
@@ -96,12 +96,12 @@ export function ImportView({ onImported }: { onImported: () => void }) {
         <div style={{ padding: "24px 24px 20px", minHeight: 300 }}>
           {step === 0 && (
             <div className="col enter" style={{ gap: 14 }}>
-              <h2 style={{ font: "600 18px/26px var(--sans)" }}>De onde vamos importar?</h2>
+              <h2 style={{ font: "600 calc(18px * var(--fs, 1))/calc(26px * var(--fs, 1)) var(--sans)" }}>De onde vamos importar?</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
                 {SOURCES.map((s) => (
                   <button key={s.id} className="plain card" type="button" aria-pressed={source === s.id} onClick={() => setSource(s.id)} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, textAlign: "left", cursor: "pointer", boxShadow: source === s.id ? "inset 0 0 0 2px var(--accent)" : "none" }}>
                     <b style={{ fontWeight: 600 }}>{s.title}</b>
-                    <span style={{ fontSize: 13, color: "var(--text-2)" }}>{s.text}</span>
+                    <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{s.text}</span>
                   </button>
                 ))}
               </div>
@@ -111,22 +111,22 @@ export function ImportView({ onImported }: { onImported: () => void }) {
 
           {step === 1 && (
             <div className="col enter" style={{ gap: 14 }}>
-              <h2 style={{ font: "600 18px/26px var(--sans)" }}>Escolher o arquivo</h2>
-              <p style={{ fontSize: 14, lineHeight: "21px", color: "var(--text-2)" }}>{SOURCES.find((s) => s.id === source)!.how}</p>
+              <h2 style={{ font: "600 calc(18px * var(--fs, 1))/calc(26px * var(--fs, 1)) var(--sans)" }}>Escolher o arquivo</h2>
+              <p style={{ fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(21px * var(--fs, 1))", color: "var(--text-2)" }}>{SOURCES.find((s) => s.id === source)!.how}</p>
               <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
                 <button className="btn btn-pri" type="button" disabled={reading} onClick={() => fileInput.current?.click()}>{reading ? "Lendo…" : "Escolher .zip ou arquivos .md"}</button>
                 {source === "vault" && <button className="btn btn-sec" type="button" disabled={reading} onClick={() => folderInput.current?.click()}>Escolher uma pasta</button>}
               </div>
               <input ref={fileInput} type="file" accept=".zip,.md,.markdown" multiple hidden aria-label="Arquivos para importar" onChange={(e) => { void load(e.target.files); e.target.value = ""; }} />
               <input ref={folderInput} type="file" hidden aria-label="Pasta para importar" {...({ webkitdirectory: "" } as object)} onChange={(e) => { void load(e.target.files); e.target.value = ""; }} />
-              {error && <span role="alert" style={{ fontSize: 13, color: "var(--danger)" }}>{error}</span>}
+              {error && <span role="alert" style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--danger)" }}>{error}</span>}
             </div>
           )}
 
           {step === 2 && plan && (
             <div className="col enter" style={{ gap: 10 }}>
-              <h2 style={{ font: "600 18px/26px var(--sans)" }}>Escolha o que importar</h2>
-              <div className="row" style={{ gap: 8, fontSize: 13, color: "var(--text-2)" }}>
+              <h2 style={{ font: "600 calc(18px * var(--fs, 1))/calc(26px * var(--fs, 1)) var(--sans)" }}>Escolha o que importar</h2>
+              <div className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
                 <span>{plan.nodes.length} {plan.nodes.length === 1 ? "página encontrada" : "páginas encontradas"}</span>
                 {plan.skipped.length > 0 && <span>· {plan.skipped.length} {plan.skipped.length === 1 ? "arquivo ignorado" : "arquivos ignorados"}</span>}
                 <button className="btn btn-fan btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={() => setSelected(selected.size === plan.nodes.length ? new Set() : new Set(plan.nodes.map((n) => n.key)))}>{selected.size === plan.nodes.length ? "Desmarcar tudo" : "Marcar tudo"}</button>
@@ -137,15 +137,15 @@ export function ImportView({ onImported }: { onImported: () => void }) {
                   return (
                     <button key={n.key} className="plain" type="button" role="checkbox" aria-checked={on} onClick={() => setSelected(toggleSubtree(plan.nodes, selected, n.key))} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 32, padding: `2px 8px 2px ${8 + n.depth * 18}px`, textAlign: "left", cursor: "pointer", borderRadius: 6 }}>
                       <span className={`cb${on ? " on" : ""}`} style={{ width: 16, height: 16 }}><svg className="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1" /></svg></span>
-                      <span className="grow1 trunc" style={{ fontSize: 14 }}>{n.title}</span>
-                      {!n.isFile && <span className="badge out" style={{ height: 18, fontSize: 11 }}>pasta</span>}
+                      <span className="grow1 trunc" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>{n.title}</span>
+                      {!n.isFile && <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>pasta</span>}
                     </button>
                   );
                 })}
               </div>
-              {warnings.map((w) => <span key={w} style={{ fontSize: 12, color: "var(--warning)" }}>{w}</span>)}
+              {warnings.map((w) => <span key={w} style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--warning)" }}>{w}</span>)}
               {plan.skipped.length > 0 && (
-                <details style={{ fontSize: 12, color: "var(--text-2)" }}>
+                <details style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>
                   <summary style={{ cursor: "pointer" }}>Ver arquivos ignorados</summary>
                   <ul style={{ margin: "6px 0 0", paddingLeft: 18, maxHeight: 120, overflow: "auto" }}>
                     {plan.skipped.slice(0, 50).map((s) => <li key={s.path}>{s.path}: {s.reason}</li>)}
@@ -158,10 +158,10 @@ export function ImportView({ onImported }: { onImported: () => void }) {
 
           {step === 3 && (
             <div className="col enter" style={{ gap: 14 }}>
-              <h2 style={{ font: "600 18px/26px var(--sans)" }}>{finished ? "Importação concluída" : "Importando…"}</h2>
+              <h2 style={{ font: "600 calc(18px * var(--fs, 1))/calc(26px * var(--fs, 1)) var(--sans)" }}>{finished ? "Importação concluída" : "Importando…"}</h2>
               <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Progresso da importação"><span style={{ width: `${pct}%`, animation: "none", transition: "width var(--medio) var(--padrao)" }} /></div>
-              <span style={{ fontSize: 13, color: "var(--text-2)" }}>{progress.done} de {progress.total}</span>
-              {error && <span role="alert" style={{ fontSize: 13, color: "var(--danger)" }}>{error}</span>}
+              <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{progress.done} de {progress.total}</span>
+              {error && <span role="alert" style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--danger)" }}>{error}</span>}
               {result && (
                 <div className="draft-ok enter">
                   <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "var(--success)" }}><path d="M5 12.5l4.5 4.5L19 7" /></svg>
@@ -170,7 +170,7 @@ export function ImportView({ onImported }: { onImported: () => void }) {
                 </div>
               )}
               {result && result.failed.length > 0 && (
-                <ul style={{ fontSize: 12, color: "var(--danger)", margin: 0, paddingLeft: 18 }}>{result.failed.slice(0, 20).map((f) => <li key={f.key}>{f.title}</li>)}</ul>
+                <ul style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--danger)", margin: 0, paddingLeft: 18 }}>{result.failed.slice(0, 20).map((f) => <li key={f.key}>{f.title}</li>)}</ul>
               )}
             </div>
           )}

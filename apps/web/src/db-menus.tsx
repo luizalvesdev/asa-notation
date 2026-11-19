@@ -20,7 +20,7 @@ function MenuButton({ icon, label, count, children, width }: { icon: IconName; l
       <button className={`btn btn-fan btn-sm${open || (count ?? 0) > 0 ? " on" : ""}`} type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <Icon name={icon} />
         {label}
-        {(count ?? 0) > 0 && <span className="badge ac" style={{ height: 16, padding: "0 5px", fontSize: 11 }}>{count}</span>}
+        {(count ?? 0) > 0 && <span className="badge ac" style={{ height: 16, padding: "0 5px", fontSize: "calc(11px * var(--fs, 1))" }}>{count}</span>}
       </button>
       {open && (
         <Popover anchor={anchor} onClose={() => setOpen(false)} width={width ?? 340}>
@@ -44,7 +44,7 @@ export function FilterMenu({ schema, view, onSchema }: Common) {
     <MenuButton icon="filter" label="Filtrar" count={view.filters.length} width={440}>
       {() => (
         <>
-          {view.filters.length === 0 && <span style={{ fontSize: 13, color: "var(--text-2)" }}>Nenhum filtro. Todas as linhas aparecem.</span>}
+          {view.filters.length === 0 && <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Nenhum filtro. Todas as linhas aparecem.</span>}
           {view.filters.map((f, i) => {
             const type = typeOf(f.prop);
             const prop = schema.properties.find((p) => p.id === f.prop);
@@ -82,7 +82,7 @@ export function SortMenu({ schema, view, onSchema }: Common) {
     <MenuButton icon="sort" label="Ordenar" count={view.sorts.length} width={360}>
       {() => (
         <>
-          {view.sorts.length === 0 && <span style={{ fontSize: 13, color: "var(--text-2)" }}>Na ordem em que as linhas foram criadas.</span>}
+          {view.sorts.length === 0 && <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Na ordem em que as linhas foram criadas.</span>}
           {view.sorts.map((s, i) => (
             <div key={i} className="row" style={{ gap: 6 }}>
               <select className="inp" aria-label="Propriedade" value={s.prop} onChange={(e) => set(view.sorts.map((x, j) => (j === i ? { ...x, prop: e.target.value } : x)))}>
@@ -148,8 +148,8 @@ export function PropertiesMenu({ schema, view, onSchema, databases }: Common & {
             <div key={p.id} className="col" style={{ gap: 6 }}>
               <div className="row" style={{ gap: 6 }}>
                 <button className="tog" type="button" role="switch" aria-checked={!view.hidden.includes(p.id)} aria-label={`Mostrar ${p.name}`} onClick={() => toggleHidden(p.id)} style={{ padding: 0 }}><span className={`sw${view.hidden.includes(p.id) ? "" : " on"}`}><span className="knob" /></span></button>
-                <span className="grow1 trunc" style={{ fontSize: 13 }}>{p.name}</span>
-                <span className="badge out" style={{ height: 18, fontSize: 11 }}>{TYPE_LABEL[p.type]}</span>
+                <span className="grow1 trunc" style={{ fontSize: "calc(13px * var(--fs, 1))" }}>{p.name}</span>
+                <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{TYPE_LABEL[p.type]}</span>
                 <button className="btn btn-fan btn-sm" type="button" aria-expanded={editing === p.id} onClick={() => setEditing(editing === p.id ? null : p.id)}>Editar</button>
               </div>
               {editing === p.id && (
@@ -158,7 +158,7 @@ export function PropertiesMenu({ schema, view, onSchema, databases }: Common & {
                   {(p.type === "select" || p.type === "multiselect" || p.type === "status") && <OptionsEditor prop={p} onChange={(options) => setProp(p.id, { options })} />}
                   {confirm === p.id ? (
                     <div className="row" style={{ gap: 6 }}>
-                      <span style={{ fontSize: 12, color: "var(--danger)" }}>Apaga a coluna e os valores dela nas views.</span>
+                      <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--danger)" }}>Apaga a coluna e os valores dela nas views.</span>
                       <button className="btn btn-sec btn-sm" type="button" onClick={() => { onSchema(removeProperty(schema, p.id)); setConfirm(null); setEditing(null); }}>Confirmar</button>
                     </div>
                   ) : (
@@ -169,7 +169,7 @@ export function PropertiesMenu({ schema, view, onSchema, databases }: Common & {
             </div>
           ))}
           <form className="col" style={{ gap: 6, borderTop: "1px solid var(--border)", paddingTop: 8 }} onSubmit={(e) => { e.preventDefault(); if (!valid) return; onSchema({ ...schema, properties: [...schema.properties, newProperty(type, name.trim(), newId(), type === "relation" ? relationDb : null)] }); setName(""); setType("text"); }}>
-            <b style={{ fontWeight: 600, fontSize: 12 }}>Nova propriedade</b>
+            <b style={{ fontWeight: 600, fontSize: "calc(12px * var(--fs, 1))" }}>Nova propriedade</b>
             <div className="row" style={{ gap: 6 }}>
               <input className="inp" aria-label="Nome da nova propriedade" placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} />
               <select className="inp" aria-label="Tipo" style={{ width: 150 }} value={type} onChange={(e) => setType(e.target.value as PropertyType)}>
@@ -195,7 +195,7 @@ export function ViewSettings({ schema, view, onSchema }: Common) {
   if (view.type === "kanban" || view.type === "list") {
     const options = schema.properties.filter((p) => p.type === "select" || p.type === "status");
     return (
-      <label className="row" style={{ gap: 6, fontSize: 13, color: "var(--text-2)" }}>
+      <label className="row" style={{ gap: 6, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
         Agrupar por
         <select className="inp" aria-label="Agrupar por" style={{ width: "auto", height: 28 }} value={view.groupBy ?? ""} onChange={(e) => onSchema(patchView(schema, view.id, { groupBy: e.target.value || null }))}>
           <option value="">{view.type === "list" ? "Nada" : "Escolher…"}</option>
@@ -207,7 +207,7 @@ export function ViewSettings({ schema, view, onSchema }: Common) {
   if (view.type === "calendar") {
     const dates = schema.properties.filter((p) => p.type === "date");
     return (
-      <label className="row" style={{ gap: 6, fontSize: 13, color: "var(--text-2)" }}>
+      <label className="row" style={{ gap: 6, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
         Data
         <select className="inp" aria-label="Propriedade de data" style={{ width: "auto", height: 28 }} value={view.dateProp ?? ""} onChange={(e) => onSchema(patchView(schema, view.id, { dateProp: e.target.value || null }))}>
           <option value="">Escolher…</option>

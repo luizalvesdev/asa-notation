@@ -76,7 +76,7 @@ export function HistoryPanel({ pageId, currentBody, onClose, onRestored }: Histo
   return (
     <aside className="side-panel" aria-label="Versões da página">
       <div className="row" style={{ padding: "14px 16px 8px" }}>
-        <b style={{ fontWeight: 600, fontSize: 14 }}>Versões</b>
+        <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>Versões</b>
         <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Fechar" onClick={onClose} style={{ marginLeft: "auto" }}>
           <Icon name="close" />
         </button>
@@ -84,18 +84,18 @@ export function HistoryPanel({ pageId, currentBody, onClose, onRestored }: Histo
 
       <div style={{ padding: "0 8px", maxHeight: "38%", overflow: "auto", display: "flex", flexDirection: "column", gap: 1 }}>
         {items === null && !failed && <span className="sk" style={{ height: 16, margin: "8px", display: "block" }} aria-label="Carregando as versões" />}
-        {failed && <span role="alert" style={{ padding: 12, fontSize: 13, color: "var(--danger)" }}>Não foi possível carregar o histórico.</span>}
-        {items?.length === 0 && <span style={{ padding: 12, fontSize: 13, color: "var(--text-2)" }}>Ainda não há versões. Elas são guardadas a cada 10 minutos de edição.</span>}
+        {failed && <span role="alert" style={{ padding: 12, fontSize: "calc(13px * var(--fs, 1))", color: "var(--danger)" }}>Não foi possível carregar o histórico.</span>}
+        {items?.length === 0 && <span style={{ padding: 12, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Ainda não há versões. Elas são guardadas a cada 10 minutos de edição.</span>}
         {items?.map((v) => (
           <button key={v.id} className={`plain mrow${picked === v.id ? " sel" : ""}`} type="button" onClick={() => setPicked(v.id)} style={{ height: "auto", padding: "8px 10px", alignItems: "flex-start", flexDirection: "column", gap: 2, textAlign: "left" }}>
             <span style={{ fontWeight: 500 }}>{formatAgo(v.createdAt)}</span>
-            <span className="trunc" style={{ fontSize: 12, color: "var(--text-3)", maxWidth: "100%" }}>{v.excerpt || v.title || "Sem conteúdo"}</span>
+            <span className="trunc" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", maxWidth: "100%" }}>{v.excerpt || v.title || "Sem conteúdo"}</span>
           </button>
         ))}
       </div>
 
       <div style={{ flex: 1, minHeight: 0, borderTop: "1px solid var(--border)", marginTop: 8, display: "flex", flexDirection: "column" }}>
-        {picked === null && <p className="muted" style={{ padding: 16, fontSize: 13 }}>Escolha uma versão para comparar com a atual.</p>}
+        {picked === null && <p className="muted" style={{ padding: 16, fontSize: "calc(13px * var(--fs, 1))" }}>Escolha uma versão para comparar com a atual.</p>}
         {picked !== null && !version && !failed && <span className="sk" style={{ height: 80, margin: 16, display: "block" }} />}
         {version && (
           <>
@@ -105,16 +105,16 @@ export function HistoryPanel({ pageId, currentBody, onClose, onRestored }: Histo
                 <button className={`seg-b${view === "diff" ? " on" : ""}`} type="button" role="tab" aria-selected={view === "diff"} onClick={() => setView("diff")}>Diferenças</button>
                 <button className={`seg-b${view === "full" ? " on" : ""}`} type="button" role="tab" aria-selected={view === "full"} onClick={() => setView("full")}>Versão</button>
               </div>
-              <span style={{ fontSize: 12, color: "var(--text-3)", marginLeft: "auto" }}>{view === "diff" ? (changes === 0 ? "igual à atual" : `${changes} ${changes === 1 ? "mudança" : "mudanças"}`) : ""}</span>
+              <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", marginLeft: "auto" }}>{view === "diff" ? (changes === 0 ? "igual à atual" : `${changes} ${changes === 1 ? "mudança" : "mudanças"}`) : ""}</span>
             </div>
-            <div style={{ flex: 1, overflow: "auto", padding: "0 16px 16px", fontSize: 14, lineHeight: "22px" }}>
+            <div style={{ flex: 1, overflow: "auto", padding: "0 16px 16px", fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(22px * var(--fs, 1))" }}>
               {view === "diff" ? (
                 <div className="col" style={{ gap: 4 }}>
                   {diff.length === 0 && <span className="muted">Sem conteúdo para comparar.</span>}
                   {diff.map((d, i) => (
                     <div key={i} className={d.type === "add" ? "diff-add" : d.type === "del" ? "diff-del" : undefined} style={{ overflowWrap: "anywhere" }}>
-                      {d.type === "add" && <span className="badge ok" style={{ height: 16, marginRight: 6, fontSize: 10 }}>atual</span>}
-                      {d.type === "del" && <span className="badge bad" style={{ height: 16, marginRight: 6, fontSize: 10, textDecoration: "none" }}>nesta versão</span>}
+                      {d.type === "add" && <span className="badge ok" style={{ height: 16, marginRight: 6, fontSize: "calc(10px * var(--fs, 1))" }}>atual</span>}
+                      {d.type === "del" && <span className="badge bad" style={{ height: 16, marginRight: 6, fontSize: "calc(10px * var(--fs, 1))", textDecoration: "none" }}>nesta versão</span>}
                       {d.text}
                     </div>
                   ))}
@@ -124,9 +124,9 @@ export function HistoryPanel({ pageId, currentBody, onClose, onRestored }: Histo
               )}
             </div>
             <div style={{ padding: 12, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 6 }}>
-              {restoreFailed && <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>Não foi possível restaurar.</span>}
+              {restoreFailed && <span role="alert" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--danger)" }}>Não foi possível restaurar.</span>}
               <button className="btn btn-pri" type="button" disabled={busy} onClick={() => void restore()}>Restaurar esta versão</button>
-              <span style={{ fontSize: 12, color: "var(--text-3)" }}>O conteúdo de agora fica guardado como uma versão.</span>
+              <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>O conteúdo de agora fica guardado como uma versão.</span>
             </div>
           </>
         )}

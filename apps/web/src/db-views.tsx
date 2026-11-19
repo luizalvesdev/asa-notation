@@ -82,7 +82,7 @@ export function KanbanView({ rows, schema, view, onOpen, onProps, onAdd }: ViewP
   const prop = schema.properties.find((p) => p.id === view.groupBy);
   const dragging = useRef<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
-  if (!prop) return <p className="muted" style={{ fontSize: 14 }}>Escolha por qual propriedade agrupar (Seleção ou Status) para ver o Kanban.</p>;
+  if (!prop) return <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Escolha por qual propriedade agrupar (Seleção ou Status) para ver o Kanban.</p>;
 
   const groups = groupRows(rows, prop);
   const shown = cardProps(schema, view, [prop.id]);
@@ -104,7 +104,7 @@ export function KanbanView({ rows, schema, view, onOpen, onProps, onAdd }: ViewP
           onDrop={(e) => { e.preventDefault(); move(g.key); }}
           style={{ flex: "0 0 270px", background: "var(--bg-2)", borderRadius: 12, padding: 8, display: "flex", flexDirection: "column", gap: 6, boxShadow: over === g.key ? "inset 0 0 0 2px var(--accent)" : "none", transition: "box-shadow var(--rapido) var(--padrao)" }}
         >
-          <div className="row" style={{ padding: "2px 4px 6px", fontSize: 13, gap: 6 }}>
+          <div className="row" style={{ padding: "2px 4px 6px", fontSize: "calc(13px * var(--fs, 1))", gap: 6 }}>
             <b style={{ fontWeight: 600 }}>{g.label}</b>
             <span style={{ color: "var(--text-3)" }}>{g.rows.length}</span>
           </div>
@@ -142,7 +142,7 @@ export function ListView({ rows, schema, view, onOpen, onAdd }: ViewProps) {
           ))}
         </div>
       ))}
-      {rows.length === 0 && <p className="muted" style={{ fontSize: 14, padding: "4px 10px" }}>Nenhuma linha.</p>}
+      {rows.length === 0 && <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", padding: "4px 10px" }}>Nenhuma linha.</p>}
       <button className="plain task add-task" type="button" onClick={() => onAdd(group ? { [group.id]: null } : undefined)}><Icon name="plus" />Nova linha</button>
     </div>
   );
@@ -158,7 +158,7 @@ export function CalendarView({ rows, schema, view, onOpen, onAdd, weekStart = 1 
     const [y, m] = today.split("-").map(Number) as [number, number];
     return { year: y, month: m - 1 };
   });
-  if (!prop) return <p className="muted" style={{ fontSize: 14 }}>Escolha qual propriedade de data posiciona as linhas para ver o calendário.</p>;
+  if (!prop) return <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Escolha qual propriedade de data posiciona as linhas para ver o calendário.</p>;
 
   const byDate = rowsByDate(rows, prop.id);
   const weeks = calendarWeeks(cursor.year, cursor.month, weekStart);
@@ -172,7 +172,7 @@ export function CalendarView({ rows, schema, view, onOpen, onAdd, weekStart = 1 
   return (
     <div className="col" style={{ gap: 8 }}>
       <div className="row" style={{ gap: 6 }}>
-        <b style={{ fontWeight: 600, fontSize: 15, textTransform: "capitalize" }}>{MONTHS[cursor.month]} de {cursor.year}</b>
+        <b style={{ fontWeight: 600, fontSize: "calc(15px * var(--fs, 1))", textTransform: "capitalize" }}>{MONTHS[cursor.month]} de {cursor.year}</b>
         <span className="row" style={{ marginLeft: "auto", gap: 2 }}>
           <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Mês anterior" onClick={() => step(-1)}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
           <button className="btn btn-sec btn-sm" type="button" onClick={() => { const [y, m] = today.split("-").map(Number) as [number, number]; setCursor({ year: y, month: m - 1 }); }}>Hoje</button>
@@ -181,24 +181,24 @@ export function CalendarView({ rows, schema, view, onOpen, onAdd, weekStart = 1 
       </div>
       <div style={{ overflowX: "auto" }}>
         <div role="grid" aria-label="Calendário" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(110px, 1fr))", gap: 1, background: "var(--border)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", minWidth: 770 }}>
-          {names.map((n) => <div key={n} role="columnheader" style={{ background: "var(--bg-2)", padding: "6px 8px", fontSize: 12, color: "var(--text-2)" }}>{n}</div>)}
+          {names.map((n) => <div key={n} role="columnheader" style={{ background: "var(--bg-2)", padding: "6px 8px", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>{n}</div>)}
           {weeks.flat().map((date) => {
             const inMonth = date.startsWith(isoDate(cursor.year, cursor.month, 1).slice(0, 7));
             const items = byDate.get(date) ?? [];
             return (
               <div key={date} role="gridcell" className="cal-day" style={{ background: date === today ? "var(--accent-soft)" : "var(--surface)", minHeight: 96, padding: 6, display: "flex", flexDirection: "column", gap: 3, opacity: inMonth ? 1 : 0.5 }}>
-                <span className="row" style={{ fontSize: 12, color: "var(--text-2)" }}>
+                <span className="row" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>
                   {Number(date.slice(8))}
                   <button className="btn btn-fan btn-ico btn-sm row-open" type="button" aria-label={`Nova linha em ${date.split("-").reverse().join("/")}`} onClick={() => onAdd({ [prop.id]: date })} style={{ marginLeft: "auto", width: 20, height: 20 }}><Icon name="plus" /></button>
                 </span>
                 {items.slice(0, 3).map((r) => <button key={r.id} className="plain badge ac trunc" type="button" onClick={() => onOpen(r.id)} style={{ cursor: "pointer", justifyContent: "flex-start", maxWidth: "100%" }}>{displayTitle(r.title)}</button>)}
-                {items.length > 3 && <span style={{ fontSize: 11, color: "var(--text-3)" }}>+{items.length - 3}</span>}
+                {items.length > 3 && <span style={{ fontSize: "calc(11px * var(--fs, 1))", color: "var(--text-3)" }}>+{items.length - 3}</span>}
               </div>
             );
           })}
         </div>
       </div>
-      {undated > 0 && <span style={{ fontSize: 12, color: "var(--text-3)" }}>{undated} {undated === 1 ? "linha sem data não aparece" : "linhas sem data não aparecem"} no calendário.</span>}
+      {undated > 0 && <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{undated} {undated === 1 ? "linha sem data não aparece" : "linhas sem data não aparecem"} no calendário.</span>}
     </div>
   );
 }

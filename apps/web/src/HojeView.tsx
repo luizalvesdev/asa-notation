@@ -51,8 +51,8 @@ export function HojeView({ onToast }: HojeViewProps) {
   return (
     <div style={{ padding: "40px 40px 120px", maxWidth: 780 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>Hoje</h1>
-        <span className="muted" style={{ fontSize: 15, paddingBottom: 4 }}>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Hoje</h1>
+        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>
           {formatHeading(today)}
         </span>
       </div>
@@ -68,7 +68,7 @@ export function HojeView({ onToast }: HojeViewProps) {
 
       {tasks.status === "erro" && (
         <div className="card" role="alert" style={{ marginTop: 28, padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar as tarefas.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as tarefas.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={tasks.reload} style={{ marginLeft: "auto" }}>
             Tentar de novo
           </button>
@@ -81,7 +81,7 @@ export function HojeView({ onToast }: HojeViewProps) {
             <div className="bar grow1">
               <span style={{ width: `${stats.pct}%`, transition: "width var(--medio) var(--padrao)", animation: "none", background: stats.total > 0 && stats.pct === 100 ? "var(--success)" : undefined }} />
             </div>
-            <span style={{ fontSize: 13, color: "var(--text-2)", whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", whiteSpace: "nowrap" }}>
               {stats.done} de {stats.total} concluídas
             </span>
           </div>
@@ -104,7 +104,7 @@ export function HojeView({ onToast }: HojeViewProps) {
             Hoje <span className="n">{todayItems.length}</span>
           </div>
           {todayItems.length === 0 && list.late.length === 0 && (
-            <p className="muted" style={{ fontSize: 14, padding: "4px 10px 8px" }}>
+            <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", padding: "4px 10px 8px" }}>
               Dia livre. Adicione uma tarefa ou puxe algo de Sem prazo.
             </p>
           )}

@@ -32,14 +32,14 @@ export function NewMenu({ onCreate }: NewMenuProps) {
               <Icon name="table" />
               <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                 <span>Database</span>
-                <span className="subtle" style={{ fontSize: 11 }}>Tabela, kanban, lista e calendário</span>
+                <span className="subtle" style={{ fontSize: "calc(11px * var(--fs, 1))" }}>Tabela, kanban, lista e calendário</span>
               </span>
             </button>
             <button className="plain mrow" type="button" role="menuitem" onClick={() => pick({ kind: "canvas", title: "Quadro", icon: "🎨" })}>
               <Icon name="canvas" />
               <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                 <span>Quadro</span>
-                <span className="subtle" style={{ fontSize: 11 }}>Desenho livre com formas e texto</span>
+                <span className="subtle" style={{ fontSize: "calc(11px * var(--fs, 1))" }}>Desenho livre com formas e texto</span>
               </span>
             </button>
             <div className="mgroup">Modelos</div>
@@ -48,7 +48,7 @@ export function NewMenu({ onCreate }: NewMenuProps) {
                 <span className="page-emoji" aria-hidden="true">{t.icon}</span>
                 <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                   <span>{t.title}</span>
-                  <span className="subtle" style={{ fontSize: 11 }}>{t.description}</span>
+                  <span className="subtle" style={{ fontSize: "calc(11px * var(--fs, 1))" }}>{t.description}</span>
                 </span>
               </button>
             ))}

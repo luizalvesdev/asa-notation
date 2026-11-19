@@ -68,10 +68,10 @@ export function Login({ dark, onAuthenticated, onToggleTheme }: LoginProps) {
             >
               <Icon name="feather" large />
             </span>
-            <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 34, lineHeight: "40px", letterSpacing: "-.02em" }}>
+            <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(34px * var(--fs, 1))", lineHeight: "calc(40px * var(--fs, 1))", letterSpacing: "-.02em" }}>
               Bem-vindo de volta
             </h1>
-            <p className="muted" style={{ fontSize: 14 }}>
+            <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>
               Seu caderno está protegido por senha.
             </p>
           </div>
@@ -93,7 +93,7 @@ export function Login({ dark, onAuthenticated, onToggleTheme }: LoginProps) {
                 aria-invalid={invalid}
                 aria-describedby="pw-msg"
                 disabled={busy}
-                style={{ height: 44, fontSize: 15, paddingRight: 76 }}
+                style={{ height: 44, fontSize: "calc(15px * var(--fs, 1))", paddingRight: 76 }}
               />
               <button
                 className="btn btn-fan btn-sm"
@@ -114,7 +114,7 @@ export function Login({ dark, onAuthenticated, onToggleTheme }: LoginProps) {
             type="submit"
             aria-busy={busy}
             disabled={busy || locked || password.length === 0}
-            style={{ height: 44, fontSize: 15 }}
+            style={{ height: 44, fontSize: "calc(15px * var(--fs, 1))" }}
           >
             {busy ? "Entrando…" : "Entrar"}
           </button>

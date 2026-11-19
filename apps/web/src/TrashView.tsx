@@ -49,8 +49,8 @@ export function TrashView({ onRestored }: TrashViewProps) {
 
   return (
     <div className="page" style={{ paddingTop: 40 }}>
-      <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 40, lineHeight: "44px", letterSpacing: "-.02em" }}>Lixeira</h1>
-      <p className="muted" style={{ marginTop: 8, fontSize: 14, lineHeight: "22px" }}>
+      <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Lixeira</h1>
+      <p className="muted" style={{ marginTop: 8, fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(22px * var(--fs, 1))" }}>
         Páginas apagadas ficam aqui. Restaurar traz de volta a página e tudo que estava dentro dela.
       </p>
 
@@ -74,7 +74,7 @@ export function TrashView({ onRestored }: TrashViewProps) {
           <div className="col" style={{ gap: 4, padding: 24, alignItems: "center", textAlign: "center" }}>
             <Icon name="trash" large />
             <b style={{ fontWeight: 600 }}>A lixeira está vazia</b>
-            <span className="muted" style={{ fontSize: 13 }}>Quando você excluir uma página, ela aparece aqui.</span>
+            <span className="muted" style={{ fontSize: "calc(13px * var(--fs, 1))" }}>Quando você excluir uma página, ela aparece aqui.</span>
           </div>
         )}
         {state.status === "pronto" &&
@@ -83,12 +83,12 @@ export function TrashView({ onRestored }: TrashViewProps) {
               {item.icon ? <span className="page-emoji" aria-hidden="true">{item.icon}</span> : <Icon name="doc" />}
               <span className="col grow1" style={{ gap: 0 }}>
                 <span className="trunc">{displayTitle(item.title)}</span>
-                <span className="subtle trunc" style={{ fontSize: 12 }}>
+                <span className="subtle trunc" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>
                   Apagada {formatDeleted(item.deletedAt, Date.now())}
                   {item.parentTitle !== null && ` · estava em ${displayTitle(item.parentTitle)}`}
                 </span>
               </span>
-              {failed === item.id && <span style={{ color: "var(--danger)", fontSize: 12 }}>Falhou</span>}
+              {failed === item.id && <span style={{ color: "var(--danger)", fontSize: "calc(12px * var(--fs, 1))" }}>Falhou</span>}
               <button className="btn btn-sec btn-sm" type="button" disabled={busy === item.id} aria-busy={busy === item.id} onClick={() => void restore(item)}>
                 Restaurar
               </button>

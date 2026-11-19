@@ -59,7 +59,7 @@ function MoveMenu({ nodes, onPick, onClose }: { nodes: TreeNode[]; onPick: (pare
   return (
     <div ref={ref} className="menu on" role="menu" style={{ position: "absolute", bottom: 38, right: 0, width: 260, color: "var(--text)", zIndex: 40 }}>
       <div className="mgroup">Mover para</div>
-      <input className="add-task-input" autoFocus value={q} placeholder="Buscar página…" aria-label="Buscar página" onChange={(e) => setQ(e.target.value)} style={{ margin: "0 8px 6px", width: "calc(100% - 16px)", height: 30, fontSize: 13 }} />
+      <input className="add-task-input" autoFocus value={q} placeholder="Buscar página…" aria-label="Buscar página" onChange={(e) => setQ(e.target.value)} style={{ margin: "0 8px 6px", width: "calc(100% - 16px)", height: 30, fontSize: "calc(13px * var(--fs, 1))" }} />
       {q.trim() === "" && (
         <button className="plain mrow" type="button" role="menuitem" onClick={() => onPick(null)}>
           Nova página na raiz
@@ -71,7 +71,7 @@ function MoveMenu({ nodes, onPick, onClose }: { nodes: TreeNode[]; onPick: (pare
           <span className="trunc">{displayTitle(n.title)}</span>
         </button>
       ))}
-      {shown.length === 0 && q.trim() !== "" && <div style={{ padding: "6px 12px", fontSize: 12, color: "var(--text-3)" }}>Nenhuma página.</div>}
+      {shown.length === 0 && q.trim() !== "" && <div style={{ padding: "6px 12px", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>Nenhuma página.</div>}
     </div>
   );
 }
@@ -162,8 +162,8 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
   return (
     <div style={{ maxWidth: 880, margin: "0 auto", padding: "36px 32px 140px", display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="row" style={{ flexWrap: "wrap", gap: 10, alignItems: "flex-end" }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: 36, lineHeight: "42px", letterSpacing: "-.02em" }}>Inbox</h1>
-        <span className="muted" style={{ fontSize: 14, paddingBottom: 4 }}>
+        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Inbox</h1>
+        <span className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", paddingBottom: 4 }}>
           {inbox.counts.total + pending.length} {inbox.counts.total + pending.length === 1 ? "item" : "itens"}
           {inbox.counts.none > 0 ? ` · ${inbox.counts.none} sem tipo` : ""}
         </span>
@@ -185,10 +185,10 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
       <div key={p.id} className="card" style={{ display: "flex", gap: 12, padding: "12px 14px" }}>
         <div className="col grow1" style={{ gap: 8, minWidth: 0 }}>
           <div className="row" style={{ gap: 8 }}>
-            <span className="grow1" style={{ fontWeight: 500, fontSize: 14, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            <span className="grow1" style={{ fontWeight: 500, fontSize: "calc(14px * var(--fs, 1))", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
               {p.text}
             </span>
-            <span style={{ fontSize: 12, color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(p.createdAt)}</span>
+            <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(p.createdAt)}</span>
           </div>
           <div className="row" style={{ gap: 8 }}>
             <span className="badge warn">Na fila · envia ao reconectar</span>
@@ -211,7 +211,7 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
       )}
       {inbox.status === "erro" && (
         <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 14 }}>Não foi possível carregar a Inbox.</span>
+          <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar a Inbox.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={inbox.reload} style={{ marginLeft: "auto" }}>
             Tentar de novo
           </button>
@@ -234,7 +234,7 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
             />
           ))}
           {inbox.items.length === 0 && pending.length === 0 && (
-            <p className="muted enter" style={{ fontSize: 14, padding: "12px 4px" }}>
+            <p className="muted enter" style={{ fontSize: "calc(14px * var(--fs, 1))", padding: "12px 4px" }}>
               {filter === "all" ? "Inbox vazia. Capture algo com ⌘⇧K, de qualquer tela." : "Nada neste filtro."}
             </p>
           )}
@@ -242,7 +242,7 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
       )}
 
       <div className={`bulk${chosen.length > 0 ? " on" : ""}`} role="toolbar" aria-label="Ações em lote" aria-hidden={chosen.length === 0} style={{ position: "fixed", left: "50%", bottom: 32, transform: "translateX(-50%)", width: "min(600px, calc(100% - 24px))", zIndex: 30, display: chosen.length > 0 ? "block" : "none" }}>
-        <div className="row" style={{ gap: 6, padding: "6px 6px 6px 14px", borderRadius: 12, background: "var(--text)", color: "var(--bg)", boxShadow: "var(--e3)", fontSize: 13 }}>
+        <div className="row" style={{ gap: 6, padding: "6px 6px 6px 14px", borderRadius: 12, background: "var(--text)", color: "var(--bg)", boxShadow: "var(--e3)", fontSize: "calc(13px * var(--fs, 1))" }}>
           <b style={{ fontWeight: 600 }}>{chosen.length} {chosen.length === 1 ? "selecionada" : "selecionadas"}</b>
           <span style={{ position: "relative", marginLeft: "auto" }}>
             <button className="btn btn-sm" type="button" style={{ color: "inherit" }} aria-expanded={bulkMenu === "kind"} onClick={() => setBulkMenu(bulkMenu === "kind" ? null : "kind")}>
@@ -291,10 +291,10 @@ function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMe
       </button>
       <div className="col grow1" style={{ gap: 8, minWidth: 0 }}>
         <div className="row" style={{ gap: 8, alignItems: "flex-start" }}>
-          <span className="grow1" style={{ fontWeight: 500, fontSize: 14, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+          <span className="grow1" style={{ fontWeight: 500, fontSize: "calc(14px * var(--fs, 1))", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
             {item.text}
           </span>
-          <span style={{ fontSize: 12, color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(item.createdAt)}</span>
+          <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(item.createdAt)}</span>
           <button className="btn btn-fan btn-ico btn-sm row-action" type="button" aria-label="Arquivar" onClick={onArchive}>
             <Icon name="close" />
           </button>
