@@ -11,6 +11,7 @@ import type { Candidate, CardKind, Deck, StudyCard } from "./study-types";
 import type { Toast } from "./toast";
 import { useStudyOverview } from "./use-study";
 import { ContextBox } from "./ContextBox";
+import { Reveal } from "./Reveal";
 
 interface StudyViewProps {
   nodes: TreeNode[];
@@ -390,8 +391,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
               <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-3)", marginLeft: 8 }}>ligadas às metas</span>
               <button className="btn btn-fan btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={() => setCreating(true)}>Nova trilha</button>
             </div>
-            {creating && (
-              <NewDeckForm
+            <Reveal show={creating}><NewDeckForm
                 goals={goals}
                 onCancel={() => setCreating(false)}
                 onCreate={async (title, goalId) => {
@@ -405,8 +405,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
                     return false;
                   }
                 }}
-              />
-            )}
+              /></Reveal>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 12 }}>
               {decks.map((d) => (
                 <button key={d.id} className="plain card" type="button" aria-pressed={activeId === d.id} onClick={() => setSelected(d.id)} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, textAlign: "left", cursor: "pointer", boxShadow: activeId === d.id ? "inset 0 0 0 2px var(--accent)" : "none" }}>

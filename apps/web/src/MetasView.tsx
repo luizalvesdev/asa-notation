@@ -9,6 +9,7 @@ import type { TaskItem } from "./tasks-types";
 import type { Toast } from "./toast";
 import { useGoalDetail, useGoals } from "./use-goals";
 import { useContextItems } from "./use-context-items";
+import { Reveal } from "./Reveal";
 
 interface MetasViewProps {
   onToast: (toast: Toast) => void;
@@ -296,8 +297,7 @@ export function MetasView({ onToast }: MetasViewProps) {
             </button>
           </div>
 
-          {creating && (
-            <NewGoalForm
+          <Reveal show={creating}><NewGoalForm
               onCancel={() => setCreating(false)}
               onCreate={async (title, dueDate) => {
                 const goal = await goals.create({ title, dueDate });
@@ -307,8 +307,7 @@ export function MetasView({ onToast }: MetasViewProps) {
                 setPicked(goal.id);
                 return true;
               }}
-            />
-          )}
+            /></Reveal>
 
           {goals.status === "carregando" && (
             <div className="col" style={{ gap: 8 }} aria-busy="true" aria-label="Carregando as metas">

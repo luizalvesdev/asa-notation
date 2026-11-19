@@ -15,6 +15,7 @@ import { SharePopover } from "./SharePopover";
 import { Icon } from "./icons";
 import type { Page, TreeNode } from "./pages-types";
 import { Presence } from "./Presence";
+import { Reveal } from "./Reveal";
 
 interface PageViewProps {
   pageId: string;
@@ -219,8 +220,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
         </button>
       </div>
 
-      {conflict && (
-        <div className="conflict" role="alert">
+      <Reveal show={!!conflict}>{conflict && (<div className="conflict" role="alert">
           <span>Esta página foi alterada em outro lugar.</span>
           <button className="btn btn-fan btn-sm" type="button" onClick={keepMine}>
             Manter a minha versão
@@ -228,8 +228,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
           <button className="btn btn-fan btn-sm" type="button" onClick={reloadFromServer}>
             Carregar a versão salva
           </button>
-        </div>
-      )}
+        </div>)}</Reveal>
 
       <input
         className="p-title"

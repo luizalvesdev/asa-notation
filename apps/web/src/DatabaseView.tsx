@@ -106,14 +106,12 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
           <SortMenu schema={db.schema} view={view} onSchema={db.saveSchema} />
           <PropertiesMenu schema={db.schema} view={view} onSchema={db.saveSchema} databases={databases} />
           <button ref={renameAnchor} className="btn btn-fan btn-sm" type="button" aria-expanded={renaming} onClick={() => setRenaming((o) => !o)}>Esta view</button>
-          {renaming && (
-            <Popover anchor={renameAnchor} onClose={() => setRenaming(false)} width={260}>
+          <Presence show={renaming}>{renaming && (<Popover anchor={renameAnchor} onClose={() => setRenaming(false)} width={260}>
               <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                 <input className="inp" aria-label="Nome da view" value={view.name} onChange={(e) => db.saveSchema({ ...db.schema, views: db.schema.views.map((v) => (v.id === view.id ? { ...v, name: e.target.value } : v)) })} />
                 <button className="btn btn-fan btn-sm" type="button" disabled={db.schema.views.length <= 1} style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => { db.saveSchema({ ...db.schema, views: db.schema.views.filter((v) => v.id !== view.id) }); setViewId(null); setRenaming(false); }}>Apagar view</button>
               </div>
-            </Popover>
-          )}
+            </Popover>)}</Presence>
           <button className="btn btn-pri btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={() => void add()}><Icon name="plus" />Nova linha</button>
         </div>
       )}
@@ -135,8 +133,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
         </div>
       )}
 
-      {peek && (
-        <aside className="side-panel" aria-label="Linha" style={{ width: "min(640px, 100%)" }}>
+      <Presence show={!!peek}>{peek && (<aside className="side-panel" aria-label="Linha" style={{ width: "min(640px, 100%)" }}>
           <div className="row" style={{ padding: "10px 12px", gap: 6, borderBottom: "1px solid var(--border)" }}>
             <a className="btn btn-fan btn-sm" href={`#/p/${peek}`}>Abrir como página</a>
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Fechar" onClick={() => setPeek(null)} style={{ marginLeft: "auto" }}><Icon name="close" /></button>
@@ -144,8 +141,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
           <div style={{ flex: 1, overflow: "auto" }}>
             <PageView key={peek} pageId={peek} nodes={nodes} onToast={onToast} onSaved={(saved) => db.applySaved(saved)} onDelete={() => void remove(peek)} />
           </div>
-        </aside>
-      )}
+        </aside>)}</Presence>
     </div>
   );
 }

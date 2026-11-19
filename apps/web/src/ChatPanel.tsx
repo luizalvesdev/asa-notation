@@ -6,6 +6,7 @@ import { Icon } from "./icons";
 import { pageHash, routeHash } from "./nav";
 import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
+import { Reveal } from "./Reveal";
 
 interface ChatPanelProps {
   /** Falso enquanto o painel está escondido (ele continua montado): não captura Esc nem foco. */
@@ -336,12 +337,10 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
               </div>
             </div>
           )}
-          {error && (
-            <div className="draft-ok enter" role="alert" style={{ background: "var(--warning-soft)", borderColor: "transparent", color: "var(--warning)", flexWrap: "wrap" }}>
+          <Reveal show={!!error}>{error && (<div className="draft-ok enter" role="alert" style={{ background: "var(--warning-soft)", borderColor: "transparent", color: "var(--warning)", flexWrap: "wrap" }}>
               <span>{error.message}</span>
               {(error.kind === "no_key" || error.kind === "invalid_key") && <a className="btn btn-fan btn-sm" href={routeHash("configuracoes")} onClick={onClose} style={{ color: "inherit" }}>Configurações</a>}
-            </div>
-          )}
+            </div>)}</Reveal>
         </div>
       )}
 

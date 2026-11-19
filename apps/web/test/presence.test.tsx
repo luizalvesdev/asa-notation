@@ -35,3 +35,27 @@ describe("Presence", () => {
     act(() => root.unmount());
   });
 });
+
+describe("Reveal", () => {
+  it("abre crescendo, fecha encolhendo e só então sai da página", async () => {
+    vi.useFakeTimers();
+    const { Reveal, REVEAL_MS } = await import("../src/Reveal");
+    const box = document.createElement("div");
+    const root = createRoot(box);
+    const view = (show: boolean, text: string) => act(() => root.render(<Reveal show={show}><form>{text}</form></Reveal>));
+
+    view(false, "x");
+    expect(box.innerHTML).toBe("");
+    view(true, "nova trilha");
+    expect(box.querySelector(".reveal")?.className).toBe("reveal");
+    act(() => vi.advanceTimersByTime(REVEAL_MS + 50));
+    expect(box.querySelector(".reveal")?.className).toBe("reveal on done");
+
+    view(false, "mudou");
+    expect(box.querySelector(".reveal")?.className).toBe("reveal");
+    expect(box.querySelector("form")?.textContent).toBe("nova trilha");
+    act(() => vi.advanceTimersByTime(REVEAL_MS + 1));
+    expect(box.innerHTML).toBe("");
+    act(() => root.unmount());
+  });
+});

@@ -120,6 +120,11 @@ textarea.inp{height:auto;padding:8px 10px;resize:none}
 .menu{animation:menuin var(--rapido) var(--entrada) both;transform-origin:top left}
 .presence.leaving>*{animation:fadeout var(--rapido) var(--saida) both;pointer-events:none}
 .presence.leaving .palette,.presence.leaving .menu,.presence.leaving .checkin-box,.presence.leaving .modal{animation:fall var(--rapido) var(--saida) both}
+.reveal{display:grid;grid-template-rows:0fr;opacity:0;transform:translateY(-4px);transition:grid-template-rows var(--medio) var(--padrao),opacity var(--medio) var(--padrao),transform var(--medio) var(--padrao)}
+.reveal.on{grid-template-rows:1fr;opacity:1;transform:none}
+.reveal-in{min-height:0;overflow:hidden}
+.reveal.done .reveal-in{overflow:visible}
+.reveal[aria-hidden]{pointer-events:none}
 @keyframes rise{from{opacity:0;transform:scale(.96) translateY(6px)}to{opacity:1;transform:none}}
 .grow{transform-origin:bottom;animation:grow var(--lento) var(--entrada) both}
 @keyframes grow{from{transform:scaleY(0)}to{transform:none}}

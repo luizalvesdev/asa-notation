@@ -5,6 +5,7 @@ import { buildImportPlan, type ImportPlan } from "./import-parse";
 import { nodesToImport, runImport, toggleSubtree, type ImportResult } from "./import-run";
 import { markdownToDoc } from "./markdown-to-doc";
 import { pageHash, routeHash } from "./nav";
+import { Reveal } from "./Reveal";
 
 type Source = "notion" | "vault";
 
@@ -162,16 +163,14 @@ export function ImportView({ onImported }: { onImported: () => void }) {
               <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Progresso da importação"><span style={{ width: `${pct}%`, animation: "none", transition: "width var(--medio) var(--padrao)" }} /></div>
               <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{progress.done} de {progress.total}</span>
               {error && <span role="alert" style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--danger)" }}>{error}</span>}
-              {result && (
-                <div className="draft-ok enter">
+              <Reveal show={!!result}>{result && (<div className="draft-ok enter">
                   <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "var(--success)" }}><path d="M5 12.5l4.5 4.5L19 7" /></svg>
                   {result.created} {result.created === 1 ? "página importada" : "páginas importadas"}{result.failed.length > 0 ? `, ${result.failed.length} com erro` : ""}.
                   {result.rootId && <a className="btn btn-sec btn-sm" href={pageHash(result.rootId)} style={{ marginLeft: "auto" }}>Abrir “Importado”</a>}
-                </div>
-              )}
-              {result && result.failed.length > 0 && (
+                </div>)}</Reveal>
+              <Reveal show={!!result}>{result && (result.failed.length > 0 && (
                 <ul style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--danger)", margin: 0, paddingLeft: 18 }}>{result.failed.slice(0, 20).map((f) => <li key={f.key}>{f.title}</li>)}</ul>
-              )}
+              ))}</Reveal>
             </div>
           )}
         </div>

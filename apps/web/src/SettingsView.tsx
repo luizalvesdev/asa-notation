@@ -13,6 +13,7 @@ import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
 import { loadReviewOnOpen, saveReviewOnOpen } from "./review-on-open";
 import { loadTypedAnswers, saveTypedAnswers } from "./typed-answer";
+import { Reveal } from "./Reveal";
 
 interface SettingsViewProps {
   preference: Preference;
@@ -295,16 +296,14 @@ function Tokens({ onToast }: { onToast: (t: Toast) => void }) {
   return (
     <div className="col enter" style={{ gap: 14 }}>
       <p className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Tokens para scripts e integrações acessarem suas páginas pela API (cabeçalho <code>Authorization: Bearer …</code>). Token não altera senha, configurações nem outros tokens.</p>
-      {secret && (
-        <div className="draft-ok enter" role="status" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+      <Reveal show={!!secret}>{secret && (<div className="draft-ok enter" role="status" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
           <b style={{ fontWeight: 600 }}>Token “{secret.name}” criado. Copie agora: ele não aparece de novo.</b>
           <div className="row" style={{ gap: 8 }}>
             <input className="inp mono" readOnly value={secret.value} aria-label="Token novo" onFocus={(e) => e.currentTarget.select()} />
             <button className="btn btn-sec btn-sm" type="button" onClick={() => void navigator.clipboard.writeText(secret.value).then(() => setCopied(true)).catch(() => onToast({ text: "Não foi possível copiar. Selecione o texto." }))}>{copied ? "Copiado" : "Copiar"}</button>
             <button className="btn btn-fan btn-sm" type="button" onClick={() => setSecret(null)}>Fechar</button>
           </div>
-        </div>
-      )}
+        </div>)}</Reveal>
       <div className="dgrid card tokens" role="table" aria-label="Tokens" style={{ ["--cols" as string]: "minmax(0, 1.3fr) 140px 130px 150px", overflow: "hidden" }}>
         <div className="drow hd" role="row"><span role="columnheader">Nome</span><span role="columnheader">Escopo</span><span role="columnheader">Último uso</span><span role="columnheader" /></div>
         {tokens === null && <div className="drow" role="row"><span className="sk" style={{ height: 14, margin: "0 10px" }} /></div>}
