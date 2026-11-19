@@ -335,7 +335,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
   const newCount = overview?.newAvailable ?? 0;
 
   return (
-    <div style={{ padding: "36px 40px 120px", maxWidth: 1120, display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ padding: "36px 40px 120px", display: "flex", flexDirection: "column", gap: 24 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
         <h1 style={H1}>Estudo</h1>
         <a className="btn btn-fan btn-sm" href={routeHash("estudo-stats")} style={{ marginLeft: "auto" }}>Estatísticas</a>

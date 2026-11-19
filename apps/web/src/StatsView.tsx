@@ -38,7 +38,7 @@ export function StatsView() {
 
   const today = localDate();
   return (
-    <div style={{ padding: "36px 40px 120px", maxWidth: 1120, display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ padding: "36px 40px 120px", display: "flex", flexDirection: "column", gap: 24 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Estatísticas</h1>
         <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>últimos {DAYS} dias</span>
