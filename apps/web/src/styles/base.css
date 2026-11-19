@@ -121,6 +121,9 @@ textarea.inp{height:auto;padding:8px 10px;resize:none}
 @keyframes menuin{from{opacity:0;transform:scale(.97) translateY(-2px)}to{opacity:1;transform:none}}
 .menu{animation:menuin var(--rapido) var(--entrada) both;transform-origin:top left}
 .presence.leaving>*{animation:fadeout var(--rapido) var(--saida) both;pointer-events:none}
+/* Captura: sai pela própria transição do .float (sem esmaecer a camada inteira, que piscava). */
+.presence.leaving>.capture-layer{animation:none}
+.presence.leaving .float.on{opacity:0;transform:scale(.96) translateY(-4px);transition:opacity var(--rapido) var(--saida),transform var(--rapido) var(--saida)}
 @keyframes slideout{to{transform:translateX(100%)}}
 .presence.leaving .side-panel,.presence.leaving .peek{animation:slideout var(--rapido) var(--saida) both}
 .presence.leaving .palette,.presence.leaving .menu,.presence.leaving .checkin-box,.presence.leaving .modal{animation:fall var(--rapido) var(--saida) both}
