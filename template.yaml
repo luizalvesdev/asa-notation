@@ -43,8 +43,10 @@ Parameters:
 
   PushSchedule:
     Type: String
-    Default: rate(15 minutes)
-    Description: Com que frequência o servidor gera os check-ins vencidos e manda por Web Push. Cada execução acorda o Neon
+    # De 7:00 a 22:30 em Brasília (UTC-3), de meia em meia hora: o horário de silêncio padrão já cobre o resto.
+    # Cada execução acorda o Neon (~5 min ligado): ~16 h de compute por mês, contra ~60 h a cada 15 min o dia todo.
+    Default: cron(0,30 10-23,0-1 * * ? *)
+    Description: Quando o servidor gera os check-ins vencidos e manda por Web Push (expressão do EventBridge, em UTC)
 
 Conditions:
   UseBedrock: !Equals [!Ref AiProvider, bedrock]

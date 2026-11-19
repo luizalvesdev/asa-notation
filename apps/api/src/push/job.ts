@@ -61,7 +61,7 @@ export async function broadcast({ push, fetchImpl, subject, now }: PushDeps, mes
 const WINDOW_HOURS = 12;
 
 /**
- * Rodado pelo agendador (a cada 15 min): gera os check-ins que venceram e manda por push
+ * Rodado pelo agendador (`PushSchedule` no template): gera os check-ins que venceram e manda por push
  * os avisos ainda não lidos nem enviados. Sem navegador inscrito ou no horário de silêncio, não marca nada:
  * ficam para a próxima execução (dentro da janela de 12 h).
  */
