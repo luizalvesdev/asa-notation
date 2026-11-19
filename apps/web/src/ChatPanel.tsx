@@ -7,6 +7,7 @@ import { pageHash, routeHash } from "./nav";
 import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
 import { Reveal } from "./Reveal";
+import { askConfirm } from "./confirm";
 
 interface ChatPanelProps {
   /** Falso enquanto o painel está escondido (ele continua montado): não captura Esc nem foco. */
@@ -288,7 +289,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
                 <span className="trunc" style={{ fontWeight: 500, fontSize: "calc(13px * var(--fs, 1))", maxWidth: "100%" }}>{c.title || "Sem título"}</span>
                 <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{formatAgo(c.updatedAt)}</span>
               </button>
-              <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Apagar a conversa ${c.title}`} onClick={() => void chatApi.remove(c.id).then(() => { setHistories((h) => ({ ...h, [c.agent]: h[c.agent]?.filter((x) => x.id !== c.id) ?? null })); if (conversation?.id === c.id) newConversation(); }).catch(() => onToast({ text: "Não foi possível apagar." }))}><Icon name="trash" /></button>
+              <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Apagar a conversa ${c.title}`} onClick={() => void askConfirm({ title: `Apagar a conversa “${c.title || "Sem título"}”?` }).then((ok) => { if (ok) void chatApi.remove(c.id).then(() => { setHistories((h) => ({ ...h, [c.agent]: h[c.agent]?.filter((x) => x.id !== c.id) ?? null })); if (conversation?.id === c.id) newConversation(); }).catch(() => onToast({ text: "Não foi possível apagar." })); })}><Icon name="trash" /></button>
             </div>
           ))}
         </div>

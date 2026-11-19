@@ -10,6 +10,7 @@ import type { Toast } from "./toast";
 import { useDismiss } from "./use-dismiss";
 import { useInbox } from "./use-inbox";
 import { Presence } from "./Presence";
+import { askConfirm } from "./confirm";
 
 interface InboxViewProps {
   nodes: TreeNode[];
@@ -194,7 +195,7 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
           </div>
           <div className="row" style={{ gap: 8 }}>
             <span className="badge warn">Na fila · envia ao reconectar</span>
-            <button className="btn btn-fan btn-sm" type="button" style={{ height: 24, padding: "0 8px" }} onClick={() => removePending(p.id)}>
+            <button className="btn btn-fan btn-sm" type="button" style={{ height: 24, padding: "0 8px" }} onClick={() => void askConfirm({ title: "Descartar esta captura?", body: "Ela ainda não foi enviada: some daqui e não vai para a Inbox.", confirmLabel: "Descartar" }).then((ok) => { if (ok) void removePending(p.id); })}>
               Descartar
             </button>
           </div>

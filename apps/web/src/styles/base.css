@@ -34,6 +34,8 @@
 .btn-sec:hover{background:var(--hover)}
 .btn-fan:hover{background:var(--hover)}
 .btn-fan.on{background:var(--hover)}
+.fav-on .ico{fill:#F5B400;stroke:#F5B400}
+.ds.escuro .fav-on .ico{fill:#F7C948;stroke:#F7C948}
 .btn-ink{background:var(--text);color:var(--bg)}
 .btn-perigo,.ds .btn-perigo{background:var(--danger-soft);color:var(--danger)}
 .btn-perigo:hover{background:var(--danger);color:var(--bg)}
@@ -119,6 +121,8 @@ textarea.inp{height:auto;padding:8px 10px;resize:none}
 @keyframes menuin{from{opacity:0;transform:scale(.97) translateY(-2px)}to{opacity:1;transform:none}}
 .menu{animation:menuin var(--rapido) var(--entrada) both;transform-origin:top left}
 .presence.leaving>*{animation:fadeout var(--rapido) var(--saida) both;pointer-events:none}
+@keyframes slideout{to{transform:translateX(100%)}}
+.presence.leaving .side-panel,.presence.leaving .peek{animation:slideout var(--rapido) var(--saida) both}
 .presence.leaving .palette,.presence.leaving .menu,.presence.leaving .checkin-box,.presence.leaving .modal{animation:fall var(--rapido) var(--saida) both}
 .reveal{display:grid;grid-template-rows:0fr;opacity:0;transform:translateY(-4px);transition:grid-template-rows var(--medio) var(--padrao),opacity var(--medio) var(--padrao),transform var(--medio) var(--padrao)}
 .reveal.on{grid-template-rows:1fr;opacity:1;transform:none}
@@ -204,6 +208,9 @@ textarea.inp{height:auto;padding:8px 10px;resize:none}
 .drawer .side{width:100%}
 /* overlays */
 .checkin-scrim{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim);backdrop-filter:blur(2px);animation:enter var(--medio) var(--padrao) both}
+.checkin-box.confirm-box{max-width:420px;padding:22px 22px 18px;display:flex;flex-direction:column;gap:10px}
+.confirm-box h2{font:600 calc(17px * var(--fs, 1))/calc(24px * var(--fs, 1)) var(--sans)}
+.confirm-box p{font-size:calc(14px * var(--fs, 1));color:var(--text-2);margin-bottom:6px}
 .checkin-box{width:100%;max-width:720px;max-height:100%;overflow-y:auto;border-radius:20px;background:var(--bg);border:1px solid var(--border);box-shadow:var(--e2)}
 .overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;background:var(--scrim)}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--e3);overflow:hidden;width:640px;max-width:calc(100% - 32px)}

@@ -14,6 +14,7 @@ import type { Toast } from "./toast";
 import { loadReviewOnOpen, saveReviewOnOpen } from "./review-on-open";
 import { loadTypedAnswers, saveTypedAnswers } from "./typed-answer";
 import { Reveal } from "./Reveal";
+import { askConfirm } from "./confirm";
 
 interface SettingsViewProps {
   preference: Preference;
@@ -250,7 +251,7 @@ function Assistants({ onToast, settings, save: saveSettings }: { onToast: (t: To
           {confirm ? (
             <button className="btn btn-sec btn-sm" type="button" onClick={() => void aiApi.removeKey().then(() => { setStatus({ provider: "anthropic", configured: false, last4: null, model: status.model }); setConfirm(false); }).catch(() => onToast({ text: "Não foi possível remover." }))}>Confirmar remoção</button>
           ) : (
-            <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => setConfirm(true)}>Remover</button>
+            <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => void askConfirm({ title: "Remover a chave da Anthropic?", body: "Os assistentes param de funcionar até você adicionar outra.", confirmLabel: "Remover" }).then((ok) => { if (ok) void aiApi.removeKey().then(() => setStatus({ provider: "anthropic", configured: false, last4: null, model: status.model })).catch(() => onToast({ text: "Não foi possível remover." })); })}>Remover</button>
           )}
         </div>
       )}
@@ -317,7 +318,7 @@ function Tokens({ onToast }: { onToast: (t: Toast) => void }) {
               {confirm === t.id ? (
                 <button className="btn btn-sm btn-sec" type="button" onClick={() => void tokensApi.revoke(t.id).then(() => { setConfirm(null); load(); }).catch(() => onToast({ text: "Não foi possível revogar." }))}>Confirmar</button>
               ) : (
-                <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => setConfirm(t.id)}>Revogar</button>
+                <button className="btn btn-fan btn-sm" type="button" style={{ color: "var(--danger)" }} onClick={() => void askConfirm({ title: `Revogar o token “${t.name}”?`, body: "O que usa esse token (extensão, Claude, scripts) para de acessar o Asa na hora.", confirmLabel: "Revogar" }).then((ok) => { if (ok) void tokensApi.revoke(t.id).then(() => load()).catch(() => onToast({ text: "Não foi possível revogar." })); })}>Revogar</button>
               )}
             </span>
           </div>
@@ -485,7 +486,7 @@ function PushCard({ onToast }: { onToast: (t: Toast) => void }) {
             <div key={d.id} className="row" style={{ gap: 10, fontSize: "calc(13px * var(--fs, 1))", borderTop: "1px solid var(--border)", minHeight: 44 }}>
               <span className="grow1 trunc">{d.label || d.service}</span>
               <span className="spec">{d.lastOkAt ? `último aviso ${formatAgo(d.lastOkAt)}` : `inscrito ${formatAgo(d.createdAt)}`}</span>
-              <button className="btn btn-fan btn-sm" type="button" disabled={busy} aria-label={`Remover ${d.label || d.service}`} onClick={() => void run(async () => { await pushApi.remove(d.id); })}>Remover</button>
+              <button className="btn btn-fan btn-sm" type="button" disabled={busy} aria-label={`Remover ${d.label || d.service}`} onClick={() => void askConfirm({ title: `Parar os avisos em “${d.label || d.service}”?`, body: "Esse aparelho deixa de receber notificações até você ligar de novo nele.", confirmLabel: "Remover" }).then((ok) => { if (ok) void run(async () => { await pushApi.remove(d.id); }); })}>Remover</button>
             </div>
           ))}
         </div>

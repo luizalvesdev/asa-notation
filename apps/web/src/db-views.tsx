@@ -5,6 +5,7 @@ import type { Property, PropValue, Row, Schema, View } from "./db-types";
 import { Icon } from "./icons";
 import { displayTitle } from "./pages-tree";
 import { localDate } from "./tasks-dates";
+import { askConfirm } from "./confirm";
 
 export interface ViewProps {
   rows: Row[];
@@ -62,7 +63,7 @@ export function TableView({ rows, schema, view, onOpen, onProps, onRename, onRem
               </div>
             ))}
             <div role="cell" style={{ padding: 0, overflow: "visible" }}>
-              <button className="btn btn-fan btn-ico btn-sm row-open" type="button" aria-label={`Apagar ${displayTitle(row.title)}`} onClick={() => onRemove(row.id)}><Icon name="close" /></button>
+              <button className="btn btn-fan btn-ico btn-sm row-open" type="button" aria-label={`Apagar ${displayTitle(row.title)}`} onClick={() => void askConfirm({ title: `Excluir “${displayTitle(row.title)}”?`, body: "A linha vai para a lixeira: dá para restaurar depois." }).then((ok) => { if (ok) void onRemove(row.id); })}><Icon name="close" /></button>
             </div>
           </div>
         ))}

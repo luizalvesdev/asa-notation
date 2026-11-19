@@ -12,6 +12,7 @@ import { PageView } from "./PageView";
 import type { Toast } from "./toast";
 import { useDatabase } from "./use-database";
 import { Presence } from "./Presence";
+import { askConfirm } from "./confirm";
 
 interface DatabaseViewProps {
   page: Page;
@@ -109,7 +110,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
           <Presence show={renaming}>{renaming && (<Popover anchor={renameAnchor} onClose={() => setRenaming(false)} width={260}>
               <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                 <input className="inp" aria-label="Nome da view" value={view.name} onChange={(e) => db.saveSchema({ ...db.schema, views: db.schema.views.map((v) => (v.id === view.id ? { ...v, name: e.target.value } : v)) })} />
-                <button className="btn btn-fan btn-sm" type="button" disabled={db.schema.views.length <= 1} style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => { db.saveSchema({ ...db.schema, views: db.schema.views.filter((v) => v.id !== view.id) }); setViewId(null); setRenaming(false); }}>Apagar view</button>
+                <button className="btn btn-fan btn-sm" type="button" disabled={db.schema.views.length <= 1} style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => void askConfirm({ title: `Apagar a view “${view.name}”?`, body: "Os dados do banco não mudam, só esta forma de ver." }).then((ok) => { if (!ok) return; db.saveSchema({ ...db.schema, views: db.schema.views.filter((v) => v.id !== view.id) }); setViewId(null); setRenaming(false); })}>Apagar view</button>
               </div>
             </Popover>)}</Presence>
           <button className="btn btn-pri btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={() => void add()}><Icon name="plus" />Nova linha</button>

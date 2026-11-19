@@ -8,6 +8,7 @@ import { groupByDate } from "./tasks-logic";
 import type { TaskItem } from "./tasks-types";
 import { useTasks } from "./use-tasks";
 import { useContextItems } from "./use-context-items";
+import { askConfirm } from "./confirm";
 
 interface SemanaViewProps {
   onToast: (toast: Toast) => void;
@@ -133,11 +134,13 @@ export function SemanaView({ onToast }: SemanaViewProps) {
       drop(date);
     },
   });
-  const remove = (item: TaskItem) =>
+  const remove = async (item: TaskItem) => {
+    if (!(await askConfirm({ title: `Apagar “${item.title}”?`, body: item.recurrence ? "Apaga a tarefa recorrente inteira, com todas as repetições." : undefined }))) return;
     void tasks.remove(item).then((ok) => {
       if (!ok) return fail("Não foi possível apagar a tarefa.");
       onToast({ text: "Tarefa apagada", action: { label: "Desfazer", run: () => void tasks.restore(item.id) } });
     });
+  };
   const cardProps = {
     today,
     onToggle: toggle,

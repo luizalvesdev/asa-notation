@@ -10,6 +10,7 @@ import type { Toast } from "./toast";
 import { useGoalDetail, useGoals } from "./use-goals";
 import { useContextItems } from "./use-context-items";
 import { Reveal } from "./Reveal";
+import { askConfirm } from "./confirm";
 
 interface MetasViewProps {
   onToast: (toast: Toast) => void;
@@ -268,12 +269,14 @@ export function MetasView({ onToast }: MetasViewProps) {
 
   const ready = goals.status === "pronto";
 
-  const deleteGoal = (goal: Goal) =>
+  const deleteGoal = async (goal: Goal) => {
+    if (!(await askConfirm({ title: `Apagar a meta “${goal.title}”?`, body: "As tarefas ligadas a ela continuam, só deixam de estar na meta." }))) return;
     void goals.remove(goal.id).then((ok) => {
       if (!ok) return onToast({ text: "Não foi possível apagar a meta." });
       setPicked(null);
       onToast({ text: "Meta apagada", action: { label: "Desfazer", run: () => void goals.restore(goal.id) } });
     });
+  };
 
   return (
     <div className={`metas${explicit ? " has-sel" : ""}`} style={{ display: "flex", minHeight: "100%" }}>

@@ -59,3 +59,16 @@ describe("Reveal", () => {
     act(() => root.unmount());
   });
 });
+
+describe("confirmação de exclusão", () => {
+  it("sem modal montado confirma; com modal, espera a resposta", async () => {
+    const { askConfirm, setConfirmHost } = await import("../src/confirm");
+    expect(await askConfirm({ title: "x" })).toBe(true);
+    let pending: ((ok: boolean) => void) | null = null;
+    setConfirmHost((req) => (pending = req.resolve));
+    const answer = askConfirm({ title: "Apagar?" });
+    pending!(false);
+    expect(await answer).toBe(false);
+    setConfirmHost(null);
+  });
+});

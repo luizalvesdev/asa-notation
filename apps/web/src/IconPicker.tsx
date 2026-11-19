@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Popover } from "./db-cells";
 import { Presence } from "./Presence";
+import { Icon } from "./icons";
 
 const EMOJIS = ["📄", "📝", "📚", "📖", "📓", "🗒️", "🗂️", "📌", "⭐", "💡", "🎯", "🚀", "🧠", "🔬", "🧪", "💻", "⚙️", "🛠️", "🔒", "🔑", "📊", "📈", "🗓️", "⏰", "✅", "❤️", "🔥", "🌱", "🌍", "🏠", "🎵", "🎬", "🍎", "☕", "✈️", "🏃", "💰", "🧾", "📦", "🔗"];
 
@@ -27,8 +28,8 @@ export function IconPicker({ icon, onChange }: IconPickerProps) {
   };
   return (
     <>
-      <button ref={anchor} className="btn btn-fan btn-sm" type="button" aria-haspopup="dialog" aria-expanded={open} aria-label={icon ? "Trocar ícone da página" : "Adicionar ícone à página"} onClick={() => setOpen((v) => !v)} style={{ fontSize: icon ? 18 : 12 }}>
-        {icon ?? "Ícone"}
+      <button ref={anchor} className="btn btn-fan btn-ico btn-sm" type="button" aria-haspopup="dialog" aria-expanded={open} aria-label={icon ? "Trocar ícone da página" : "Adicionar ícone à página"} title={icon ? "Trocar ícone" : "Adicionar ícone"} onClick={() => setOpen((v) => !v)} style={{ fontSize: icon ? 18 : 12 }}>
+        {icon ? <span className="page-emoji" style={{ fontSize: "calc(16px * var(--fs, 1))" }}>{icon}</span> : <Icon name="smile" />}
       </button>
       <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={280}>
           <div role="dialog" aria-label="Escolher ícone" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>

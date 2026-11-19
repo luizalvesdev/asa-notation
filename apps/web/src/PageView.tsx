@@ -210,7 +210,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
         >
           Histórico
         </button>
-        <button className={`btn btn-fan btn-sm${favorite ? " on" : ""}`} type="button" aria-pressed={favorite} onClick={toggleFavorite}>
+        <button className={`btn btn-fan btn-sm${favorite ? " on fav-on" : ""}`} type="button" aria-pressed={favorite} onClick={toggleFavorite} style={{ minWidth: "calc(98px * var(--fs, 1))" }}>
           <Icon name="star" />
           {favorite ? "Favorita" : "Favoritar"}
         </button>

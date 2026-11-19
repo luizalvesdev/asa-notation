@@ -41,7 +41,7 @@ export function CoverPicker({ cover, onChange }: CoverPickerProps) {
   return (
     <>
       <button ref={anchor} className="btn btn-fan btn-sm" type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        {cover ? "Trocar capa" : "Capa"}
+        Capa
       </button>
       <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={280}>
           <div role="dialog" aria-label="Escolher capa" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>

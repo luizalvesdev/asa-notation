@@ -31,6 +31,8 @@ import { localDate, localDayStartIso, localTimeZone } from "./tasks-dates";
 import { CheckinReport, todaySummary } from "./CheckinReport";
 import type { Stats } from "./study-types";
 import { Presence } from "./Presence";
+import { askConfirm } from "./confirm";
+import { ConfirmHost } from "./ConfirmHost";
 
 const SIDE_KEY = "asa:side-width";
 const CHAT_KEY = "asa:chat-width";
@@ -283,6 +285,13 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
 
   const deletePage = useCallback(
     async (page: Pick<Page, "id">) => {
+      const node = pages.nodes.find((n) => n.id === page.id);
+      const kids = pages.nodes.filter((n) => n.parentId === page.id).length;
+      const ok = await askConfirm({
+        title: `Excluir “${displayTitle(node?.title ?? "") || "Sem título"}”?`,
+        body: `${kids > 0 ? "As páginas dentro dela vão junto. " : ""}Vai para a lixeira: dá para restaurar depois.`,
+      });
+      if (!ok) return;
       try {
         const count = await pages.remove(page.id);
         location.hash = routeHash("hoje");
@@ -524,6 +533,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           </div>
         )}
       </Presence>
+      <ConfirmHost />
       <Presence show={searchOpen}>
         <SearchPalette
           nodes={pages.nodes}

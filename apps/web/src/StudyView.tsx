@@ -12,6 +12,7 @@ import type { Toast } from "./toast";
 import { useStudyOverview } from "./use-study";
 import { ContextBox } from "./ContextBox";
 import { Reveal } from "./Reveal";
+import { askConfirm } from "./confirm";
 
 interface StudyViewProps {
   nodes: TreeNode[];
@@ -73,7 +74,7 @@ function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; on
           key={card.id}
           items={() => [
             { label: "Editar card", run: () => setEditing(card.id) },
-            { label: "Apagar card", danger: true, run: () => setConfirm(card.id) },
+            { label: "Apagar card", danger: true, run: () => void askConfirm({ title: "Apagar este card?", body: "O histórico de revisão dele também é apagado." }).then((ok) => { if (ok) void void remove(card.id); }) },
           ]}
           className="row"
           style={{ gap: 12, minHeight: 44, borderTop: "1px solid var(--border)", padding: "6px 0", alignItems: "flex-start" }}
@@ -101,7 +102,7 @@ function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; on
           ) : (
             <>
               <button className="btn btn-fan btn-sm" type="button" onClick={() => setEditing(card.id)}>Editar</button>
-              <button className="btn btn-fan btn-sm" type="button" onClick={() => setConfirm(card.id)}>Apagar</button>
+              <button className="btn btn-fan btn-sm" type="button" onClick={() => void askConfirm({ title: "Apagar este card?", body: "O histórico de revisão dele também é apagado." }).then((ok) => { if (ok) void void remove(card.id); })}>Apagar</button>
             </>
           )}
         </ContextBox>
@@ -333,6 +334,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
     }
   };
   const deleteDeck = async (d: Deck) => {
+    if (!(await askConfirm({ title: `Apagar a trilha “${d.title}”?`, body: d.cards > 0 ? `${d.cards === 1 ? "O card não é apagado: vai" : `Os ${d.cards} cards não são apagados: vão`} para Sem trilha.` : undefined }))) return;
     try {
       await studyApi.deleteDeck(d.id);
       if (selected === d.id) setSelected("");

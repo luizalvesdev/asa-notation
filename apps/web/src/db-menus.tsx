@@ -4,6 +4,7 @@ import { newId, newProperty, NO_VALUE_OPS, OPS_BY_TYPE, removeProperty } from ".
 import { COLOR_BADGE, OP_LABEL, OPTION_COLORS, TYPE_LABEL, type Filter, type FilterOp, type Option, type Property, type PropertyType, type Schema, type Sort, type View } from "./db-types";
 import { Icon, type IconName } from "./icons";
 import { Presence } from "./Presence";
+import { askConfirm } from "./confirm";
 
 interface Common {
   schema: Schema;
@@ -120,7 +121,7 @@ function OptionsEditor({ prop, onChange }: { prop: Property; onChange: (options:
               <option value="done">Concluído</option>
             </select>
           )}
-          <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Remover ${o.name}`} onClick={() => onChange(prop.options.filter((_, j) => j !== i))}><Icon name="close" /></button>
+          <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Remover ${o.name}`} onClick={() => void askConfirm({ title: `Remover a opção “${o.name}”?`, body: "As linhas que usam essa opção ficam sem valor nela." }).then((ok) => { if (ok) void onChange(prop.options.filter((_, j) => j !== i)); })}><Icon name="close" /></button>
         </div>
       ))}
       <button className="btn btn-fan btn-sm" type="button" style={{ alignSelf: "flex-start" }} disabled={prop.options.length >= 100} onClick={() => onChange([...prop.options, { id: newId(), name: "Nova opção", color: "gray", group: prop.type === "status" ? "todo" : null }])}><Icon name="plus" />Opção</button>
@@ -161,7 +162,7 @@ export function PropertiesMenu({ schema, view, onSchema, databases }: Common & {
                       <button className="btn btn-sec btn-sm" type="button" onClick={() => { onSchema(removeProperty(schema, p.id)); setConfirm(null); setEditing(null); }}>Confirmar</button>
                     </div>
                   ) : (
-                    <button className="btn btn-fan btn-sm" type="button" style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => setConfirm(p.id)}>Apagar propriedade</button>
+                    <button className="btn btn-fan btn-sm" type="button" style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => void askConfirm({ title: `Apagar a propriedade “${p.name}”?`, body: "Apaga a coluna e os valores dela em todas as linhas." }).then((ok) => { if (!ok) return; onSchema(removeProperty(schema, p.id)); setConfirm(null); setEditing(null); })}>Apagar propriedade</button>
                   )}
                 </div>
               )}

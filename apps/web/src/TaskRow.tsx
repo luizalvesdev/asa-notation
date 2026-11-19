@@ -3,6 +3,7 @@ import { AddTask } from "./AddTask";
 import { Icon } from "./icons";
 import { useContextItems } from "./use-context-items";
 import type { TaskItem } from "./tasks-types";
+import { askConfirm } from "./confirm";
 
 interface TaskRowProps {
   item: TaskItem;
@@ -34,12 +35,13 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
   const [open, setOpen] = useState(false);
   const subDone = item.subtasks.filter((s) => s.done).length;
   const hasSubs = item.subtasks.length > 0;
+  const remove = () => void askConfirm({ title: `Apagar “${item.title}”?`, body: item.recurrence ? "Apaga a tarefa recorrente inteira, com todas as repetições." : hasSubs ? "As subtarefas vão junto." : undefined }).then((ok) => ok && onRemove(item));
   const menuRef = useContextItems(() => [
     { label: item.done ? "Reabrir" : "Concluir", run: () => onToggle(item) },
     ...(extra ? [{ label: extra.label, run: () => extra.run(item) }] : []),
     ...(onAddSubtask ? [{ label: "Adicionar subtarefa", run: () => setOpen(true) }] : []),
     ...(hasSubs ? [{ label: open ? "Esconder subtarefas" : "Mostrar subtarefas", run: () => setOpen((v) => !v) }] : []),
-    { label: "Apagar tarefa", danger: true, run: () => onRemove(item) },
+    { label: "Apagar tarefa", danger: true, run: remove },
   ]);
 
   return (
@@ -81,7 +83,7 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
               Subtarefa
             </button>
           )}
-          <button className="btn btn-fan btn-ico btn-sm row-action" type="button" aria-label={`Apagar “${item.title}”`} onClick={() => onRemove(item)}>
+          <button className="btn btn-fan btn-ico btn-sm row-action" type="button" aria-label={`Apagar “${item.title}”`} onClick={remove}>
             <Icon name="close" />
           </button>
         </span>
