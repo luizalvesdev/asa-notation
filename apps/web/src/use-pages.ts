@@ -47,6 +47,29 @@ export function usePages(): PagesApi {
     };
   }, [version]);
 
+  // Páginas criadas fora desta aba (extensão do navegador, MCP, outro aparelho) aparecem ao voltar para o app,
+  // sem piscar a árvore. No máximo uma vez a cada 5 s.
+  useEffect(() => {
+    let last = Date.now();
+    const refresh = () => {
+      if (document.visibilityState !== "visible" || Date.now() - last < 5_000) return;
+      last = Date.now();
+      pagesApi
+        .tree()
+        .then((list) => {
+          setNodes(list);
+          setStatus("pronto");
+        })
+        .catch(() => {});
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+
   const reload = useCallback(() => {
     setStatus("carregando");
     setVersion((v) => v + 1);

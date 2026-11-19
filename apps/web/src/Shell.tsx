@@ -6,7 +6,7 @@ import { keepsNativeMenu, type ContextTarget, type MenuAction } from "./context-
 import { OPEN_CHAT_EVENT, type Agent, type OpenChatRequest } from "./chat-types";
 import { CapturePanel } from "./CapturePanel";
 import { Icon, ThemeIcon } from "./icons";
-import { pageHash, routeHash, routeTitle, type Route } from "./nav";
+import { goStep, pageHash, routeHash, routeTitle, type Route } from "./nav";
 
 /** As rotas de dentro do app (o link público tem tela própria, fora do Shell). */
 export type AppRoute = Exclude<Route, { kind: "publica" }>;
@@ -25,7 +25,6 @@ import type { Preference } from "./theme";
 import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
 import { useUnread } from "./use-notifications";
-import { useRecents } from "./recents";
 import { usePages, type CreateExtra } from "./use-pages";
 
 const SIDE_KEY = "asa:side-width";
@@ -96,7 +95,6 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const tree = useMemo(() => buildTree(pages.nodes), [pages.nodes]);
   const favorites = useMemo(() => pages.nodes.filter((n) => n.favorite), [pages.nodes]);
   const pageId = route.kind === "pagina" ? route.pageId : null;
-  const recents = useRecents(pages.nodes, pageId);
 
   useEffect(() => {
     if (!drawer) return;
@@ -121,6 +119,25 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearchOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // "G e depois a letra" leva às telas. Não vale digitando num campo, com Ctrl/Alt/⌘ nem com uma janela aberta.
+  useEffect(() => {
+    let armedAt: number | null = null;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+      const el = event.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      if (document.querySelector("[role=dialog]")) return;
+      const step = goStep(armedAt, event.key, Date.now());
+      armedAt = step.armedAt;
+      if (step.target) {
+        event.preventDefault();
+        location.hash = routeHash(step.target);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -319,7 +336,6 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     onOpenSearch: () => setSearchOpen(true),
     badges: { notificacoes: unread },
     favorites,
-    recents,
   };
 
   const onRestored = useCallback(

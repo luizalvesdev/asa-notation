@@ -1,5 +1,5 @@
 import { Icon, isIconName } from "./icons";
-import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, navParent, routeHash, type NavItem, type Route, type RouteId } from "./nav";
+import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, goKey, navParent, routeHash, type NavItem, type Route, type RouteId } from "./nav";
 import { NewMenu } from "./NewMenu";
 import { PageTree } from "./PageTree";
 import { displayTitle, type TreeItem } from "./pages-tree";
@@ -21,9 +21,8 @@ interface SidebarProps {
   onToggleCollapsed: () => void;
   onNavigate?: () => void;
   inDrawer?: boolean;
-  /** Páginas favoritas e abertas há pouco, em atalhos no topo da árvore. */
+  /** Páginas favoritas, em atalhos no topo da árvore. */
   favorites: TreeNode[];
-  recents: TreeNode[];
   /** Contadores ao lado de itens da barra (ex.: notificações não lidas). */
   badges?: Partial<Record<RouteId, number>>;
 }
@@ -50,12 +49,14 @@ function NavLink({ item, route, onNavigate, onOpenSearch, badge }: { item: NavIt
     <a
       className={`tr${selected ? " s" : ""}`}
       href={routeHash(item.id)}
+      title={goKey(item.id) ? `${item.label} (G e depois ${goKey(item.id)!.toUpperCase()})` : undefined}
       aria-current={selected ? "page" : undefined}
       onClick={onNavigate}
     >
       {isIconName(item.icon) && <Icon name={item.icon} />}
       <span className="lab">{item.label}</span>
       {item.shortcut && <span className="k">{item.shortcut}</span>}
+      {goKey(item.id) && <span className="k go-k" aria-hidden="true">G {goKey(item.id)!.toUpperCase()}</span>}
       {badge !== undefined && badge > 0 && (
         <span className="badge ac lab" style={{ height: 18, padding: "0 6px", fontSize: "calc(11px * var(--fs, 1))" }} aria-label={`${badge} não lidas`}>
           {badge > 99 ? "99+" : badge}
@@ -75,7 +76,7 @@ function ShortcutLink({ node, current, onNavigate }: { node: TreeNode; current: 
   );
 }
 
-export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites, recents }: SidebarProps) {
+export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
@@ -111,12 +112,6 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
           <>
             <div className="sgroup"><span>Favoritas</span></div>
             {favorites.map((n) => <ShortcutLink key={n.id} node={n} current={currentPageId} onNavigate={onNavigate} />)}
-          </>
-        )}
-        {recents.length > 0 && (
-          <>
-            <div className="sgroup"><span>Recentes</span></div>
-            {recents.slice(0, 5).map((n) => <ShortcutLink key={n.id} node={n} current={currentPageId} onNavigate={onNavigate} />)}
           </>
         )}
         <div className="sgroup">

@@ -43,6 +43,42 @@ export const NAV_FOOTER: NavItem[] = [
 
 export const DEFAULT_ROUTE: RouteId = "hoje";
 
+/** Atalhos "G e depois a letra" (como no Gmail e no GitHub) para ir às telas. */
+export const GO_KEYS: Record<string, RouteId> = {
+  h: "hoje",
+  s: "semana",
+  i: "inbox",
+  e: "estudo",
+  v: "revisao",
+  m: "metas",
+  r: "rotina",
+  p: "progresso",
+  n: "notificacoes",
+  l: "lixeira",
+  c: "configuracoes",
+};
+
+export function goKey(id: RouteId): string | null {
+  return Object.entries(GO_KEYS).find(([, target]) => target === id)?.[0] ?? null;
+}
+
+/** Quanto tempo depois do G a segunda tecla ainda vale. */
+export const GO_WINDOW_MS = 1500;
+
+/**
+ * Lê uma tecla na sequência do atalho. `armedAt` é quando o G foi apertado (ou null).
+ * Devolve o novo estado e, se completou, a tela de destino.
+ */
+export function goStep(armedAt: number | null, key: string, now: number): { armedAt: number | null; target: RouteId | null } {
+  const k = key.toLowerCase();
+  if (armedAt !== null && now - armedAt <= GO_WINDOW_MS) {
+    const target = GO_KEYS[k] ?? null;
+    if (target) return { armedAt: null, target };
+    return { armedAt: k === "g" ? now : null, target: null };
+  }
+  return { armedAt: k === "g" ? now : null, target: null };
+}
+
 export type Route = { kind: "tela"; id: RouteId; sub?: string } | { kind: "pagina"; pageId: string } | { kind: "publica"; slug: string };
 
 /** Telas que não aparecem na barra lateral. Pertencem a uma tela principal (a que fica marcada). */
