@@ -74,12 +74,6 @@ input.p-title::placeholder {
   overflow-wrap: anywhere;
 }
 
-/* A faixa à esquerda (onde ficam a alça e o +) também conta como "sobre o bloco": a alça aparece sem precisar mirar no texto. */
-.page .ProseMirror {
-  padding-left: 56px;
-  margin-left: -56px;
-}
-
 /* Bloco sob o mouse: leve fundo azul na área inteira que a alça move. */
 .ProseMirror .blk-hover {
   background: color-mix(in srgb, var(--accent) 7%, transparent);
@@ -92,6 +86,24 @@ input.p-title::placeholder {
 .ProseMirror.ProseMirror-focused .ProseMirror-selectednode,
 .ProseMirror .ProseMirror-selectednode {
   transition: opacity var(--rapido) var(--padrao);
+}
+/* Arrastando um bloco (lista reordenável): ele segue o mouse por cima dos outros. */
+.block-dragging {
+  position: relative;
+  z-index: 5;
+  background: var(--surface);
+  box-shadow: var(--e2);
+  border-radius: 6px;
+  opacity: 0.95;
+  cursor: grabbing;
+}
+body.block-sorting,
+body.block-sorting * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+body.block-sorting .dh {
+  visibility: hidden;
 }
 .drop-line {
   border-radius: 2px;

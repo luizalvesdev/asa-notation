@@ -1,7 +1,8 @@
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { quietly, startBlockSort } from "./block-sort";
 import { contentExtensions } from "./editor-extensions";
 import { FormatMenu } from "./FormatMenu";
 import { uiOf } from "./editor-nodes";
@@ -64,14 +65,50 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
     if (focusSignal > 0) editor?.commands.focus("start");
   }, [focusSignal, editor]);
 
-  // Mouse saiu da página: tira o destaque do bloco.
+  // Mouse na faixa à esquerda do texto (onde ficam a alça e o +) conta como "sobre o bloco" daquela altura:
+  // a alça aparece sem precisar mirar no texto. Saiu da página: tira o destaque.
   useEffect(() => {
     if (!editor) return;
-    const area = editor.view.dom.closest(".page") ?? editor.view.dom;
-    const clear = () => editor.view.dom.querySelectorAll(".blk-hover").forEach((el) => el.classList.remove("blk-hover"));
+    const dom = editor.view.dom;
+    const area = dom.closest(".page") ?? dom;
+    const clear = () => quietly(editor.view, () => dom.querySelectorAll(".blk-hover").forEach((el) => el.classList.remove("blk-hover")));
+    const onMove = (e: Event) => {
+      const m = e as MouseEvent;
+      if (document.body.classList.contains("block-sorting") || (m.target as Element | null)?.closest?.(".dh")) return;
+      const box = dom.getBoundingClientRect();
+      if (m.clientX >= box.left || m.clientX < box.left - 72 || m.clientY < box.top || m.clientY > box.bottom) return;
+      dom.dispatchEvent(new MouseEvent("mousemove", { clientX: box.left + 4, clientY: m.clientY, bubbles: true }));
+    };
     area.addEventListener("mouseleave", clear);
-    return () => area.removeEventListener("mouseleave", clear);
+    area.addEventListener("mousemove", onMove);
+    return () => {
+      area.removeEventListener("mouseleave", clear);
+      area.removeEventListener("mousemove", onMove);
+    };
   }, [editor]);
+
+  /** Alça: blocos do nível de cima viram lista reordenável (com animação); os de dentro usam o arrastar nativo. */
+  const sorting = useRef(false);
+  const onGripDown = (e: React.PointerEvent) => {
+    if (!editor || !target || e.button !== 0) return;
+    const $pos = editor.state.doc.resolve(target.pos);
+    if ($pos.depth !== 0) return;
+    if (startBlockSort(editor, $pos.index(0), e.nativeEvent)) {
+      e.preventDefault();
+      sorting.current = true;
+      // O elemento da alça é "draggable" (arrastar nativo): desliga enquanto a lista reordenável cuida do arrasto.
+      const handle = (e.currentTarget as HTMLElement).closest<HTMLElement>('[draggable="true"]');
+      handle?.setAttribute("draggable", "false");
+      const reset = () => {
+        sorting.current = false;
+        handle?.setAttribute("draggable", "true");
+        window.removeEventListener("pointerup", reset);
+        window.removeEventListener("pointercancel", reset);
+      };
+      window.addEventListener("pointerup", reset);
+      window.addEventListener("pointercancel", reset);
+    }
+  };
 
   /** Botão +: abre um parágrafo novo logo abaixo do bloco e já digita "/" para abrir o menu. */
   const addBelow = () => {
@@ -94,18 +131,29 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
             setTarget(node ? { pos, size: node.nodeSize } : null);
             // Destaca o bloco sob o mouse: mostra a área inteira que a alça move.
             const view = editor.view;
-            view.dom.querySelectorAll(".blk-hover").forEach((el) => el.classList.remove("blk-hover"));
             const dom = node && pos >= 0 ? view.nodeDOM(pos) : null;
-            if (dom instanceof HTMLElement) dom.classList.add("blk-hover");
+            quietly(view, () => {
+              view.dom.querySelectorAll(".blk-hover").forEach((el) => el.classList.remove("blk-hover"));
+              if (dom instanceof HTMLElement) dom.classList.add("blk-hover");
+            });
           }}
         >
-          <div className="dh">
+          <div
+            className="dh"
+            onDragStartCapture={(e) => {
+              // A lista reordenável já está cuidando deste arrasto: cancela o nativo.
+              if (sorting.current) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+          >
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Adicionar bloco abaixo" onClick={addBelow}>
               <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </button>
-            <span className="dh-grip" role="img" aria-label="Arrastar bloco" title="Arraste para mover">
+            <span className="dh-grip" role="img" aria-label="Arrastar bloco" title="Arraste para mover" onPointerDown={onGripDown}>
               <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ strokeWidth: 3 }}>
                 <path d={GRIP} />
               </svg>
