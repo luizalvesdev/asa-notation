@@ -1,5 +1,6 @@
 import { captureRoutes } from "./captures/routes.js";
 import { clipRoutes } from "./clips/routes.js";
+import { writingRoutes } from "./writing/routes.js";
 import { PgCaptureStore } from "./captures/store.js";
 import { goalRoutes } from "./goals/routes.js";
 import { PgGoalStore } from "./goals/store.js";
@@ -119,6 +120,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     ...mcpRoutes({ settings: settingsStore, tasks: taskStore, goals: goalStore, pages: pageStore, captures: captureStore, study: studyStore, now }),
     ...exportRoutes(sql, now),
     ...clipRoutes({ sql, pages: pageStore, settings: settingsStore, ai: aiProvider }),
+    ...writingRoutes(aiProvider),
   ];
 
   return async function handle(incoming: ApiRequest): Promise<ApiResponse> {

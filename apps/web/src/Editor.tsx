@@ -1,6 +1,6 @@
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { Placeholder } from "@tiptap/extensions";
-import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
+import { EditorContent, useEditor, type Editor as TiptapEditor, type JSONContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { quietly, startBlockSort } from "./block-sort";
 import { contentExtensions } from "./editor-extensions";
@@ -19,11 +19,13 @@ interface EditorProps {
   pages: TreeNode[];
   /** A própria página fica fora da lista de links. */
   selfId: string;
+  /** Entrega o editor a quem precisa agir sobre o texto (a IA da página). */
+  onReady?: (editor: TiptapEditor | null) => void;
 }
 
 const GRIP = "M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01";
 
-export function Editor({ initial, onChange, focusSignal, pages, selfId }: EditorProps) {
+export function Editor({ initial, onChange, focusSignal, pages, selfId, onReady }: EditorProps) {
   const [target, setTarget] = useState<{ pos: number; size: number } | null>(null);
   const [askingImage, setAskingImage] = useState(false);
   const [askingEmbed, setAskingEmbed] = useState(false);
@@ -52,6 +54,12 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
     },
     onUpdate: ({ editor: instance }) => onChange(instance.getJSON()),
   });
+
+  useEffect(() => {
+    onReady?.(editor ?? null);
+    return () => onReady?.(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
 
   const linkable = useMemo(() => pages.filter((p) => p.id !== selfId), [pages, selfId]);
   useEffect(() => {

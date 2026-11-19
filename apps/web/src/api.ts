@@ -101,6 +101,15 @@ export const capturesApi = {
   move: (id: string, parentId: string | null) => request<{ page: Page }>("POST", `/captures/${id}/move`, { parentId }).then((r) => r.page),
 };
 
+export type WritingAction = "improve_page" | "improve_selection" | "explain" | "write";
+export type WritingVoice = "renato" | "tutor" | "hermes";
+
+/** IA dentro da página: devolve Markdown para prévia; nada é salvo no servidor. */
+export const writingApi = {
+  run: (input: { action: WritingAction; title: string; page: string; selection?: string; instruction?: string; voice?: WritingVoice }) =>
+    request<{ markdown: string; truncated: boolean }>("POST", "/ai/writing", input),
+};
+
 export const studyApi = {
   overview: (dayStart: string) => request<Overview>("GET", `/study/overview?dayStart=${encodeURIComponent(dayStart)}`),
   queue: (dayStart: string) => request<{ cards: QueueCard[] }>("GET", `/study/queue?dayStart=${encodeURIComponent(dayStart)}`).then((r) => r.cards),

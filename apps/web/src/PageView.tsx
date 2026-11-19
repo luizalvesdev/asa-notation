@@ -16,6 +16,8 @@ import { Icon } from "./icons";
 import type { Page, TreeNode } from "./pages-types";
 import { Presence } from "./Presence";
 import { Reveal } from "./Reveal";
+import { PageAi } from "./PageAi";
+import type { Editor as TiptapEditor } from "@tiptap/react";
 
 interface PageViewProps {
   pageId: string;
@@ -84,7 +86,7 @@ export function PageView({ pageId, nodes, onSaved, onDelete, onToast }: PageView
   if (load.page.kind === "database") {
     return <Suspense fallback={<Loading />}><DatabaseView key={load.page.id} page={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onToast={onToast} /></Suspense>;
   }
-  return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} />;
+  return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} onToast={onToast} />;
 }
 
 interface PageEditorProps {
@@ -93,6 +95,7 @@ interface PageEditorProps {
   onSaved: (page: Page) => void;
   onDelete: (page: Page) => void;
   onReload: () => void;
+  onToast: (toast: Toast) => void;
 }
 
 const SAVE_LABEL: Record<SaveState, string> = {
@@ -102,7 +105,9 @@ const SAVE_LABEL: Record<SaveState, string> = {
   erro: "Falha ao salvar",
 };
 
-function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorProps) {
+function PageEditor({ initial, nodes, onSaved, onDelete, onReload, onToast }: PageEditorProps) {
+  const [editor, setEditor] = useState<TiptapEditor | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
   const [title, setTitle] = useState(initial.title);
   const [favorite, setFavorite] = useState(initial.favorite);
   const [icon, setIcon] = useState(initial.icon);
@@ -189,6 +194,11 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
     <div className="page">
       <Cover cover={cover} />
       <Subpages pageId={initial.id} nodes={nodes} side top={titleTop} />
+      <div className="ai-rail">
+        <div style={{ marginTop: titleTop }} className="ai-rail-in">
+          <PageAi editor={editor} title={title} onToast={onToast} />
+        </div>
+      </div>
       <div className="page-head">
         <span className={`save-state${saveState === "erro" ? " erro" : ""}`} role="status">
           {SAVE_LABEL[saveState]}
@@ -201,6 +211,9 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
         <span className="spacer" />
         <CoverPicker cover={cover} onChange={(next) => { setCover(next); saver.current?.queue({ cover: next }); }} />
         <IconPicker icon={icon} onChange={(next) => { setIcon(next); saver.current?.queue({ icon: next }); }} />
+        <button className="btn btn-fan btn-sm ai-toggle" type="button" aria-expanded={aiOpen} onClick={() => setAiOpen((v) => !v)}>
+          ✦ IA
+        </button>
         <span style={{ position: "relative" }}>
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
             Compartilhar
@@ -272,7 +285,12 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
           }}
         />
       )}
-      <Editor initial={initial.body} focusSignal={focusBody} pages={nodes} selfId={initial.id} onChange={(doc) => saver.current?.queue({ body: doc })} />
+      <Reveal show={aiOpen}>
+        <div className="ai-inline-wrap">
+          <PageAi editor={editor} title={title} onToast={onToast} inline />
+        </div>
+      </Reveal>
+      <Editor initial={initial.body} focusSignal={focusBody} pages={nodes} selfId={initial.id} onReady={setEditor} onChange={(doc) => saver.current?.queue({ body: doc })} />
       <Subpages pageId={initial.id} nodes={nodes} />
       <Backlinks pageId={initial.id} />
       <Presence show={panel === "history"}><HistoryPanel pageId={initial.id} currentBody={historyBody} onClose={() => setPanel(null)} onRestored={() => { setPanel(null); saver.current?.discard(); onReload(); }} /></Presence>
