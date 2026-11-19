@@ -103,3 +103,11 @@ export function toolLabel(name: string): string {
   if (name.startsWith("delete_")) return "Preparando a exclusão…";
   return "Trabalhando…";
 }
+
+/** Resumo de uma lista de conversas para a tela de histórico: "3 conversas · há 2 h" ou "Nenhuma conversa". */
+export function historySummary(list: { updatedAt: string }[] | null, ago: (iso: string) => string): string {
+  if (list === null) return "";
+  if (list.length === 0) return "Nenhuma conversa";
+  const latest = list.reduce((a, b) => (Date.parse(b.updatedAt) > Date.parse(a.updatedAt) ? b : a));
+  return `${list.length} ${list.length === 1 ? "conversa" : "conversas"} · ${ago(latest.updatedAt)}`;
+}

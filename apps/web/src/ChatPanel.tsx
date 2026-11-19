@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiApi, chatApi } from "./api";
-import { classifyChatError, describeDraft, describeResult, draftTarget, toolLabel, type ChatErrorKind } from "./chat-logic";
+import { classifyChatError, describeDraft, describeResult, draftTarget, historySummary, toolLabel, type ChatErrorKind } from "./chat-logic";
 import { AGENTS, AGENT_HINT, AGENT_NAME, type Agent, type ChatMessage, type Conversation, type Draft } from "./chat-types";
 import { Icon } from "./icons";
 import { pageHash, routeHash } from "./nav";
@@ -92,8 +92,10 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
   const [autoApply, setAutoApply] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [history, setHistory] = useState<Conversation[] | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
+  // Histórico em dois passos: "agents" (escolher o assistente) e depois a lista de conversas dele. null = conversa aberta.
+  const [historyView, setHistoryView] = useState<null | "agents" | Agent>(null);
+  const [histories, setHistories] = useState<Record<Agent, Conversation[] | null>>({ hermes: null, renato: null, tutor: null });
+  const showHistory = historyView !== null;
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [streamText, setStreamText] = useState("");
@@ -121,10 +123,15 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
 
   useEffect(() => {
     if (!active) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !showHistory && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      // Esc volta um passo no histórico; com a conversa aberta, fecha o painel.
+      if (historyView === null) onClose();
+      else setHistoryView(historyView === "agents" ? null : "agents");
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, showHistory, active]);
+  }, [onClose, historyView, active]);
 
   const switchAgent = (next: Agent) => {
     if (next === agent) return;
@@ -139,18 +146,38 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
     setConversation(saved);
     setMessages([]);
     setError(null);
-    setShowHistory(false);
+    setHistoryView(null);
     if (saved) void chatApi.open(saved.id).then((r) => setMessages(r.messages)).catch(() => undefined);
   };
 
-  const openHistory = () => {
-    setShowHistory((v) => !v);
-    chatApi.conversations(agent).then(setHistory).catch(() => setHistory([]));
+  const loadHistories = () => {
+    for (const a of AGENTS) {
+      chatApi.conversations(a).then((list) => setHistories((h) => ({ ...h, [a]: list }))).catch(() => setHistories((h) => ({ ...h, [a]: [] })));
+    }
   };
 
+  const toggleHistory = () => {
+    if (historyView !== null) return setHistoryView(null);
+    setHistories({ hermes: null, renato: null, tutor: null });
+    setHistoryView("agents");
+    loadHistories();
+  };
+
+  /** Abre uma conversa do histórico, de qualquer assistente: troca para ele e carrega as mensagens. */
   const open = (c: Conversation) => {
-    setShowHistory(false);
+    if (c.agent !== agent) {
+      try {
+        localStorage.setItem(AGENT_KEY, c.agent);
+      } catch {
+        // vale só nesta sessão
+      }
+      current.current[agent] = conversation;
+      setAgent(c.agent);
+    }
+    current.current[c.agent] = c;
+    setHistoryView(null);
     setConversation(c);
+    setMessages([]);
     setError(null);
     void chatApi.open(c.id).then((r) => setMessages(r.messages)).catch(() => onToast({ text: "Não foi possível abrir a conversa." }));
   };
@@ -206,7 +233,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
     current.current[agent] = null;
     setMessages([]);
     setError(null);
-    setShowHistory(false);
+    setHistoryView(null);
   };
 
   const name = AGENT_NAME[agent];
@@ -223,26 +250,44 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           ))}
         </div>
         <div className="row" style={{ marginLeft: "auto", gap: 2 }}>
-          <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova conversa" onClick={newConversation}><Icon name="plus" /></button>
-          <button className={`btn btn-fan btn-ico btn-sm${showHistory ? " on" : ""}`} type="button" aria-label="Histórico de conversas" aria-pressed={showHistory} onClick={openHistory}>
+          <button className={`btn btn-fan btn-ico btn-sm${showHistory ? " on" : ""}`} type="button" aria-label="Histórico de conversas" aria-pressed={showHistory} onClick={toggleHistory}>
             <svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></svg>
           </button>
+          <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova conversa" onClick={newConversation}><Icon name="plus" /></button>
           <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Fechar painel (esc)" onClick={onClose}><Icon name="close" /></button>
         </div>
       </div>
 
-      {showHistory ? (
+      {historyView === "agents" ? (
         <div className="chat-body enter" style={{ gap: 4 }}>
-          <div className="eyebrow" style={{ padding: "0 6px 6px" }}>Conversas com {name}</div>
-          {history === null && <span className="sk" style={{ height: 14, display: "block" }} aria-label="Carregando as conversas" />}
-          {history?.length === 0 && <span style={{ fontSize: 13, color: "var(--text-2)", padding: "0 6px" }}>Nenhuma conversa ainda.</span>}
-          {history?.map((c) => (
+          <div className="eyebrow" style={{ padding: "0 6px 6px" }}>Histórico · escolha um assistente</div>
+          {AGENTS.map((a) => (
+            <button key={a} className="plain mrow" type="button" onClick={() => setHistoryView(a)} style={{ height: "auto", padding: 10, gap: 10, alignItems: "center", textAlign: "left" }}>
+              <span className={`av ${AVATAR[a]}`}>{AGENT_NAME[a][0]}</span>
+              <span className="col grow1" style={{ minWidth: 0 }}>
+                <span style={{ fontWeight: 500, fontSize: 14 }}>{AGENT_NAME[a]}</span>
+                <span style={{ fontSize: 12, color: "var(--text-3)" }}>{histories[a] === null ? "Carregando…" : historySummary(histories[a], formatAgo)}</span>
+              </span>
+              <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "var(--text-3)" }}><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          ))}
+        </div>
+      ) : historyView !== null ? (
+        <div className="chat-body enter" style={{ gap: 4 }}>
+          <div className="row" style={{ gap: 4, padding: "0 0 6px", alignItems: "center" }}>
+            <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Voltar para os assistentes" onClick={() => setHistoryView("agents")}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
+            <span className={`av ${AVATAR[historyView]}`} style={{ width: 20, height: 20, fontSize: 11 }}>{AGENT_NAME[historyView][0]}</span>
+            <span className="eyebrow">Conversas com {AGENT_NAME[historyView]}</span>
+          </div>
+          {histories[historyView] === null && <span className="sk" style={{ height: 14, display: "block" }} aria-label="Carregando as conversas" />}
+          {histories[historyView]?.length === 0 && <span style={{ fontSize: 13, color: "var(--text-2)", padding: "0 6px" }}>Nenhuma conversa ainda.</span>}
+          {histories[historyView]?.map((c) => (
             <div key={c.id} className="row" style={{ gap: 2 }}>
               <button className="plain mrow grow1" type="button" onClick={() => open(c)} style={{ height: "auto", padding: 8, alignItems: "flex-start", flexDirection: "column", gap: 2, textAlign: "left" }}>
                 <span className="trunc" style={{ fontWeight: 500, fontSize: 13, maxWidth: "100%" }}>{c.title || "Sem título"}</span>
                 <span style={{ fontSize: 12, color: "var(--text-3)" }}>{formatAgo(c.updatedAt)}</span>
               </button>
-              <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Apagar a conversa ${c.title}`} onClick={() => void chatApi.remove(c.id).then(() => { setHistory((h) => h?.filter((x) => x.id !== c.id) ?? null); if (conversation?.id === c.id) newConversation(); }).catch(() => onToast({ text: "Não foi possível apagar." }))}><Icon name="trash" /></button>
+              <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Apagar a conversa ${c.title}`} onClick={() => void chatApi.remove(c.id).then(() => { setHistories((h) => ({ ...h, [c.agent]: h[c.agent]?.filter((x) => x.id !== c.id) ?? null })); if (conversation?.id === c.id) newConversation(); }).catch(() => onToast({ text: "Não foi possível apagar." }))}><Icon name="trash" /></button>
             </div>
           ))}
         </div>

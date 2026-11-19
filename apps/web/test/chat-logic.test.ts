@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../src/api";
-import { classifyChatError, describeDraft, describeResult, draftTarget } from "../src/chat-logic";
+import { classifyChatError, describeDraft, describeResult, draftTarget, historySummary } from "../src/chat-logic";
 import { NetworkError } from "../src/capture-outbox";
 
 describe("describeDraft", () => {
@@ -95,5 +95,15 @@ describe("prévia do conteúdo no cartão", () => {
     const v = describeDraft({ kind: "page", payload: { title: "T", markdown: "x".repeat(5000) } });
     expect(v.preview!.length).toBeLessThan(3010);
     expect(v.preview!.endsWith("…")).toBe(true);
+  });
+});
+
+describe("historySummary", () => {
+  const ago = (iso: string) => `há ${iso}`;
+  it("carregando, vazio, singular e plural com a mais recente", () => {
+    expect(historySummary(null, ago)).toBe("");
+    expect(historySummary([], ago)).toBe("Nenhuma conversa");
+    expect(historySummary([{ updatedAt: "2026-11-18T10:00:00Z" }], ago)).toBe("1 conversa · há 2026-11-18T10:00:00Z");
+    expect(historySummary([{ updatedAt: "2026-11-17T10:00:00Z" }, { updatedAt: "2026-11-18T10:00:00Z" }, { updatedAt: "2026-11-16T10:00:00Z" }], ago)).toBe("3 conversas · há 2026-11-18T10:00:00Z");
   });
 });
