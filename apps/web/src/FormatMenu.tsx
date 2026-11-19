@@ -1,4 +1,5 @@
 import type { Editor } from "@tiptap/react";
+import { useEditorState } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import { useEffect, useRef, useState } from "react";
 import { normalizeHref } from "./format-menu";
@@ -20,23 +21,23 @@ const BUTTONS: Button[] = [
   { label: "H2", title: "Título 2", active: (e) => e.isActive("heading", { level: 2 }), run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run() },
 ];
 
+// Fora do componente: identidade estável entre renders (o BubbleMenu se reconfigura quando elas mudam).
+const MENU_OPTIONS = { placement: "top", offset: 8 } as const;
+const shouldShowMenu = ({ editor: e, state }: { editor: Editor; state: { selection: { empty: boolean } } }) =>
+  e.isEditable && !state.selection.empty && !e.isActive("codeBlock") && !e.isActive("mermaid") && !e.isActive("image");
+
 /** Barra que flutua sobre o texto selecionado: formatação básica e link. */
 export function FormatMenu({ editor }: { editor: Editor }) {
-  const [, force] = useState(0);
   const [linking, setLinking] = useState(false);
   const [href, setHref] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
-  // Reavalia quais botões estão ativos a cada mudança de seleção.
-  useEffect(() => {
-    const update = () => force((n) => n + 1);
-    editor.on("selectionUpdate", update);
-    editor.on("transaction", update);
-    return () => {
-      editor.off("selectionUpdate", update);
-      editor.off("transaction", update);
-    };
-  }, [editor]);
+  // Quais botões estão ativos: só re-renderiza quando algum valor muda de verdade. Forçar um render a cada transação do editor
+  // fazia o BubbleMenu se reconfigurar a cada render e gerava um laço infinito ("Maximum update depth exceeded").
+  const state = useEditorState({
+    editor,
+    selector: ({ editor: e }) => ({ buttons: BUTTONS.map((b) => b.active(e)), link: e.isActive("link") }),
+  });
 
   useEffect(() => {
     if (linking) input.current?.focus();
@@ -58,8 +59,8 @@ export function FormatMenu({ editor }: { editor: Editor }) {
   return (
     <BubbleMenu
       editor={editor}
-      options={{ placement: "top", offset: 8 }}
-      shouldShow={({ editor: e, state }) => e.isEditable && !state.selection.empty && !e.isActive("codeBlock") && !e.isActive("mermaid") && !e.isActive("image")}
+      options={MENU_OPTIONS}
+      shouldShow={shouldShowMenu}
     >
       <div className={`ds${dark ? " escuro" : ""}`} style={{ background: "transparent" }}>
         <div className="menu on row" role="toolbar" aria-label="Formatação" style={{ position: "static", padding: 4, gap: 2, width: "auto", boxShadow: "var(--e2)" }} onMouseDown={(e) => !(e.target instanceof HTMLInputElement) && e.preventDefault()}>
@@ -71,12 +72,12 @@ export function FormatMenu({ editor }: { editor: Editor }) {
             </form>
           ) : (
             <>
-              {BUTTONS.map((b) => (
-                <button key={b.label} className={`btn btn-fan btn-sm${b.active(editor) ? " on" : ""}`} type="button" aria-pressed={b.active(editor)} title={b.title} aria-label={b.title} onClick={() => b.run(editor)} style={{ minWidth: 28, ...b.style }}>
+              {BUTTONS.map((b, i) => (
+                <button key={b.label} className={`btn btn-fan btn-sm${state.buttons[i] ? " on" : ""}`} type="button" aria-pressed={state.buttons[i]} title={b.title} aria-label={b.title} onClick={() => b.run(editor)} style={{ minWidth: 28, ...b.style }}>
                   {b.label}
                 </button>
               ))}
-              <button className={`btn btn-fan btn-sm${editor.isActive("link") ? " on" : ""}`} type="button" aria-pressed={editor.isActive("link")} title="Link" aria-label="Link" onClick={startLink}>
+              <button className={`btn btn-fan btn-sm${state.link ? " on" : ""}`} type="button" aria-pressed={state.link} title="Link" aria-label="Link" onClick={startLink}>
                 Link
               </button>
             </>
