@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Salvar no Asa: opções</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="page">
+    <header>
+      <img src="icons/icon-48.png" alt="" width="24" height="24" />
+      <strong>Salvar no Asa</strong>
+    </header>
+    <form id="form">
+      <label>Endereço do Asa<input id="server" type="url" required placeholder="https://asa.luizalves.dev" /></label>
+      <label>Token de API (escrita)<input id="token" type="password" required autocomplete="off" placeholder="asa_…" /></label>
+      <p class="muted">No Asa: Configurações &gt; API &gt; criar token com escopo <b>escrita</b>. O token fica só neste navegador.</p>
+      <button class="primary" type="submit">Salvar e testar</button>
+    </form>
+    <p id="status" role="status"></p>
+    <script src="options.js"></script>
+  </body>
+</html>

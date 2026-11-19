@@ -1,7 +1,7 @@
 /**
  * Markdown (o que um assistente costuma escrever) para o documento do editor:
  * títulos, parágrafos, listas, tarefas, listas numeradas, citação, divisor, blocos de código,
- * blocos ```mermaid (viram diagramas) e, dentro do texto, **negrito**, *itálico*, `código` e [links](https://...).
+ * blocos ```mermaid (viram diagramas), imagens http(s) sozinhas na linha e, dentro do texto, **negrito**, *itálico*, `código` e [links](https://...).
  */
 type Node = Record<string, unknown>;
 
@@ -76,6 +76,7 @@ export function markdownToDoc(markdown: string): { type: "doc"; content: unknown
     const ordered = /^\s*\d+[.)]\s+(.*)$/.exec(line);
     const heading = /^(#{1,3})\s+(.*)$/.exec(line);
     const quoted = /^>\s?(.*)$/.exec(line);
+    const image = /^\s*!\[([^\]\n]*)\]\((https?:\/\/[^)\s]+)\)\s*$/.exec(line);
 
     if (task) {
       if (list?.kind !== "task") (flush(), (list = { kind: "task", items: [] }));
@@ -91,7 +92,8 @@ export function markdownToDoc(markdown: string): { type: "doc"; content: unknown
       quote.push(quoted[1]!);
     } else {
       flush();
-      if (heading) content.push({ type: "heading", attrs: { level: heading[1]!.length }, content: inlineNodes(heading[2]!) });
+      if (image) content.push({ type: "image", attrs: { src: image[2]!, alt: image[1] || null } });
+      else if (heading) content.push({ type: "heading", attrs: { level: heading[1]!.length }, content: inlineNodes(heading[2]!) });
       else if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) content.push({ type: "horizontalRule" });
       else if (line.trim() !== "") content.push(para(line));
     }

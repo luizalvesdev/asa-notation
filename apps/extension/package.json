@@ -1,0 +1,21 @@
+{
+  "name": "@asa/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "package": "node build.mjs && web-ext build --source-dir dist --artifacts-dir ../../.dev/extension --overwrite-dest",
+    "sign": "node build.mjs && web-ext sign --source-dir dist --artifacts-dir ../../.dev/extension --channel unlisted"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "turndown": "^7.2.5"
+  },
+  "devDependencies": {
+    "@types/turndown": "^5.0.6",
+    "esbuild": "^0.28.2",
+    "web-ext": "^10.8.0"
+  }
+}

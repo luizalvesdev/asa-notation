@@ -315,6 +315,7 @@ function Tokens({ onToast }: { onToast: (t: Toast) => void }) {
         <button className="btn btn-sec" type="submit" disabled={name.trim() === ""}>Novo token</button>
       </form>
       <McpHelp />
+      <ExtensionHelp />
     </div>
   );
 }
@@ -336,6 +337,18 @@ function McpHelp() {
       <pre style={pre}>{code}</pre>
       <span className="label">Claude Desktop (claude_desktop_config.json)</span>
       <pre style={pre}>{desktop}</pre>
+    </div>
+  );
+}
+
+/** A extensão do navegador também entra por token. */
+function ExtensionHelp() {
+  return (
+    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+      <b style={{ fontWeight: 600 }}>Extensão "Salvar no Asa"</b>
+      <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
+        No Firefox ou no Zen, salva o artigo, a transcrição da aula ou o trecho selecionado em Leituras, e importa provas e entregas da agenda da faculdade como tarefas. Crie um token de leitura e escrita aqui e cole nas opções da extensão, com o endereço {location.origin}.
+      </span>
     </div>
   );
 }

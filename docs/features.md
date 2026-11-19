@@ -26,6 +26,8 @@ Atualizado depois do primeiro ciclo completo de telas.
 
 **Cache de prompt** (19/11): as chamadas aos assistentes marcam o fim das ferramentas, do sistema e da última mensagem. O prefixo fixo do assistente tem uns 5.300 tokens (acima do mínimo de 4.096 do Haiku 4.5), então as idas seguintes do laço de ferramentas e a próxima mensagem em até 5 minutos pagam cerca de 10% por ele. Conferido no Bedrock. O Haiku 5.5 (10x mais barato) ainda não está liberado nesta conta da AWS.
 
+**Extensão "Salvar no Asa"** (19/11): extensão do Firefox e do Zen em `apps/extension` (README lá). Lê a aba aberta com o login do usuário e salva como página em "Leituras" (ou na pasta escolhida) o artigo, a transcrição da aula (Alura e afins, ou o painel do YouTube) ou só o trecho selecionado, com o link de origem. "Importar datas desta página" manda o texto para a IA (`POST /api/clips/dates`), que devolve provas, entregas e aulas de hoje em diante para o usuário escolher quais viram tarefa; serve para a agenda da Faculdade Descomplica, que não tem calendário iCal conhecido. Autentica por token de API de escrita. Precisa ser assinada pela Mozilla (unlisted) para ficar instalada.
+
 **Ficou de fora**:
 
 - Blocos de embed e colunas.
@@ -34,7 +36,7 @@ Atualizado depois do primeiro ciclo completo de telas.
 - Streaming das respostas dos assistentes em produção (o API Gateway HTTP entrega os eventos juntos no fim).
 - Captura por e-mail ou compartilhamento do Android.
 - Importação direta por token do Notion ou do GitHub: a importação lê o `.zip` exportado ou uma pasta de Markdown.
-- Edição de um card depois de criado, tabela CSV do Notion e imagens locais na importação.
+- Tabela CSV do Notion e imagens locais na importação.
 
 ## A. Workspace
 
@@ -98,6 +100,8 @@ Atualizado depois do primeiro ciclo completo de telas.
 - Organizar e mover notas depois [2]
 - Recuperar notas conversando ("o que anotei sobre X?") [1]
 - Captura por e-mail ou compartilhamento do Android [3]
+- Extensão de navegador "Salvar no Asa" (Firefox e Zen): salva o artigo, a transcrição da aula (Alura, YouTube) ou o trecho selecionado como página em Leituras, lendo a aba com o login do usuário; código em `apps/extension` [2]
+- Importar datas de uma página (agenda da faculdade): pela extensão, a IA lê provas, entregas e aulas e o usuário escolhe quais viram tarefa [2]
 
 ## G. Assistentes
 

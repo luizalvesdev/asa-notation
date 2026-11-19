@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Salvar no Asa",
+  "version": "0.1.0",
+  "description": "Salva artigos, transcrições de aulas e trechos no Asa, e importa provas e entregas da agenda como tarefas.",
+  "icons": { "48": "icons/icon-48.png", "96": "icons/icon-96.png" },
+  "action": {
+    "default_title": "Salvar no Asa",
+    "default_popup": "popup.html",
+    "default_icon": { "48": "icons/icon-48.png", "96": "icons/icon-96.png" }
+  },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://asa.luizalves.dev/*"],
+  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "salvar-no-asa@luizalves.dev",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+  "commands": {
+    "_execute_action": { "suggested_key": { "default": "Alt+Shift+S" }, "description": "Abrir o Salvar no Asa" }
+  }
+}

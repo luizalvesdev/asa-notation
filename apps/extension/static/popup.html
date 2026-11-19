@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/icon-48.png" alt="" width="20" height="20" />
+      <strong>Salvar no Asa</strong>
+      <button id="options" class="link" type="button" title="Opções">Opções</button>
+    </header>
+
+    <section data-view="loading"><p class="muted">Lendo a página…</p></section>
+
+    <section data-view="setup" hidden>
+      <p>Falta conectar com o seu Asa. Crie um token de <b>escrita</b> em Configurações &gt; API e cole nas opções.</p>
+      <button id="setup-open" class="primary" type="button">Abrir opções</button>
+    </section>
+
+    <section data-view="blocked" hidden>
+      <p class="muted">Esta página não pode ser lida (páginas internas do navegador ou da loja de extensões). Abra um site e tente de novo.</p>
+    </section>
+
+    <section data-view="clip" hidden>
+      <form id="clip-form">
+        <p class="row"><span id="kind" class="badge"></span><span id="size" class="muted"></span></p>
+        <label>Título<input id="title" required maxlength="200" /></label>
+        <label>Pasta
+          <select id="folder"><option value="">📚 Leituras</option></select>
+        </label>
+        <button id="save" class="primary" type="submit">Salvar página</button>
+        <a id="open" href="#" hidden>Abrir no Asa</a>
+      </form>
+      <hr />
+      <button id="dates" type="button">Importar datas desta página</button>
+      <p class="muted small">Para a agenda da faculdade: a IA lê as provas e entregas e você escolhe quais viram tarefa. Se selecionar um trecho antes, só ele é salvo ou lido.</p>
+    </section>
+
+    <section data-view="dates" hidden>
+      <div id="events"></div>
+      <div class="row">
+        <button id="create" class="primary" type="button">Criar tarefas</button>
+        <button id="back" class="link" type="button">Voltar</button>
+      </div>
+    </section>
+
+    <p id="status" role="status"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

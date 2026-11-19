@@ -18,6 +18,15 @@ export const mockProvider: FetchLike = async (_url, init) => {
     ];
     return reply([{ type: "tool_use", id: "mock1", name: "save_cards", input: { cards } }], "tool_use");
   }
+  if (tools.includes("save_events")) {
+    const in3 = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    const in10 = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const events = [
+      { title: "AV1 de Algoritmos", kind: "prova", date: in10, time: "19:00" },
+      { title: "Fórum de Cálculo I", kind: "entrega", date: in3 },
+    ];
+    return reply([{ type: "tool_use", id: "mock1", name: "save_events", input: { events } }], "tool_use");
+  }
   if (Array.isArray(last?.content) && last.content.some((b: { type?: string }) => b.type === "tool_result")) {
     return reply([{ type: "text", text: "Pronto: deixei um rascunho para você aprovar." }]);
   }
