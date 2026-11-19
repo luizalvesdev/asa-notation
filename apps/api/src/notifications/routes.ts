@@ -7,7 +7,7 @@ import type { PgNotificationStore } from "./store.js";
 
 const ID = `(${UUID_SOURCE})`;
 
-interface Deps {
+export interface CheckinDeps {
   store: PgNotificationStore;
   settings: PgSettingsStore;
   tasks: PgTaskStore;
@@ -27,7 +27,7 @@ function content(kind: DueCheckin["kind"], todayCount: number, lateCount: number
 }
 
 /** Cria os check-ins que já deveriam ter acontecido e ainda não estão na caixa. */
-async function generate({ store, settings, tasks, sql, now }: Deps): Promise<void> {
+export async function generateCheckins({ store, settings, tasks, sql, now }: CheckinDeps): Promise<void> {
   const config = await settings.get();
   const due = dueCheckins(now(), config);
   const existing = await store.existingKeys(due.map((d) => d.dedupeKey));
@@ -46,7 +46,7 @@ async function generate({ store, settings, tasks, sql, now }: Deps): Promise<voi
   }
 }
 
-export function notificationRoutes(deps: Deps): Route[] {
+export function notificationRoutes(deps: CheckinDeps): Route[] {
   const { store } = deps;
   return [
     {
@@ -56,7 +56,7 @@ export function notificationRoutes(deps: Deps): Route[] {
       handle: async ({ req }) => {
         const filter = req.query.filter ?? "all";
         if (filter !== "all" && filter !== "unread") return badRequest("invalid_filter");
-        await generate(deps);
+        await generateCheckins(deps);
         const [items, unread] = await Promise.all([store.list(filter === "unread"), store.unread()]);
         return json(200, { items, unread });
       },
@@ -66,7 +66,7 @@ export function notificationRoutes(deps: Deps): Route[] {
       pattern: /^\/notifications\/count$/,
       access: "session",
       handle: async () => {
-        await generate(deps);
+        await generateCheckins(deps);
         return json(200, { unread: await store.unread() });
       },
     },

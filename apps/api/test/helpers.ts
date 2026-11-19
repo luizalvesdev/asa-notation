@@ -9,6 +9,7 @@ import { PgAuthStore } from "../src/auth/store.js";
 import type { ApiResponse } from "../src/http.js";
 import { readMigrations } from "../src/migrations.js";
 import type { SqlClient } from "../src/sql.js";
+import type { PushFetch } from "../src/push/webpush.js";
 
 export const ORIGIN = "http://localhost:5173";
 export const PASSWORD = "uma-senha-bem-longa-123";
@@ -37,13 +38,13 @@ export interface CallInit {
   origin?: string | null;
 }
 
-export async function createTestApp(options: { withPassword?: boolean; fetchImpl?: FetchLike; ai?: AiConfig; bedrockInvoke?: BedrockInvoke; bedrockStream?: BedrockStream } = {}) {
+export async function createTestApp(options: { withPassword?: boolean; fetchImpl?: FetchLike; ai?: AiConfig; bedrockInvoke?: BedrockInvoke; bedrockStream?: BedrockStream; pushFetch?: PushFetch } = {}) {
   const db = await openDb();
   const sql: SqlClient = { query: async (text, params) => (await db.query(text, params)).rows as Record<string, unknown>[] };
   const clock = { ms: Date.UTC(2026, 10, 18, 12, 0, 0) };
   const auth = new PgAuthStore(sql);
   if (options.withPassword !== false) await auth.setPassword(await hashPassword(PASSWORD), new Date(clock.ms).toISOString());
-  const handle = createApp({ sql, config: CONFIG, now: () => clock.ms, ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}), ...(options.ai ? { ai: options.ai } : {}), ...(options.bedrockInvoke ? { bedrockInvoke: options.bedrockInvoke } : {}), ...(options.bedrockStream ? { bedrockStream: options.bedrockStream } : {}) });
+  const handle = createApp({ sql, config: CONFIG, now: () => clock.ms, ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}), ...(options.ai ? { ai: options.ai } : {}), ...(options.bedrockInvoke ? { bedrockInvoke: options.bedrockInvoke } : {}), ...(options.bedrockStream ? { bedrockStream: options.bedrockStream } : {}), ...(options.pushFetch ? { pushFetch: options.pushFetch } : {}) });
 
   async function call(method: string, path: string, init: CallInit = {}): Promise<ApiResponse> {
     const headers: Record<string, string> = { ...(init.headers ?? {}) };

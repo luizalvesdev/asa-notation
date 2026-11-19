@@ -1,11 +1,11 @@
 import { GetParametersCommand, SSMClient } from "@aws-sdk/client-ssm";
 import { neon } from "@neondatabase/serverless";
-import { createApp, type Api } from "./app.js";
+import { createApp, createPushJob, type Api } from "./app.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "./auth/config.js";
 import { aiConfigFromEnv } from "./ai/provider.js";
 import { createLambdaHandler } from "./lambda.js";
 
-let cached: Promise<Api> | undefined;
+let cached: Promise<Runtime> | undefined;
 
 function env(name: string): string {
   const value = process.env[name];
@@ -24,7 +24,12 @@ async function loadSecrets(names: Record<"databaseUrl" | "sessionSecret", string
   return { databaseUrl: read("databaseUrl"), sessionSecret: read("sessionSecret") };
 }
 
-async function buildApi(): Promise<Api> {
+interface Runtime {
+  api: Api;
+  pushJob: ReturnType<typeof createPushJob>;
+}
+
+async function build(): Promise<Runtime> {
   const secrets = await loadSecrets({
     databaseUrl: env("DATABASE_URL_PARAM"),
     sessionSecret: env("SESSION_SECRET_PARAM"),
@@ -38,20 +43,30 @@ async function buildApi(): Promise<Api> {
     sessionTtlSeconds: DEFAULT_SESSION_TTL_SECONDS,
   };
 
-  const sql = neon(secrets.databaseUrl);
-  return createApp({
-    sql: { query: async (text, params) => (await sql.query(text, params)) as Record<string, unknown>[] },
-    config,
-    ai: aiConfigFromEnv(process.env),
-  });
+  const neonSql = neon(secrets.databaseUrl);
+  const sql = { query: async (text: string, params?: unknown[]) => (await neonSql.query(text, params)) as Record<string, unknown>[] };
+  return {
+    api: createApp({ sql, config, ai: aiConfigFromEnv(process.env) }),
+    pushJob: createPushJob({ sql, config }),
+  };
 }
 
-function getApi(): Promise<Api> {
-  cached ??= buildApi().catch((err) => {
+function getRuntime(): Promise<Runtime> {
+  cached ??= build().catch((err) => {
     cached = undefined;
     throw err;
   });
   return cached;
 }
 
-export const handler = createLambdaHandler(getApi);
+const httpHandler = createLambdaHandler(async () => (await getRuntime()).api);
+
+/** A mesma função atende a API (eventos do API Gateway) e o agendador ({"job": "push"}). */
+export async function handler(event: Parameters<typeof httpHandler>[0] | { job: "push" }) {
+  if ("job" in event) {
+    const result = await (await getRuntime()).pushJob();
+    console.log(JSON.stringify({ job: "push", ...result }));
+    return result;
+  }
+  return httpHandler(event);
+}

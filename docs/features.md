@@ -18,12 +18,13 @@ Atualizado depois do primeiro ciclo completo de telas.
 
 **Feito**: todo o bloco A (workspace e editor, exceto embed e colunas), B (databases), D (tarefas e metas, com subtarefas e recorrência), E (rotina e acompanhamento, com avisos do app aberto), F (captura e organização), G (assistentes, com streaming do texto no servidor de desenvolvimento), H (estudo: trilhas, cards, revisão FSRS, estatísticas, quiz e sessão guiada pelo Tutor) e I (login por senha, PWA, importação, backup, tokens e configurações), mais Mermaid, canvas e exportação SVG/PNG do bloco C.
 
+**Web Push** (19/11): os check-ins chegam como notificação do sistema com o app fechado. Configurações > Rotina > "Ligar neste aparelho". Um agendamento (EventBridge, `PushSchedule`, padrão a cada 15 min) chama a mesma Lambda com `{"job":"push"}`: gera os check-ins vencidos e manda os avisos não lidos das últimas 12 h, fora do horário de silêncio. Chaves VAPID criadas no primeiro uso e guardadas cifradas na tabela `secrets`; cifra aes128gcm e VAPID implementados com `node:crypto` e conferidos contra a implementação de referência (`http_ece`). Só aceita endpoints dos serviços de push (FCM, Mozilla, Apple, Windows). No iPhone, só com o app instalado na tela de início.
+
 **Ficou de fora**:
 
 - Blocos de embed e colunas.
 - Mapa mental como tela própria: o Renato gera um diagrama `mindmap` em Mermaid como rascunho de página.
 - Pesquisa com citações (Perplexity) e resumo e quiz com Gemini: o quiz e a sessão guiada rodam no Tutor, com o Claude.
-- Web Push com o app fechado (exige servidor de push e chaves VAPID): hoje há avisos do sistema quando a aba está aberta em segundo plano.
 - Streaming das respostas dos assistentes e servidor MCP.
 - Captura por e-mail ou compartilhamento do Android.
 - Importação direta por token do Notion ou do GitHub: a importação lê o `.zip` exportado ou uma pasta de Markdown.

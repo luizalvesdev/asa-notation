@@ -5,7 +5,7 @@
  * - Nunca guarda: login, senha, tokens, configurações, export, escritas.
  * - O cache de dados é limpo no logout (mensagem "clear-data-cache").
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `asa-shell-${VERSION}`;
 const DATA_CACHE = `asa-data-${VERSION}`;
 const DATA_LIMIT = 200;
@@ -35,6 +35,41 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function" &
         .keys()
         .then((keys) => Promise.all(keys.filter((k) => k.startsWith("asa-") && k !== SHELL_CACHE && k !== DATA_CACHE).map((k) => caches.delete(k))))
         .then(() => self.clients.claim()),
+    );
+  });
+
+  // Web Push: check-ins e lembretes mandados pelo servidor com o app fechado.
+  self.addEventListener("push", (event) => {
+    let data = {};
+    try {
+      data = event.data ? event.data.json() : {};
+    } catch {
+      data = {};
+    }
+    const title = typeof data.title === "string" && data.title ? data.title : "asa-notation";
+    // Só rotas do próprio app, nunca uma URL externa.
+    const link = typeof data.link === "string" && data.link.startsWith("#/") ? data.link : "#/notificacoes";
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body: typeof data.body === "string" ? data.body : "",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: typeof data.tag === "string" ? data.tag : undefined,
+        data: { link },
+      }),
+    );
+  });
+
+  self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const link = (event.notification.data && event.notification.data.link) || "#/notificacoes";
+    const target = new URL("/" + link, self.location.origin).href;
+    event.waitUntil(
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+        const open = list.find((c) => new URL(c.url).origin === self.location.origin);
+        if (open) return open.navigate(target).then((c) => (c || open).focus()).catch(() => open.focus());
+        return self.clients.openWindow(target);
+      }),
     );
   });
 

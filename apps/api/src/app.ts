@@ -29,6 +29,10 @@ import { exportRoutes } from "./export/routes.js";
 import { settingsRoutes } from "./settings/routes.js";
 import { PgSettingsStore } from "./settings/store.js";
 import { tokenRoutes } from "./tokens/routes.js";
+import { runPushJob, type PushDeps } from "./push/job.js";
+import { pushRoutes } from "./push/routes.js";
+import { PgPushStore } from "./push/store.js";
+import type { PushFetch } from "./push/webpush.js";
 import { PgTokenStore } from "./tokens/store.js";
 import { forbidden, json, notFound, unauthorized, type Route } from "./routing.js";
 import type { SqlClient } from "./sql.js";
@@ -48,11 +52,33 @@ export interface AppDeps {
   bedrockInvoke?: BedrockInvoke;
   /** Troca o fluxo do Bedrock nos testes. */
   bedrockStream?: BedrockStream;
+  /** Envia para os serviços de push. Os testes trocam por uma versão falsa. */
+  pushFetch?: PushFetch;
+}
+
+const defaultPushFetch: PushFetch = async (url, init) => {
+  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(10_000) });
+  return { status: res.status };
+};
+
+/** Contato do servidor no VAPID: a primeira origem https do app ou, em desenvolvimento, um mailto genérico. */
+export function pushSubject(config: AuthConfig): string {
+  return config.origins.find((o) => o.startsWith("https://")) ?? "mailto:asa-notation@localhost";
+}
+
+function pushDeps(sql: SqlClient, config: AuthConfig, now: () => number, pushFetch: PushFetch): PushDeps {
+  return { push: new PgPushStore(sql, new PgSecretStore(sql, secretsKey(config.sessionSecret), now), now), fetchImpl: pushFetch, subject: pushSubject(config), now };
+}
+
+/** O trabalho agendado: gera os check-ins vencidos e manda por push. */
+export function createPushJob({ sql, config, now = Date.now, pushFetch = defaultPushFetch }: Pick<AppDeps, "sql" | "config" | "now" | "pushFetch">) {
+  const checkins = { store: new PgNotificationStore(sql, now), settings: new PgSettingsStore(sql, now), tasks: new PgTaskStore(sql, now), sql, now };
+  return () => runPushJob({ ...pushDeps(sql, config, now, pushFetch), checkins });
 }
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke, bedrockStream }: AppDeps): Api {
+export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke, bedrockStream, pushFetch = defaultPushFetch }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
   const tokenStore = new PgTokenStore(sql, now);
@@ -86,6 +112,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
       now,
     }),
     ...tokenRoutes(tokenStore),
+    ...pushRoutes(pushDeps(sql, config, now, pushFetch)),
     ...exportRoutes(sql, now),
   ];
 

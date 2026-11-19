@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { ApiError, accountApi, aiApi, settingsApi, tokensApi } from "./api";
+import { ApiError, accountApi, aiApi, pushApi, settingsApi, tokensApi, type PushDevice } from "./api";
+import { currentSubscription, disablePush, enablePush, pushSupport } from "./push-client";
 import { downloadFile } from "./download";
 import { buildMarkdownZip } from "./export-zip";
 import { routeHash } from "./nav";
@@ -348,6 +349,91 @@ function Data({ onToast }: { onToast: (t: Toast) => void }) {
   );
 }
 
+const PUSH_HELP: Record<Exclude<ReturnType<typeof pushSupport>, "ok">, string> = {
+  "ios-install": "No iPhone, os avisos só funcionam com o app instalado: Compartilhar > Adicionar à Tela de Início, e abra por lá.",
+  unsupported: "Este navegador não recebe avisos com o app fechado.",
+  "no-sw": "Disponível no app publicado (o service worker não roda no modo de desenvolvimento).",
+};
+
+/** Avisos dos check-ins pelo sistema, mesmo com o app fechado (Web Push). */
+function PushCard({ onToast }: { onToast: (t: Toast) => void }) {
+  const support = pushSupport();
+  const [devices, setDevices] = useState<PushDevice[] | null>(null);
+  const [here, setHere] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [denied, setDenied] = useState(typeof Notification !== "undefined" && Notification.permission === "denied");
+
+  const load = useCallback(async () => {
+    const [res, sub] = await Promise.all([pushApi.get(), currentSubscription().catch(() => null)]);
+    setDevices(res.subscriptions);
+    // Só conta como ligado aqui se o servidor também conhece esta inscrição.
+    setHere(sub && res.subscriptions.length > 0 ? sub.endpoint : null);
+  }, []);
+
+  useEffect(() => {
+    load().catch(() => setDevices([]));
+  }, [load]);
+
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    try {
+      await fn();
+      await load();
+    } catch {
+      onToast({ text: "Não foi possível falar com o servidor de avisos" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const enable = () =>
+    run(async () => {
+      if ((await enablePush()) === "denied") {
+        setDenied(Notification.permission === "denied");
+        onToast({ text: "O navegador não deu permissão para notificações" });
+      } else onToast({ text: "Avisos ligados neste aparelho" });
+    });
+
+  const test = () =>
+    run(async () => {
+      const r = await pushApi.test();
+      onToast({ text: r.sent > 0 ? `Teste enviado para ${r.sent} ${r.sent === 1 ? "aparelho" : "aparelhos"}` : "Nenhum aparelho recebeu o teste" });
+    });
+
+  return (
+    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, marginTop: 18 }}>
+      <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
+        <span className="col grow1">
+          <b style={{ fontWeight: 600 }}>Avisos com o app fechado</b>
+          <span style={{ fontSize: 13, color: "var(--text-2)" }}>Os check-ins chegam como notificação do sistema, no computador ou no celular. Respeitam o horário de silêncio.</span>
+        </span>
+        {support !== "ok" ? null : here ? (
+          <>
+            <span className="badge ok">ligado aqui</span>
+            <button className="btn btn-sec btn-sm" type="button" disabled={busy} onClick={() => void test()}>Testar</button>
+            <button className="btn btn-fan btn-sm" type="button" disabled={busy} onClick={() => void run(disablePush)}>Desligar</button>
+          </>
+        ) : (
+          <button className="btn btn-pri" type="button" disabled={busy || denied} onClick={() => void enable()}>Ligar neste aparelho</button>
+        )}
+      </div>
+      {support !== "ok" && <span className="help">{PUSH_HELP[support]}</span>}
+      {support === "ok" && denied && <span className="help">As notificações estão bloqueadas para este site. Libere nas permissões do navegador e recarregue.</span>}
+      {devices && devices.length > 0 && (
+        <div className="col" style={{ gap: 0 }}>
+          {devices.map((d) => (
+            <div key={d.id} className="row" style={{ gap: 10, fontSize: 13, borderTop: "1px solid var(--border)", minHeight: 44 }}>
+              <span className="grow1 trunc">{d.label || d.service}</span>
+              <span className="spec">{d.lastOkAt ? `último aviso ${formatAgo(d.lastOkAt)}` : `inscrito ${formatAgo(d.createdAt)}`}</span>
+              <button className="btn btn-fan btn-sm" type="button" disabled={busy} aria-label={`Remover ${d.label || d.service}`} onClick={() => void run(async () => { await pushApi.remove(d.id); })}>Remover</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const installable = useSyncExternalStore(onInstallChange, canInstall);
   const pending = usePending();
@@ -439,6 +525,7 @@ export function SettingsView({ preference, onPreference, onLogout, onToast }: Se
       {needsSettings && failed && <div className="card" role="alert" style={{ padding: 16, fontSize: 14 }}>Não foi possível carregar as configurações.</div>}
       {tab === "Geral" && settings && <General key="g" settings={s} save={save} preference={preference} onPreference={onPreference} />}
       {tab === "Rotina" && settings && <Routine key="r" settings={s} save={save} />}
+      {tab === "Rotina" && <PushCard onToast={onToast} />}
       {tab === "Assistentes" && <Assistants onToast={onToast} settings={settings} save={save} />}
       {tab === "API" && <Tokens onToast={onToast} />}
       {tab === "Dados" && <Data onToast={onToast} />}

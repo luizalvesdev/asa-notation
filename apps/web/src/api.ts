@@ -133,6 +133,22 @@ export const accountApi = {
   exportAll: () => request<{ pages: { id: string; parent_id: string | null; title: string; body: unknown }[] } & Record<string, unknown>>("GET", "/export"),
 };
 
+export interface PushDevice {
+  id: string;
+  label: string;
+  service: string;
+  createdAt: string;
+  lastOkAt: string | null;
+}
+
+export const pushApi = {
+  get: () => request<{ publicKey: string; subscriptions: PushDevice[] }>("GET", "/push"),
+  subscribe: (sub: PushSubscriptionJSON, label: string) => request<{ ok: true }>("POST", "/push/subscriptions", { ...sub, label }),
+  unsubscribe: (endpoint: string) => request<{ ok: true }>("DELETE", "/push/subscriptions", { endpoint }),
+  remove: (id: string) => request<{ ok: true }>("DELETE", `/push/subscriptions/${id}`),
+  test: () => request<{ sent: number; removed: number; failed: number }>("POST", "/push/test"),
+};
+
 export const notificationsApi = {
   list: (filter: "all" | "unread") => request<{ items: Notification[]; unread: number }>("GET", `/notifications?filter=${filter}`),
   count: () => request<{ unread: number }>("GET", "/notifications/count").then((r) => r.unread),

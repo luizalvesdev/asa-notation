@@ -44,3 +44,12 @@ export function dueCheckins(nowMs: number, settings: Settings): DueCheckin[] {
   }
   return out;
 }
+
+/** Dentro do horário de silêncio (no fuso das configurações)? A janela pode passar da meia-noite (22:00 até 07:30). */
+export function isQuiet(nowMs: number, settings: Settings): boolean {
+  const { minutes } = localParts(nowMs, settings.timezone);
+  const start = minutesOf(settings.quiet.start);
+  const end = minutesOf(settings.quiet.end);
+  if (start === end) return false;
+  return start < end ? minutes >= start && minutes < end : minutes >= start || minutes < end;
+}
