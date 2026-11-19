@@ -5,7 +5,27 @@ import { pageHash, routeHash } from "./nav";
 import { applyGrade, clozeAnswers, clozeSegments, current, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize, type Session } from "./study-logic";
 import type { Grade, QueueCard } from "./study-types";
 import { localDayStartIso } from "./tasks-dates";
-import { ActiveClock, checkAnswer, expectedAnswer, formatSeconds, loadTypedAnswers, suggestGrade } from "./typed-answer";
+import { ActiveClock, checkAnswer, expectedAnswer, formatSeconds, loadSamples, loadTypedAnswers, recordSample, suggestGrade, thresholdsFrom } from "./typed-answer";
+
+const LAST_CHECKIN = "asa-checkin-last";
+
+/** Check-in: um card só, e não o mesmo da última entrada (se houver outro para hoje). */
+function pickForCheckin(queue: QueueCard[]): QueueCard[] {
+  let last: string | null = null;
+  try {
+    last = localStorage.getItem(LAST_CHECKIN);
+  } catch {
+    // sem armazenamento
+  }
+  const chosen = queue.find((c) => c.id !== last) ?? queue[0];
+  if (!chosen) return [];
+  try {
+    localStorage.setItem(LAST_CHECKIN, chosen.id);
+  } catch {
+    // sem armazenamento
+  }
+  return [chosen];
+}
 
 type Load = { status: "carregando" } | { status: "erro" } | { status: "pronto"; session: Session };
 
@@ -38,8 +58,11 @@ function Back({ card }: { card: QueueCard }) {
   );
 }
 
-/** `onExit`: a revisão abre como check-in (modal sobre Hoje); sair, Esc e o fim fecham o modal em vez de ir ao Estudo. */
-export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
+/**
+ * `checkin`: a revisão abre como check-in (modal sobre Hoje), com um card só, sem Esc;
+ * avaliar fecha o modal (`onExit`). Sem isso, é a sessão completa do Estudo.
+ */
+export function ReviewView({ onExit, checkin = false }: { onExit?: () => void; checkin?: boolean } = {}) {
   const [load, setLoad] = useState<Load>({ status: "carregando" });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -49,7 +72,10 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
   // Responder digitando: o tempo até lembrar (só com o Asa em foco) sugere a nota.
   const [typing] = useState(loadTypedAnswers);
   const [typed, setTyped] = useState("");
-  const [verdict, setVerdict] = useState<{ correct: boolean; latency: number | null; suggestion: Grade | null } | null>(null);
+  const [verdict, setVerdict] = useState<{ correct: boolean; latency: number | null; suggestion: Grade | null; errors: number } | null>(null);
+  /** Quantas vezes errou o card atual (refazendo). */
+  const [errors, setErrors] = useState(0);
+  const limits = useRef(thresholdsFrom(loadSamples()));
   const clock = useRef(new ActiveClock());
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,7 +87,7 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
       .then((queue) => {
         if (!live) return;
         startedAt.current = Date.now();
-        setLoad({ status: "pronto", session: startSession(queue, Date.now()) });
+        setLoad({ status: "pronto", session: startSession(checkin ? pickForCheckin(queue) : queue, Date.now()) });
       })
       .catch(() => live && setLoad({ status: "erro" }));
     return () => {
@@ -79,10 +105,14 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
   // Cada card novo (ou "refazer") zera a resposta e o cronômetro.
   const cardKey = card ? `${card.id}-${session?.results.length}` : "";
   const [retry, setRetry] = useState(0);
+  // Card novo: zera tudo. "Refazer" zera na própria ação (redo), sem perder teclas já digitadas.
   useEffect(() => {
     clock.current = new ActiveClock();
     setTyped("");
     setVerdict(null);
+    setErrors(0);
+  }, [cardKey]);
+  useEffect(() => {
     if (!typing || !card) return;
     const active = () => document.visibilityState === "visible" && document.hasFocus();
     const sync = () => (active() ? clock.current.start() : clock.current.pause());
@@ -104,11 +134,18 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
     clock.current.pause();
     const correct = checkAnswer(typed, expectedAnswer(card));
     const latency = clock.current.latency();
-    setVerdict({ correct, latency, suggestion: suggestGrade(correct, latency) });
+    const wrongSoFar = errors + (correct ? 0 : 1);
+    if (correct && errors === 0 && latency !== null) recordSample(latency);
+    if (!correct) setErrors(wrongSoFar);
+    setVerdict({ correct, latency, suggestion: suggestGrade(correct, latency, errors, limits.current), errors: wrongSoFar });
     flip();
-  }, [card, session, typed, flip]);
+  }, [card, session, typed, flip, errors]);
 
   const redo = useCallback(() => {
+    // Zera na hora (não só no efeito), para o que for digitado logo em seguida não somar com a tentativa anterior.
+    clock.current = new ActiveClock();
+    setTyped("");
+    setVerdict(null);
     setLoad((l) => (l.status === "pronto" ? { status: "pronto", session: { ...l.session, revealed: false } } : l));
     setRetry((n) => n + 1);
   }, []);
@@ -122,13 +159,14 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
         const spent = typing ? Math.round(clock.current.elapsed()) : Date.now() - session.shownAt;
         const response = await studyApi.review(card.id, value, spent);
         setLoad((l) => (l.status === "pronto" ? { status: "pronto", session: applyGrade(l.session, value, response, Date.now()) } : l));
+        if (checkin) onExit?.();
       } catch {
         setFailed(true);
       } finally {
         setBusy(false);
       }
     },
-    [session, card, busy, typing],
+    [session, card, busy, typing, checkin, onExit],
   );
 
   useEffect(() => {
@@ -136,9 +174,14 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
       if (editing) return;
+      // Digitando a resposta: qualquer letra vai para o campo (mesmo antes de ele ganhar foco), e não vira atalho.
+      if (typing && session && !session.revealed && card && e.key.length === 1) {
+        inputRef.current?.focus();
+        return;
+      }
       if (e.key === "Escape") {
-        if (onExit) onExit();
-        else location.hash = routeHash("estudo");
+        // No check-in não tem saída pelo Esc: o card é a porta de entrada.
+        if (!checkin) location.hash = routeHash("estudo");
       } else if (e.key === "e" && card) {
         e.preventDefault();
         setEditing(true);
@@ -160,12 +203,10 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [session, card, flip, grade, editing, onExit, typing, verdict, redo]);
+  }, [session, card, flip, grade, editing, checkin, typing, verdict, redo]);
 
-  const back = onExit ? (
-    <button className="btn btn-fan btn-sm" type="button" onClick={onExit}>
-      Depois <span className="kbd">esc</span>
-    </button>
+  const back = checkin ? (
+    <span className="eyebrow">Check-in de estudo</span>
   ) : (
     <a className="btn btn-fan btn-sm" href={routeHash("estudo")}>
       Sair <span className="kbd">esc</span>
@@ -258,6 +299,7 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
               <div className="row" style={{ gap: 8 }}>
                 <span className="badge out" style={{ height: 20 }}>{card.kind === "basic" ? "básico" : "lacuna"}</span>
                 {card.state === 0 && <span className="badge ac" style={{ height: 20 }}>novo</span>}
+                {errors > 0 && <span className="badge" style={{ height: 20, background: "var(--danger-soft)", color: "var(--danger)" }}>{errors === 1 ? "errou 1 vez" : `errou ${errors} vezes`}</span>}
               </div>
               <div style={{ fontFamily: "var(--serif)", fontSize: "calc(28px * var(--fs, 1))", lineHeight: "calc(36px * var(--fs, 1))", textWrap: "balance", overflowWrap: "anywhere" }}><Front card={card} /></div>
             </div>
@@ -322,7 +364,8 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
               onClick={() => {
                 clock.current.pause();
                 setTyped("");
-                setVerdict({ correct: false, latency: clock.current.latency(), suggestion: 1 });
+                setErrors(errors + 1);
+                setVerdict({ correct: false, latency: clock.current.latency(), suggestion: 1, errors: errors + 1 });
                 flip();
               }}
             >
@@ -338,7 +381,9 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
         {s.revealed && verdict && (
           <div className="card" role="status" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6, borderColor: verdict.correct ? "var(--success)" : "var(--danger)" }}>
             <span className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-              <b style={{ fontWeight: 600, color: verdict.correct ? "var(--success)" : "var(--danger)" }}>{verdict.correct ? "Certo" : "Você errou"}</b>
+              <b style={{ fontWeight: 600, color: verdict.correct ? "var(--success)" : "var(--danger)" }}>
+                {verdict.correct ? (verdict.errors > 0 ? `Certo, depois de errar ${verdict.errors === 1 ? "1 vez" : `${verdict.errors} vezes`}` : "Certo") : verdict.errors >= 2 ? `Você errou ${verdict.errors} vezes` : "Você errou"}
+              </b>
               <span className="muted" style={{ fontSize: "calc(13px * var(--fs, 1))" }}>
                 {verdict.latency === null ? "tempo não medido (ficou parado mais de 1 min)" : `lembrou em ${formatSeconds(verdict.latency)}`}
               </span>
@@ -354,7 +399,13 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
               </span>
             )}
             <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>
-              {verdict.suggestion ? <>Sugestão: <b style={{ fontWeight: 600 }}>{RATES.find((r) => r.grade === verdict.suggestion)!.name}</b> · enter aceita, ou escolha outra (1–4)</> : "Escolha a nota (1–4)."}
+              {verdict.suggestion ? (
+                <>
+                  {verdict.errors >= 2 ? "É recomendado" : "Sugestão"}: <b style={{ fontWeight: 600 }}>{RATES.find((r) => r.grade === verdict.suggestion)!.name}</b> · enter aceita, ou escolha outra (1–4)
+                </>
+              ) : (
+                "Escolha a nota (1–4)."
+              )}
             </span>
           </div>
         )}

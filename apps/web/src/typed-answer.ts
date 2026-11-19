@@ -86,12 +86,61 @@ export function checkAnswer(typed: string, expected: string): boolean {
   return hit / want.length >= 0.7;
 }
 
-/** null: tempo não medido (ficou parado), a nota fica com quem revisa. */
-export function suggestGrade(correct: boolean, latencyMs: number | null): Grade | null {
-  if (!correct) return 1;
+export interface Thresholds {
+  fast: number;
+  slow: number;
+}
+
+export const DEFAULT_THRESHOLDS: Thresholds = { fast: FAST_MS, slow: SLOW_MS };
+/** Quantas respostas medidas antes de trocar os limites fixos pelos seus. */
+export const MIN_SAMPLES = 50;
+const MAX_SAMPLES = 200;
+const SAMPLES_KEY = "asa-recall-times";
+
+function percentile(sorted: number[], p: number): number {
+  const i = (sorted.length - 1) * p;
+  const lo = Math.floor(i);
+  const hi = Math.ceil(i);
+  return sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (i - lo);
+}
+
+/** Seus limites: os 25% mais rápidos viram Fácil e os 25% mais lentos, Difícil. Antes de 50 respostas, os fixos. */
+export function thresholdsFrom(samples: readonly number[]): Thresholds {
+  if (samples.length < MIN_SAMPLES) return DEFAULT_THRESHOLDS;
+  const sorted = [...samples].sort((a, b) => a - b);
+  const fast = Math.max(1_000, percentile(sorted, 0.25));
+  const slow = Math.min(IDLE_MS, Math.max(fast + 1_000, percentile(sorted, 0.75)));
+  return { fast, slow };
+}
+
+export function loadSamples(): number[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SAMPLES_KEY) ?? "[]") as unknown;
+    return Array.isArray(raw) ? raw.filter((n): n is number => typeof n === "number" && n >= 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Guarda o tempo de uma resposta certa de primeira, medida (por aparelho; as últimas 200). */
+export function recordSample(latencyMs: number): void {
+  try {
+    localStorage.setItem(SAMPLES_KEY, JSON.stringify([...loadSamples(), Math.round(latencyMs)].slice(-MAX_SAMPLES)));
+  } catch {
+    // sem armazenamento
+  }
+}
+
+/**
+ * Nota sugerida. `errors`: quantas vezes errou este card antes (refazendo).
+ * null: tempo não medido (ficou parado), a nota fica com quem revisa.
+ */
+export function suggestGrade(correct: boolean, latencyMs: number | null, errors = 0, limits: Thresholds = DEFAULT_THRESHOLDS): Grade | null {
+  if (!correct || errors >= 2) return 1;
+  if (errors === 1) return 2;
   if (latencyMs === null) return null;
-  if (latencyMs > SLOW_MS) return 2;
-  if (latencyMs < FAST_MS) return 4;
+  if (latencyMs > limits.slow) return 2;
+  if (latencyMs < limits.fast) return 4;
   return 3;
 }
 

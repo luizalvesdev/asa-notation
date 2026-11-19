@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ActiveClock, IDLE_MS, checkAnswer, expectedAnswer, formatSeconds, normalizeAnswer, suggestGrade } from "../src/typed-answer";
+import { ActiveClock, DEFAULT_THRESHOLDS, IDLE_MS, checkAnswer, expectedAnswer, formatSeconds, normalizeAnswer, suggestGrade, thresholdsFrom } from "../src/typed-answer";
 
 describe("conferir a resposta digitada", () => {
   it("ignora acento, maiúscula e pontuação", () => {
@@ -77,5 +77,23 @@ describe("cronômetro só com o Asa em foco", () => {
     t = 1_000 + IDLE_MS + 1;
     clock.key();
     expect(clock.latency()).toBeNull();
+  });
+});
+
+describe("tentativas e limites pessoais", () => {
+  it("errou antes: uma vez sugere Difícil, duas ou mais De novo, mesmo acertando rápido", () => {
+    expect(suggestGrade(true, 1_000, 1)).toBe(2);
+    expect(suggestGrade(true, 1_000, 2)).toBe(1);
+    expect(suggestGrade(true, null, 1)).toBe(2);
+  });
+
+  it("com 50 respostas medidas, os limites viram os seus quartis", () => {
+    expect(thresholdsFrom(Array(49).fill(5_000))).toEqual(DEFAULT_THRESHOLDS);
+    const mine = Array.from({ length: 100 }, (_, i) => 2_000 + i * 100); // 2 s a 11,9 s
+    const t = thresholdsFrom(mine);
+    expect(Math.round(t.fast)).toBe(4_475);
+    expect(Math.round(t.slow)).toBe(9_425);
+    expect(suggestGrade(true, 4_000, 0, t)).toBe(4);
+    expect(suggestGrade(true, 10_000, 0, t)).toBe(2);
   });
 });

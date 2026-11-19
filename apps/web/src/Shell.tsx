@@ -27,7 +27,9 @@ import { flushOutbox, removePending, submitCapture, usePending } from "./outbox"
 import { useUnread } from "./use-notifications";
 import { usePages, type CreateExtra } from "./use-pages";
 import { AWAY_MS, hasCardsToday, isStartHash, loadReviewOnOpen } from "./review-on-open";
-import { localDayStartIso } from "./tasks-dates";
+import { localDate, localDayStartIso, localTimeZone } from "./tasks-dates";
+import { CheckinReport, todaySummary } from "./CheckinReport";
+import type { Stats } from "./study-types";
 
 const SIDE_KEY = "asa:side-width";
 const CHAT_KEY = "asa:chat-width";
@@ -130,16 +132,26 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   // Check-in de estudo: ao entrar (ou voltar depois de um tempo longe) pela tela inicial, abre Hoje
   // com a revisão por cima, num modal, se há cards para hoje.
   const [checkin, setCheckin] = useState(false);
+  const [report, setReport] = useState<Stats | null>(null);
   useEffect(() => {
     let hiddenAt: number | null = null;
     const offer = () => {
       if (!loadReviewOnOpen() || !isStartHash(location.hash)) return;
       studyApi
         .overview(localDayStartIso())
-        .then((o) => {
-          if (!hasCardsToday(o) || !isStartHash(location.hash)) return;
-          if (location.hash !== routeHash("hoje")) location.hash = routeHash("hoje");
-          setCheckin(true);
+        .then(async (o) => {
+          if (!isStartHash(location.hash)) return;
+          if (hasCardsToday(o)) {
+            if (location.hash !== routeHash("hoje")) location.hash = routeHash("hoje");
+            setCheckin(true);
+            return;
+          }
+          // Já respondeu tudo hoje: o check-in vira o resumo do dia (só se estudou hoje).
+          const stats = await studyApi.stats(localTimeZone(), 2);
+          if (todaySummary(stats, localDate()).reviews > 0 && isStartHash(location.hash)) {
+            if (location.hash !== routeHash("hoje")) location.hash = routeHash("hoje");
+            setReport(stats);
+          }
         })
         .catch(() => undefined);
     };
@@ -497,8 +509,15 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         <div className="checkin-scrim" role="dialog" aria-modal="true" aria-label="Revisão do dia">
           <div className="checkin-box">
             <Suspense fallback={<ScreenFallback />}>
-              <ReviewView onExit={() => setCheckin(false)} />
+              <ReviewView checkin onExit={() => setCheckin(false)} />
             </Suspense>
+          </div>
+        </div>
+      )}
+      {report && (
+        <div className="checkin-scrim" role="dialog" aria-modal="true" aria-label="Resumo do estudo de hoje">
+          <div className="checkin-box">
+            <CheckinReport stats={report} onClose={() => setReport(null)} />
           </div>
         </div>
       )}
