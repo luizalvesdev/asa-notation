@@ -48,7 +48,7 @@ describe("dueCheckins", () => {
   });
 
   it("respeita os desligados", () => {
-    const off = { ...settings, checkinsEnabled: { plan: false, thursday: true, saturday: true } };
+    const off = { ...settings, checkinsEnabled: { plan: false, thursday: true, saturday: true, study: false } };
     expect(keys("2026-11-18T12:00:00Z", off)).toEqual([]);
   });
 });

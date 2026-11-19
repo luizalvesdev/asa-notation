@@ -127,10 +127,11 @@ function General({ settings, save, preference, onPreference }: { settings: Setti
 }
 
 function Routine({ settings, save }: { settings: Settings; save: ReturnType<typeof useSettings>["save"] }) {
-  const rows: { label: string; badge: string; aria: string; key: "plan" | "thursday" | "saturday" }[] = [
+  const rows: { label: string; badge: string; aria: string; key: "plan" | "thursday" | "saturday" | "study" }[] = [
     { label: "Plano do dia", badge: "todo dia", aria: "Horário do plano do dia", key: "plan" },
     { label: "Métricas da quinta", badge: "quinta", aria: "Horário das métricas", key: "thursday" },
     { label: "Revisão do sábado", badge: "sábado", aria: "Horário da revisão", key: "saturday" },
+    { label: "Lembrete de estudo", badge: "se houver cards", aria: "Horário do lembrete de estudo", key: "study" },
   ];
   return (
     <div className="col enter">

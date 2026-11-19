@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyGrade, clozeAnswers, fillDays, clozeSegments, current, estimateMinutes, formatClock, formatInterval, isFinished, reveal, startSession, summarize } from "../src/study-logic";
+import { applyGrade, clozeAnswers, fillDays, clozeSegments, current, estimateMinutes, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize } from "../src/study-logic";
 import type { QueueCard } from "../src/study-types";
 
 const NOW = Date.parse("2026-11-18T12:00:00.000Z");
@@ -124,5 +124,16 @@ describe("fillDays", () => {
       { day: "2026-11-17", reviews: 5, remembered: 4 },
       { day: "2026-11-18", reviews: 0, remembered: 0 },
     ]);
+  });
+});
+
+describe("editar durante a revisão", () => {
+  it("troca o texto só do card atual, sem mexer na ordem nem no estado", () => {
+    const s = reveal(startSession([card("a"), card("b")], NOW));
+    const next = replaceCurrent(s, { id: "a", front: "A corrigido", back: "resposta nova" });
+    expect(current(next)).toMatchObject({ id: "a", front: "A corrigido", back: "resposta nova" });
+    expect(next.revealed).toBe(true);
+    expect(next.queue.map((c) => c.id)).toEqual(["a", "b"]);
+    expect(replaceCurrent(s, { id: "b", front: "x", back: "y" })).toBe(s);
   });
 });

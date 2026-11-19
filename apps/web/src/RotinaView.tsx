@@ -20,10 +20,11 @@ const NOTES = [
   { v: 5, l: "ótima" },
 ];
 
-const CHECKINS: { key: "plan" | "thursday" | "saturday"; title: string; when: string }[] = [
+const CHECKINS: { key: "plan" | "thursday" | "saturday" | "study"; title: string; when: string }[] = [
   { key: "plan", title: "Plano do dia", when: "todo dia" },
   { key: "thursday", title: "Métricas da quinta", when: "quinta" },
   { key: "saturday", title: "Revisão do sábado", when: "sábado" },
+  { key: "study", title: "Lembrete de estudo", when: "todo dia" },
 ];
 
 function Stat({ value, label }: { value: string; label: string }) {
@@ -165,7 +166,7 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
   }, [start, attempt]);
 
   const saved = useCallback((review: WeeklyReview) => setWeek((w) => (w ? { ...w, review } : w)), []);
-  const toggleCheckin = async (key: "plan" | "thursday" | "saturday") => {
+  const toggleCheckin = async (key: "plan" | "thursday" | "saturday" | "study") => {
     if (!settings) return;
     const next = !settings.checkinsEnabled[key];
     setSettings({ ...settings, checkinsEnabled: { ...settings.checkinsEnabled, [key]: next } });

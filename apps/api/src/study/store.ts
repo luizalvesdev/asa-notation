@@ -116,6 +116,20 @@ export class PgStudyStore {
     return { created, skipped: items.length - created };
   }
 
+  async getCard(id: string): Promise<Card | null> {
+    const rows = await this.sql.query(`select ${CARD_COLUMNS} from cards c where c.id = $1 and c.deleted_at is null`, [id]);
+    return rows[0] ? toCard(rows[0]) : null;
+  }
+
+  /** Corrige o texto ou a trilha. O histórico de revisão (FSRS) continua o mesmo. */
+  async updateCard(id: string, patch: { front: string; back: string; deckId: string | null }): Promise<Card | null> {
+    const rows = await this.sql.query(
+      `update cards set front = $2, back = $3, deck_id = $4, updated_at = $5 where id = $1 and deleted_at is null returning id`,
+      [id, patch.front, patch.back, patch.deckId, this.now().toISOString()],
+    );
+    return rows.length > 0 ? this.getCard(id) : null;
+  }
+
   async deleteCard(id: string): Promise<boolean> {
     return (await this.sql.query(`update cards set deleted_at = $2, updated_at = $2 where id = $1 and deleted_at is null returning id`, [id, this.now().toISOString()])).length > 0;
   }
@@ -140,8 +154,12 @@ export class PgStudyStore {
   }
 
   async pageBody(pageId: string): Promise<unknown | undefined> {
-    const rows = await this.sql.query(`select body from pages where id = $1 and deleted_at is null`, [pageId]);
-    return rows[0] ? (rows[0].body ?? null) : undefined;
+    return (await this.page(pageId))?.body;
+  }
+
+  async page(pageId: string): Promise<{ title: string; body: unknown } | undefined> {
+    const rows = await this.sql.query(`select title, body from pages where id = $1 and deleted_at is null`, [pageId]);
+    return rows[0] ? { title: (rows[0].title as string | null) ?? "", body: rows[0].body ?? null } : undefined;
   }
 
   async candidatesExist(pageId: string, candidates: Candidate[]): Promise<boolean[]> {

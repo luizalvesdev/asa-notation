@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { goalsApi, studyApi } from "./api";
+import { CardEditor } from "./CardEditor";
 import type { Goal } from "./goals-types";
 import { routeHash, pageHash } from "./nav";
 import { displayTitle } from "./pages-tree";
@@ -36,6 +37,7 @@ function CardText({ card }: { card: Pick<StudyCard, "kind" | "front" | "back"> }
 function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; onChanged: () => void; onToast: (t: Toast) => void }) {
   const [cards, setCards] = useState<StudyCard[] | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
@@ -67,16 +69,30 @@ function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; on
       {cards.map((card) => (
         <div key={card.id} className="row" style={{ gap: 12, minHeight: 44, borderTop: "1px solid var(--border)", padding: "6px 0", alignItems: "flex-start" }}>
           <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{card.kind === "basic" ? "básico" : "lacuna"}</span>
-          <span className="grow1" style={{ fontSize: "calc(14px * var(--fs, 1))", minWidth: 0, overflowWrap: "anywhere" }}>
-            <CardText card={card} />
-          </span>
-          {confirm === card.id ? (
+          {editing === card.id ? (
+            <CardEditor
+              card={card}
+              onCancel={() => setEditing(null)}
+              onSaved={(saved) => {
+                setCards((cur) => cur && cur.map((c) => (c.id === saved.id ? saved : c)));
+                setEditing(null);
+              }}
+            />
+          ) : (
+            <span className="grow1" style={{ fontSize: "calc(14px * var(--fs, 1))", minWidth: 0, overflowWrap: "anywhere" }}>
+              <CardText card={card} />
+            </span>
+          )}
+          {editing === card.id ? null : confirm === card.id ? (
             <>
               <button className="btn btn-sm btn-sec" type="button" onClick={() => void remove(card.id)}>Confirmar</button>
               <button className="btn btn-fan btn-sm" type="button" onClick={() => setConfirm(null)}>Cancelar</button>
             </>
           ) : (
-            <button className="btn btn-fan btn-sm" type="button" onClick={() => setConfirm(card.id)}>Apagar</button>
+            <>
+              <button className="btn btn-fan btn-sm" type="button" onClick={() => setEditing(card.id)}>Editar</button>
+              <button className="btn btn-fan btn-sm" type="button" onClick={() => setConfirm(card.id)}>Apagar</button>
+            </>
           )}
         </div>
       ))}
@@ -89,6 +105,7 @@ function NewCardForm({ decks, defaultDeck, onCreated, onToast }: { decks: Deck[]
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [deck, setDeck] = useState(defaultDeck);
+  const [reverse, setReverse] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => setDeck(defaultDeck), [defaultDeck]);
@@ -99,7 +116,7 @@ function NewCardForm({ decks, defaultDeck, onCreated, onToast }: { decks: Deck[]
     if (!valid || busy) return;
     setBusy(true);
     try {
-      await studyApi.createCard({ kind, front, back: kind === "basic" ? back : "", deckId: deck === "none" ? null : deck });
+      await studyApi.createCard({ kind, front, back: kind === "basic" ? back : "", deckId: deck === "none" ? null : deck, ...(kind === "basic" && reverse ? { reverse: true } : {}) });
       setFront("");
       setBack("");
       onCreated();
@@ -125,7 +142,15 @@ function NewCardForm({ decks, defaultDeck, onCreated, onToast }: { decks: Deck[]
       </div>
       <input className="add-task-input" value={front} onChange={(e) => setFront(e.target.value)} aria-label={kind === "basic" ? "Frente" : "Texto com lacuna"} placeholder={kind === "basic" ? "Frente (pergunta)" : "Texto com {{lacuna}} no meio"} />
       {kind === "basic" && <input className="add-task-input" value={back} onChange={(e) => setBack(e.target.value)} aria-label="Verso" placeholder="Verso (resposta)" />}
-      <div className="row"><button className="btn btn-pri btn-sm" type="submit" disabled={!valid || busy}>Adicionar card</button></div>
+      <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
+        <button className="btn btn-pri btn-sm" type="submit" disabled={!valid || busy}>{kind === "basic" && reverse ? "Adicionar 2 cards" : "Adicionar card"}</button>
+        {kind === "basic" && (
+          <button className="plain row" type="button" role="checkbox" aria-checked={reverse} onClick={() => setReverse((r) => !r)} style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", cursor: "pointer" }}>
+            <span className={`cb${reverse ? " on" : ""}`}><svg className="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1" /></svg></span>
+            Também ao contrário (resposta → pergunta)
+          </button>
+        )}
+      </div>
     </form>
   );
 }
@@ -137,18 +162,45 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
   const [deck, setDeck] = useState("none");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<number | null>(null);
+  const [source, setSource] = useState<"marks" | "ai">("marks");
+  const [generating, setGenerating] = useState(false);
+
+  const show = (found: Candidate[]) => {
+    setCandidates(found);
+    setPicked(new Set(found.filter((c) => !c.exists).map((c) => c.sourceKey)));
+  };
 
   const extract = async (id: string) => {
     setPageId(id);
     setCandidates(null);
     setDone(null);
+    setSource("marks");
     if (!id) return;
     try {
-      const found = await studyApi.extract(id);
-      setCandidates(found);
-      setPicked(new Set(found.filter((c) => !c.exists).map((c) => c.sourceKey)));
+      show(await studyApi.extract(id));
     } catch {
       onToast({ text: "Não foi possível ler a página." });
+    }
+  };
+
+  const generate = async () => {
+    if (!pageId || generating) return;
+    setGenerating(true);
+    setDone(null);
+    try {
+      show(await studyApi.generate(pageId));
+      setSource("ai");
+    } catch (err) {
+      const code = (err as { body?: { error?: string } }).body?.error;
+      onToast({
+        text:
+          code === "page_too_short" ? "A página tem pouco texto para virar cards."
+          : code === "ai_not_configured" ? "Configure os assistentes em Configurações para gerar cards."
+          : code === "ai_busy" ? "A IA está ocupada. Tente de novo em instantes."
+          : "Não foi possível gerar os cards.",
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -178,13 +230,18 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
         {pageId && <a href={pageHash(pageId)} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Ver página</a>}
       </div>
       <p style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
-        Na página, escreva <code>Pergunta :: resposta</code> para um card básico ou <code>texto com {"{{lacuna}}"}</code> para um card de lacuna.
+        Na página, escreva <code>Pergunta :: resposta</code> para um card básico, <code>Pergunta ::: resposta</code> para ele valer nos dois sentidos, ou <code>texto com {"{{lacuna}}"}</code> para um card de lacuna. Ou deixe a IA sugerir cards a partir do texto: você escolhe quais entram.
       </p>
-      <select className="add-task-input" aria-label="Página" value={pageId} onChange={(e) => void extract(e.target.value)} style={{ height: 32 }}>
-        <option value="">Escolha uma página…</option>
-        {sorted.map((n) => <option key={n.id} value={n.id}>{displayTitle(n.title)}</option>)}
-      </select>
-      {candidates && candidates.length === 0 && <p style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>Nenhum card encontrado nesta página.</p>}
+      <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+        <select className="add-task-input grow1" aria-label="Página" value={pageId} onChange={(e) => void extract(e.target.value)} style={{ height: 32, minWidth: 0, width: "auto" }}>
+          <option value="">Escolha uma página…</option>
+          {sorted.map((n) => <option key={n.id} value={n.id}>{displayTitle(n.title)}</option>)}
+        </select>
+        <button className="btn btn-sec btn-sm" type="button" disabled={!pageId || generating} onClick={() => void generate()} aria-busy={generating}>
+          {generating ? "Gerando…" : "Gerar com IA"}
+        </button>
+      </div>
+      {candidates && candidates.length === 0 && <p style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>{source === "ai" ? "A IA não achou nada que valha um card nesta página." : "Nenhuma marcação de card nesta página. Tente \"Gerar com IA\"."}</p>}
       {candidates && candidates.length > 0 && (
         <>
           {candidates.map((c) => {
@@ -195,6 +252,7 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
                 <span className="col grow1" style={{ gap: 4 }}>
                   <span className="row" style={{ gap: 6 }}>
                     <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{c.kind === "basic" ? "básico" : "lacuna"}</span>
+                    {source === "ai" && <span className="badge ac" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>IA</span>}
                     {c.exists && <span className="badge ok" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>já adicionado</span>}
                   </span>
                   <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}><CardText card={c} /></span>

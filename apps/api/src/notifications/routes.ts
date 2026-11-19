@@ -2,7 +2,8 @@ import { UUID_SOURCE, badRequest, isRecord, json, notFound, type Route } from ".
 import type { PgSettingsStore } from "../settings/store.js";
 import type { PgTaskStore } from "../tasks/store.js";
 import type { SqlClient } from "../sql.js";
-import { dueCheckins, type DueCheckin } from "./checkins.js";
+import { NEW_PER_DAY } from "../study/store.js";
+import { dueCheckins, localParts, type DueCheckin } from "./checkins.js";
 import type { PgNotificationStore } from "./store.js";
 
 const ID = `(${UUID_SOURCE})`;
@@ -17,6 +18,7 @@ export interface CheckinDeps {
 
 /** O horário em que o check-in aconteceu, como instante: usado só para ordenar a lista. */
 function content(kind: DueCheckin["kind"], todayCount: number, lateCount: number, cards: number) {
+  if (kind === "study") return { title: "Hora de revisar", body: `${cards} ${cards === 1 ? "card" : "cards"} para hoje.`, link: "#/estudo/revisao" };
   if (kind === "plan") {
     const parts = [`${todayCount} ${todayCount === 1 ? "tarefa" : "tarefas"} hoje`, `${lateCount} ${lateCount === 1 ? "atrasada" : "atrasadas"}`];
     if (cards > 0) parts.push(`${cards} ${cards === 1 ? "card" : "cards"} para revisar`);
@@ -24,6 +26,20 @@ function content(kind: DueCheckin["kind"], todayCount: number, lateCount: number
   }
   if (kind === "thursday") return { title: "Métricas da quinta", body: "Veja os números da semana até agora.", link: "#/rotina/quinta" };
   return { title: "Revisão do sábado", body: "Cinco perguntas rápidas para fechar a semana.", link: "#/rotina/sabado" };
+}
+
+/** Cards para revisar hoje: os vencidos mais os novos que ainda cabem no limite do dia. */
+async function studyToday(sql: SqlClient, nowMs: number, timezone: string): Promise<number> {
+  const { minutes } = localParts(nowMs, timezone);
+  const dayStart = new Date(nowMs - minutes * 60_000 - (nowMs % 60_000));
+  const rows = await sql.query(
+    `select (select count(*)::int from cards where deleted_at is null and state <> 0 and due_at <= $1) as due,
+            (select count(*)::int from cards where deleted_at is null and state = 0) as fresh,
+            (select count(*)::int from review_logs where state_before = 0 and reviewed_at >= $2) as learned`,
+    [new Date(nowMs).toISOString(), dayStart.toISOString()],
+  );
+  const r = rows[0] ?? {};
+  return Number(r.due ?? 0) + Math.min(Number(r.fresh ?? 0), Math.max(0, NEW_PER_DAY - Number(r.learned ?? 0)));
 }
 
 /** Cria os check-ins que já deveriam ter acontecido e ainda não estão na caixa. */
@@ -35,6 +51,11 @@ export async function generateCheckins({ store, settings, tasks, sql, now }: Che
     let todayCount = 0;
     let lateCount = 0;
     let cards = 0;
+    if (item.kind === "study") {
+      cards = await studyToday(sql, now(), config.timezone);
+      // Nada para revisar: não avisa (volta a olhar na próxima rodada, se algo vencer).
+      if (cards === 0) continue;
+    }
     if (item.kind === "plan") {
       const list = await tasks.list(item.date, item.date, item.date);
       todayCount = list.days.filter((t) => !t.done).length;

@@ -7,6 +7,8 @@ export interface Candidate {
 }
 
 const MAX_CANDIDATES = 200;
+/** Marca o card inverso na chave de origem, para não duplicar nem colidir com o card de ida. */
+export const REVERSE_SUFFIX = " ⇄";
 const MAX_FIELD = 2000;
 
 /** Texto de cada parágrafo e título do documento do editor, em ordem. */
@@ -39,26 +41,32 @@ export function blockTexts(doc: unknown): string[] {
 /**
  * Procura cards no texto da página:
  *   "Pergunta :: resposta"            -> card básico
+ *   "Pergunta ::: resposta"           -> card básico nos dois sentidos (o inverso pergunta pela resposta)
  *   "Texto com {{lacuna}} no meio"    -> card de lacuna
  */
 export function extractCards(blocks: string[]): Candidate[] {
   const out: Candidate[] = [];
   const seen = new Set<string>();
   for (const block of blocks) {
-    let candidate: Candidate | null = null;
+    const found: Candidate[] = [];
     const split = block.indexOf("::");
     if (split > 0) {
+      const both = block.startsWith(":::", split);
       const front = block.slice(0, split).trim();
-      const back = block.slice(split + 2).trim();
-      if (front && back && front.length <= MAX_FIELD && back.length <= MAX_FIELD) candidate = { kind: "basic", front, back, sourceKey: block };
+      const back = block.slice(split + (both ? 3 : 2)).trim();
+      if (front && back && front.length <= MAX_FIELD && back.length <= MAX_FIELD) {
+        found.push({ kind: "basic", front, back, sourceKey: block });
+        if (both) found.push({ kind: "basic", front: back, back: front, sourceKey: `${block}${REVERSE_SUFFIX}` });
+      }
     } else if (/\{\{[^{}]+\}\}/.test(block) && block.length <= MAX_FIELD) {
-      candidate = { kind: "cloze", front: block, back: "", sourceKey: block };
+      found.push({ kind: "cloze", front: block, back: "", sourceKey: block });
     }
-    if (candidate && !seen.has(candidate.sourceKey)) {
+    for (const candidate of found) {
+      if (seen.has(candidate.sourceKey) || out.length >= MAX_CANDIDATES) continue;
       seen.add(candidate.sourceKey);
       out.push(candidate);
-      if (out.length >= MAX_CANDIDATES) break;
     }
+    if (out.length >= MAX_CANDIDATES) break;
   }
   return out;
 }

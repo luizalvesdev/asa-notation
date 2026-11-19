@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { studyApi } from "./api";
+import { CardEditor } from "./CardEditor";
 import { pageHash, routeHash } from "./nav";
-import { applyGrade, clozeAnswers, clozeSegments, current, formatClock, formatInterval, isFinished, reveal, startSession, summarize, type Session } from "./study-logic";
+import { applyGrade, clozeAnswers, clozeSegments, current, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize, type Session } from "./study-logic";
 import type { Grade, QueueCard } from "./study-types";
 import { localDayStartIso } from "./tasks-dates";
 
@@ -41,6 +42,7 @@ export function ReviewView() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [editing, setEditing] = useState(false);
   const startedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -87,8 +89,12 @@ export function ReviewView() {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+      if (editing) return;
       if (e.key === "Escape") {
         location.hash = routeHash("estudo");
+      } else if (e.key === "e" && card) {
+        e.preventDefault();
+        setEditing(true);
       } else if (e.key === " " || e.key === "Enter") {
         if (session && !session.revealed && card) {
           e.preventDefault();
@@ -100,7 +106,7 @@ export function ReviewView() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [session, card, flip, grade]);
+  }, [session, card, flip, grade, editing]);
 
   const back = (
     <a className="btn btn-fan btn-sm" href={routeHash("estudo")}>
@@ -203,7 +209,25 @@ export function ReviewView() {
             </div>
           </div>
         </div>
-        {!s.revealed && (
+        {editing ? (
+          <div className="card" style={{ padding: 14 }}>
+            <CardEditor
+              card={card}
+              onCancel={() => setEditing(false)}
+              onSaved={(saved) => {
+                setLoad((l) => (l.status === "pronto" ? { status: "pronto", session: replaceCurrent(l.session, saved) } : l));
+                setEditing(false);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="row" style={{ justifyContent: "flex-end", marginTop: -12 }}>
+            <button className="btn btn-fan btn-sm" type="button" onClick={() => setEditing(true)}>
+              Editar card <span className="kbd">e</span>
+            </button>
+          </div>
+        )}
+        {!s.revealed && !editing && (
           <button className="btn btn-pri" type="button" onClick={flip} style={{ height: 48, fontSize: "calc(15px * var(--fs, 1))" }}>
             Mostrar resposta <span className="kbd" style={{ background: "transparent", color: "inherit", borderColor: "currentColor" }}>espaço</span>
           </button>

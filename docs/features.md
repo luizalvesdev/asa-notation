@@ -22,6 +22,10 @@ Atualizado depois do primeiro ciclo completo de telas.
 
 **MCP** (19/11): `POST /api/mcp` (Streamable HTTP, sem estado, só JSON) expõe ao Claude Code e ao Claude Desktop as mesmas ferramentas dos assistentes: buscar e ler notas, listar páginas, tarefas, metas, Inbox e baralhos; criar páginas, tarefas e capturas, acrescentar e trocar seções, mover, renomear e apagar (lixeira). Autentica só por token de API: token de leitura vê só as ferramentas de leitura; de escrita executa na hora, sem rascunho (quem pede permissão é o cliente). Instruções de conexão em Configurações > API.
 
+**Estudo estilo Anki** (19/11): além da revisão FSRS, dá para editar o card (na lista da trilha ou no meio da revisão, tecla `e`, sem perder o histórico), criar card nos dois sentidos (`Pergunta ::: resposta` na página ou "Também ao contrário" no formulário) e pedir à IA que sugira cards a partir de uma página (Estudo > Extrair cards > "Gerar com IA"; nada entra sem aprovar). Um lembrete diário de estudo (padrão 19:00, Configurações > Rotina) avisa por push quantos cards há para hoje, e só quando há algum.
+
+**Cache de prompt** (19/11): as chamadas aos assistentes marcam o fim das ferramentas, do sistema e da última mensagem. O prefixo fixo do assistente tem uns 5.300 tokens (acima do mínimo de 4.096 do Haiku 4.5), então as idas seguintes do laço de ferramentas e a próxima mensagem em até 5 minutos pagam cerca de 10% por ele. Conferido no Bedrock. O Haiku 5.5 (10x mais barato) ainda não está liberado nesta conta da AWS.
+
 **Ficou de fora**:
 
 - Blocos de embed e colunas.

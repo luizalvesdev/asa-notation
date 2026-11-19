@@ -11,6 +11,13 @@ export const mockProvider: FetchLike = async (_url, init) => {
   const tools = (body.tools ?? []).map((t) => t.name);
 
   if (tools.length === 0) return reply([{ type: "text", text: "ok" }]);
+  if (tools.includes("save_cards")) {
+    const cards = [
+      { kind: "basic", front: "Para que serve um consumer group?", back: "Dividir as partições de um tópico entre consumidores" },
+      { kind: "cloze", front: "Cada partição vai para {{um único}} consumidor do grupo." },
+    ];
+    return reply([{ type: "tool_use", id: "mock1", name: "save_cards", input: { cards } }], "tool_use");
+  }
   if (Array.isArray(last?.content) && last.content.some((b: { type?: string }) => b.type === "tool_result")) {
     return reply([{ type: "text", text: "Pronto: deixei um rascunho para você aprovar." }]);
   }

@@ -1,6 +1,6 @@
 import type { Settings } from "../settings/model.js";
 
-export type CheckinKind = "plan" | "thursday" | "saturday";
+export type CheckinKind = "plan" | "thursday" | "saturday" | "study";
 
 export interface DueCheckin {
   kind: CheckinKind;
@@ -21,22 +21,23 @@ export function localParts(ms: number, tz: string): { date: string; weekday: num
 
 const minutesOf = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 
-const WEEKDAY: Record<CheckinKind, number | null> = { plan: null, thursday: 4, saturday: 6 };
+// null = todo dia.
+const WEEKDAY: Record<CheckinKind, number | null> = { plan: null, thursday: 4, saturday: 6, study: null };
 
 /**
  * Check-ins ligados cujo horário já passou hoje (no fuso das configurações).
  * Quinta e sábado olham também um dia para trás, para quem só abriu o app no dia seguinte.
- * O plano diário vale só para hoje: um plano de ontem já não serve.
+ * Os diários (plano e estudo) valem só para hoje: um aviso de ontem já não serve.
  */
 export function dueCheckins(nowMs: number, settings: Settings): DueCheckin[] {
   const today = localParts(nowMs, settings.timezone);
   const yesterday = localParts(nowMs - 24 * 3_600_000, settings.timezone);
   const out: DueCheckin[] = [];
   for (const [day, isToday] of [[yesterday, false], [today, true]] as const) {
-    for (const kind of ["plan", "thursday", "saturday"] as const) {
+    for (const kind of ["plan", "thursday", "saturday", "study"] as const) {
       if (!settings.checkinsEnabled[kind]) continue;
-      if (kind === "plan" && !isToday) continue;
       const weekday = WEEKDAY[kind];
+      if (weekday === null && !isToday) continue;
       if (weekday !== null && day.weekday !== weekday) continue;
       if (isToday && minutesOf(settings.checkins[kind]) > today.minutes) continue;
       out.push({ kind, date: day.date, daysAgo: isToday ? 0 : 1, dedupeKey: `${kind}:${day.date}` });

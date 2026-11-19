@@ -26,7 +26,7 @@ export function mergeSettings(current: Settings, body: Record<string, unknown>):
   }
   if (body.checkins !== undefined) {
     if (!isRecord(body.checkins)) return "invalid_checkins";
-    for (const key of ["plan", "thursday", "saturday"] as const) {
+    for (const key of ["plan", "thursday", "saturday", "study"] as const) {
       const value = body.checkins[key];
       if (value === undefined) continue;
       if (!isTime(value)) return "invalid_checkins";
@@ -35,7 +35,7 @@ export function mergeSettings(current: Settings, body: Record<string, unknown>):
   }
   if (body.checkinsEnabled !== undefined) {
     if (!isRecord(body.checkinsEnabled)) return "invalid_checkins_enabled";
-    for (const key of ["plan", "thursday", "saturday"] as const) {
+    for (const key of ["plan", "thursday", "saturday", "study"] as const) {
       const value = body.checkinsEnabled[key];
       if (value === undefined) continue;
       if (typeof value !== "boolean") return "invalid_checkins_enabled";

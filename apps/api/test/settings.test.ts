@@ -13,7 +13,7 @@ interface SettingsJson {
   timezone: string;
   weekStart: number;
   checkins: { plan: string; thursday: string; saturday: string };
-  checkinsEnabled: { plan: boolean; thursday: boolean; saturday: boolean };
+  checkinsEnabled: { plan: boolean; thursday: boolean; saturday: boolean; study: boolean };
   quiet: { start: string; end: string };
   aiAutoApply: boolean;
 }
@@ -23,21 +23,21 @@ const patch = (body: unknown) => app.call("PATCH", "/settings", { cookies, body 
 describe("configurações", () => {
   it("exige sessão e devolve os padrões", async () => {
     expect((await app.call("GET", "/settings")).status).toBe(401);
-    expect(await get()).toEqual({ timezone: "America/Sao_Paulo", weekStart: 1, checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" }, checkinsEnabled: { plan: true, thursday: true, saturday: true }, quiet: { start: "22:00", end: "07:30" }, aiAutoApply: false });
+    expect(await get()).toEqual({ timezone: "America/Sao_Paulo", weekStart: 1, checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00", study: "19:00" }, checkinsEnabled: { plan: true, thursday: true, saturday: true, study: true }, quiet: { start: "22:00", end: "07:30" }, aiAutoApply: false });
   });
 
   it("muda só o que foi enviado", async () => {
     await patch({ timezone: "Europe/Lisbon", checkins: { thursday: "17:15" } });
     const s = await get();
     expect(s.timezone).toBe("Europe/Lisbon");
-    expect(s.checkins).toEqual({ plan: "08:30", thursday: "17:15", saturday: "10:00" });
+    expect(s.checkins).toEqual({ plan: "08:30", thursday: "17:15", saturday: "10:00", study: "19:00" });
     await patch({ quiet: { end: "08:00" }, weekStart: 0 });
     expect(await get()).toMatchObject({ weekStart: 0, quiet: { start: "22:00", end: "08:00" }, timezone: "Europe/Lisbon" });
   });
 
   it("liga e desliga check-ins sem mexer nos outros", async () => {
     await patch({ checkinsEnabled: { thursday: false } });
-    expect((await get()).checkinsEnabled).toEqual({ plan: true, thursday: false, saturday: true });
+    expect((await get()).checkinsEnabled).toEqual({ plan: true, thursday: false, saturday: true, study: true });
   });
 
   it("valida cada campo", async () => {

@@ -81,6 +81,13 @@ export function startSession(queue: QueueCard[], now: number): Session {
 export const current = (s: Session): QueueCard | null => s.queue[0] ?? null;
 export const isFinished = (s: Session): boolean => s.queue.length === 0;
 
+/** Troca o texto do card atual depois de editado, sem mexer na ordem da sessão. */
+export function replaceCurrent(s: Session, card: Pick<QueueCard, "id" | "front" | "back">): Session {
+  const first = s.queue[0];
+  if (!first || first.id !== card.id) return s;
+  return { ...s, queue: [{ ...first, front: card.front, back: card.back }, ...s.queue.slice(1)] };
+}
+
 export function reveal(s: Session): Session {
   return s.queue.length === 0 || s.revealed ? s : { ...s, revealed: true };
 }

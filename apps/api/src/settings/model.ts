@@ -3,6 +3,8 @@ export interface CheckinTimes {
   plan: string;
   thursday: string;
   saturday: string;
+  /** Lembrete de revisão do estudo (só avisa se houver cards para hoje). */
+  study: string;
 }
 
 export interface Settings {
@@ -21,8 +23,8 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   timezone: "America/Sao_Paulo",
   weekStart: 1,
-  checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" },
-  checkinsEnabled: { plan: true, thursday: true, saturday: true },
+  checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00", study: "19:00" },
+  checkinsEnabled: { plan: true, thursday: true, saturday: true, study: true },
   quiet: { start: "22:00", end: "07:30" },
   aiAutoApply: false,
 };

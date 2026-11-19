@@ -88,12 +88,13 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
   const studyStore = new PgStudyStore(sql, now);
   const captureStore = new PgCaptureStore(sql, now);
   const secretStore = new PgSecretStore(sql, secretsKey(config.sessionSecret), now);
+  const aiProvider = createProvider({ config: ai, secrets: secretStore, fetchImpl, ...(bedrockInvoke ? { bedrockInvoke } : {}), ...(bedrockStream ? { bedrockStream } : {}) });
   const routes: Route[] = [
     ...authRoutes({ auth: new PgAuthStore(sql), config }),
     ...pageRoutes(pageStore),
     ...taskRoutes(taskStore),
     ...goalRoutes(goalStore, taskStore),
-    ...studyRoutes(studyStore),
+    ...studyRoutes(studyStore, aiProvider),
     ...captureRoutes(captureStore, pageStore),
     ...settingsRoutes(settingsStore),
     ...notificationRoutes({ store: new PgNotificationStore(sql, now), settings: settingsStore, tasks: taskStore, sql, now }),
@@ -102,7 +103,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     ...chatRoutes({
       chat: new PgChatStore(sql, now),
       secrets: secretStore,
-      provider: createProvider({ config: ai, secrets: secretStore, fetchImpl, ...(bedrockInvoke ? { bedrockInvoke } : {}), ...(bedrockStream ? { bedrockStream } : {}) }),
+      provider: aiProvider,
       settings: settingsStore,
       tasks: taskStore,
       goals: goalStore,
