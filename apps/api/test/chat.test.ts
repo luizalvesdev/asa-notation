@@ -656,6 +656,7 @@ describe("assistentes com poder sobre o app", () => {
     const system = provider.calls[0]!.body.system;
     expect(system).toContain("append_to_page");
     expect(system).toContain("pergunte ao usuário se quer uma página nova");
+    expect(system).toContain("NÃO peça confirmação por texto");
   });
 
   it("tutor continua só lendo", async () => {
