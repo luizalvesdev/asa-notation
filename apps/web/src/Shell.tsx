@@ -12,7 +12,10 @@ import { pageHash, routeHash, routeTitle, type Route } from "./nav";
 export type AppRoute = Exclude<Route, { kind: "publica" }>;
 import { HojeView } from "./HojeView";
 import { PageView } from "./PageView";
+import { Resizer } from "./Resizer";
 import { SearchPalette } from "./SearchPalette";
+import { CHAT_LIMITS, SIDE_LIMITS, clampWidth } from "./panel-size";
+import { useStoredWidth } from "./use-stored-width";
 import { SemanaView } from "./SemanaView";
 import { TrashView } from "./TrashView";
 import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
@@ -24,6 +27,9 @@ import { flushOutbox, removePending, submitCapture, usePending } from "./outbox"
 import { useUnread } from "./use-notifications";
 import { useRecents } from "./recents";
 import { usePages, type CreateExtra } from "./use-pages";
+
+const SIDE_KEY = "asa:side-width";
+const CHAT_KEY = "asa:chat-width";
 
 const ImportView = lazy(() => import("./ImportView").then((m) => ({ default: m.ImportView })));
 const SettingsView = lazy(() => import("./SettingsView").then((m) => ({ default: m.SettingsView })));
@@ -62,6 +68,16 @@ interface ShellProps {
 export function Shell({ dark, route, preference, onPreference, onToggleTheme, onLogout }: ShellProps) {
   const pages = usePages();
   const [collapsed, setCollapsed] = useState(false);
+  const [sideW, setSideW] = useStoredWidth(SIDE_KEY, SIDE_LIMITS);
+  const [chatW, setChatW] = useStoredWidth(CHAT_KEY, CHAT_LIMITS);
+  const [resizing, setResizing] = useState(false);
+  // Janela estreita: nem a barra lateral nem o chat podem passar de metade dela.
+  const [winW, setWinW] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const onResize = () => setWinW(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [drawer, setDrawer] = useState(false);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<Toast | null>(null);
@@ -315,8 +331,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   );
 
   return (
-    <div className={`ds app${dark ? " escuro" : ""}`}>
+    <div className={`ds app${dark ? " escuro" : ""}${resizing ? " resizing" : ""}`} style={{ "--side-w": `${clampWidth(sideW, SIDE_LIMITS, winW * 0.5)}px`, "--chat-w": `${clampWidth(chatW, CHAT_LIMITS, winW * 0.6)}px` } as React.CSSProperties}>
       <Sidebar {...sidebarProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((v) => !v)} />
+      {!collapsed && <Resizer edge="left" width={sideW} limits={SIDE_LIMITS} ceiling={winW * 0.5} label="Largura da barra lateral" onChange={setSideW} onDragging={setResizing} />}
       <div className="main">
         <header className="tb">
           <button className="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick={() => setDrawer(true)}>
@@ -406,6 +423,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         </main>
         <BottomNav route={route} onCapture={() => setCaptureOpen(true)} onMenu={() => setDrawer(true)} />
       </div>
+      {chatOpen && <Resizer edge="right" width={chatW} limits={CHAT_LIMITS} ceiling={winW * 0.6} label="Largura do painel de assistentes" onChange={setChatW} onDragging={setResizing} />}
       <div className={`chat-wrap${chatOpen ? " open" : ""}`} inert={!chatOpen} aria-hidden={!chatOpen}>
         {chatMounted && (
           <Suspense fallback={null}>

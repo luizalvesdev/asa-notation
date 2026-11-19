@@ -110,12 +110,62 @@ body,
 }
 
 .chat-wrap.open {
-  width: 380px;
+  width: var(--chat-w, 380px);
 }
 
 .chat-wrap .chat {
   animation: none;
-  width: 380px;
+  width: var(--chat-w, 380px);
+}
+
+/* Alças para arrastar a borda da barra lateral e do painel de assistentes. A caixa tem largura 0; só a faixa de 8 px recebe o mouse. */
+.rz {
+  flex: none;
+  width: 0;
+  position: relative;
+  z-index: 40;
+}
+
+.rz-h {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.rz-h::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background-color var(--rapido) var(--padrao);
+}
+
+.rz-h:hover::after,
+.rz-h:focus-visible::after,
+.rz-h.on::after {
+  background: var(--accent);
+}
+
+/* Durante o arrasto: sem animação de largura (senão o painel fica atrasado em relação ao mouse) e sem seleção de texto. */
+.app.resizing,
+.app.resizing * {
+  transition: none !important;
+  user-select: none !important;
+  cursor: col-resize !important;
+}
+
+@container app (max-width: 720px) {
+  .rz {
+    display: none;
+  }
 }
 
 @container app (max-width: 720px) {

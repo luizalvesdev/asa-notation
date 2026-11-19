@@ -61,6 +61,7 @@ Atualizado depois do primeiro ciclo completo de telas.
 
 ## C. Diagramas e mapas mentais
 
+- Barra lateral e painel de assistentes com largura ajustável arrastando a borda (setas do teclado e duplo clique também; a largura fica guardada no navegador)
 - Bloco Mermaid na página (fluxo, sequência, ER, C4, mindmap) [1], com arrastar para mover, roda do mouse para zoom e duplo clique para ajustar
 - Página canvas livre (Excalidraw) [1]
 - Mapa mental gerado pelo assistente a partir de um tema [2]
