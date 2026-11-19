@@ -239,9 +239,19 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
         <span className="draft-t">Extrair cards de uma página</span>
         {pageId && <a href={pageHash(pageId)} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Ver página</a>}
       </div>
-      <p style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
-        Na página, escreva <code>Pergunta :: resposta</code> para um card básico, <code>Pergunta ::: resposta</code> para ele valer nos dois sentidos, ou <code>texto com {"{{lacuna}}"}</code> para um card de lacuna. Ou deixe a IA sugerir cards a partir do texto: você escolhe quais entram.
-      </p>
+      <div className="col" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
+        <span>Transforme suas notas em cards sem digitar um por um. Escolha a página abaixo e o Asa lista os cards que achou nela; você marca quais entram na trilha.</span>
+        <span>Para o Asa achar, marque o texto na própria página:</span>
+        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 14px", alignItems: "baseline", padding: "10px 12px", borderRadius: 8, background: "var(--surface)" }}>
+          <code>Porta do Postgres :: 5432</code>
+          <span>pergunta e resposta</span>
+          <code>Capital da Austrália ::: Canberra</code>
+          <span>vale nos dois sentidos (vira 2 cards)</span>
+          <code>O {"{{Raft}}"} elege um {"{{líder}}"}</code>
+          <span>lacuna: você completa o que está entre {"{{ }}"}</span>
+        </div>
+        <span>Página sem marcações, como um artigo salvo? Use <b style={{ fontWeight: 600 }}>Gerar com IA</b>: ela sugere perguntas a partir do texto e nada entra sem você aprovar.</span>
+      </div>
       <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
         <select className="add-task-input grow1" aria-label="Página" value={pageId} onChange={(e) => void extract(e.target.value)} style={{ height: 32, minWidth: 0, width: "auto" }}>
           <option value="">Escolha uma página…</option>
@@ -311,6 +321,27 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
   const { overview, status, reload, retry } = useStudyOverview();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [selected, setSelected] = useState<string>("");
+  const [renamingDeck, setRenamingDeck] = useState<string | null>(null);
+  const renameDeck = async (d: Deck, title: string) => {
+    if (!title || title === d.title) return setRenamingDeck(null);
+    try {
+      await studyApi.updateDeck(d.id, { title });
+      setRenamingDeck(null);
+      reload();
+    } catch {
+      onToast({ text: "Não foi possível renomear a trilha." });
+    }
+  };
+  const deleteDeck = async (d: Deck) => {
+    try {
+      await studyApi.deleteDeck(d.id);
+      if (selected === d.id) setSelected("");
+      reload();
+      onToast({ text: d.cards > 0 ? `Trilha apagada. ${d.cards === 1 ? "O card foi" : `Os ${d.cards} cards foram`} para Sem trilha.` : "Trilha apagada." });
+    } catch {
+      onToast({ text: "Não foi possível apagar a trilha." });
+    }
+  };
   const [creating, setCreating] = useState(false);
   const [cardsVersion, setCardsVersion] = useState(0);
 
@@ -408,7 +439,32 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
               /></Reveal>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 12 }}>
               {decks.map((d) => (
-                <button key={d.id} className="plain card" type="button" aria-pressed={activeId === d.id} onClick={() => setSelected(d.id)} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, textAlign: "left", cursor: "pointer", boxShadow: activeId === d.id ? "inset 0 0 0 2px var(--accent)" : "none" }}>
+                <ContextBox
+                  key={d.id}
+                  style={{ display: "flex" }}
+                  items={() => [
+                    { label: "Abrir trilha", run: () => setSelected(d.id) },
+                    { label: "Renomear", run: () => setRenamingDeck(d.id) },
+                    { label: "Apagar trilha", danger: true, run: () => void deleteDeck(d) },
+                  ]}
+                >
+                {renamingDeck === d.id ? (
+                  <form
+                    className="card"
+                    style={{ padding: 16, display: "flex", gap: 8, flex: 1, alignItems: "center" }}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const title = (new FormData(e.currentTarget).get("title") as string).trim();
+                      void renameDeck(d, title);
+                    }}
+                    onKeyDown={(e) => e.key === "Escape" && setRenamingDeck(null)}
+                  >
+                    <input name="title" className="add-task-input grow1" autoFocus defaultValue={d.title} aria-label="Nome da trilha" />
+                    <button className="btn btn-pri btn-sm" type="submit">Salvar</button>
+                    <button className="btn btn-fan btn-sm" type="button" onClick={() => setRenamingDeck(null)}>Cancelar</button>
+                  </form>
+                ) : (
+                <button className="plain card" type="button" aria-pressed={activeId === d.id} onClick={() => setSelected(d.id)} style={{ flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 10, textAlign: "left", cursor: "pointer", boxShadow: activeId === d.id ? "inset 0 0 0 2px var(--accent)" : "none" }}>
                   <span className="row" style={{ gap: 8 }}>
                     <b className="grow1" style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>{d.title}</b>
                     <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{d.cards} {d.cards === 1 ? "card" : "cards"}{d.due > 0 ? ` · ${d.due} para revisar` : ""}</span>
@@ -416,6 +472,8 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
                   <span className="bar" style={{ width: "100%" }}><span style={{ width: `${d.cards === 0 ? 0 : Math.round((d.learned / d.cards) * 100)}%` }} /></span>
                   <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>{d.goalTitle ? `Meta: ${d.goalTitle}` : "Sem meta"} · {d.learned} de {d.cards} aprendidos</span>
                 </button>
+                )}
+                </ContextBox>
               ))}
               <button className="plain card" type="button" aria-pressed={activeId === "none"} onClick={() => setSelected("none")} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, textAlign: "left", cursor: "pointer", boxShadow: activeId === "none" ? "inset 0 0 0 2px var(--accent)" : "none" }}>
                 <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>Sem trilha</b>

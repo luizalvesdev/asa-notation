@@ -17,6 +17,12 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
   const field = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => field.current?.focus(), []);
+  // Entra com animação: monta fechado e abre no quadro seguinte.
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const save = async () => {
     if (busy || text.trim() === "") return;
@@ -33,7 +39,7 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
   return (
     <div className={`ds${dark ? " escuro" : ""} capture-layer`} style={{ position: "fixed", inset: 0, zIndex: 70, background: "transparent" }} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
-        className="float on"
+        className={`float${shown ? " on" : ""}`}
         role="dialog"
         aria-label="Captura rápida"
         onKeyDown={(e) => {
