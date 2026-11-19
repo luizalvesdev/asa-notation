@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react"
 import { ApiError, isConflict, pagesApi } from "./api";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
 import { Backlinks } from "./Backlinks";
+import { Subpages } from "./Subpages";
 import { Cover, CoverPicker } from "./Cover";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { normalizeSchema } from "./use-database";
@@ -258,6 +259,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
         />
       )}
       <Editor initial={initial.body} focusSignal={focusBody} pages={nodes} selfId={initial.id} onChange={(doc) => saver.current?.queue({ body: doc })} />
+      <Subpages pageId={initial.id} nodes={nodes} />
       <Backlinks pageId={initial.id} />
       {panel === "history" && <HistoryPanel pageId={initial.id} currentBody={historyBody} onClose={() => setPanel(null)} onRestored={() => { setPanel(null); saver.current?.discard(); onReload(); }} />}
     </div>

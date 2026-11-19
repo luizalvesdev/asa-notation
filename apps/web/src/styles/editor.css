@@ -583,6 +583,10 @@ input.p-title::placeholder {
   font-weight: 500;
 }
 
+/* Páginas dentro desta, embaixo do texto */
+.page-foot .subpage { gap: 8px; border-radius: 6px; }
+.page-foot .subpage + .subpage { margin-top: -6px; }
+
 /* Painéis da página: backlinks, histórico, compartilhar */
 .page-foot {
   margin-top: 32px;
