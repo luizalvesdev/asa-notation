@@ -23,7 +23,7 @@ input.p-title::placeholder {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 10px;
+  gap: 6px 4px;
   min-height: 32px;
   padding-top: 24px;
   font-size: calc(12px * var(--fs, 1));
@@ -39,7 +39,8 @@ input.p-title::placeholder {
   align-items: center;
   gap: 6px;
   /* Largura fixa para "Salvo", "Editando…" e "Salvando…": trocar o texto não empurra os botões. */
-  min-width: 10ch;
+  min-width: 9ch;
+  margin-right: 6px;
   white-space: nowrap;
 }
 
@@ -586,9 +587,28 @@ input.p-title::placeholder {
   font-weight: 500;
 }
 
-/* Páginas dentro desta, embaixo do texto */
-.page-foot .subpage { gap: 8px; border-radius: 6px; }
+/* Páginas dentro desta: coluna à direita do texto quando há espaço; senão, embaixo. */
+.subpage { gap: 8px; border-radius: 6px; }
 .page-foot .subpage + .subpage { margin-top: -6px; }
+.subpages-side { display: none; }
+@media (min-width: 1500px) {
+  .subpages-side {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: absolute;
+    /* Sem top: fica na altura em que estaria no fluxo, logo abaixo da capa. */
+    left: calc(100% - 24px);
+    width: 240px;
+    margin-top: 72px;
+    padding-left: 16px;
+    border-left: 1px solid var(--border);
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+  .subpages-side .eyebrow { margin-bottom: 6px; }
+  .page-foot.subpages-foot { display: none; }
+}
 
 /* Painéis da página: backlinks, histórico, compartilhar */
 .page-foot {

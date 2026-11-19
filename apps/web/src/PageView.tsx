@@ -174,6 +174,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
   return (
     <div className="page">
       <Cover cover={cover} />
+      <Subpages pageId={initial.id} nodes={nodes} side />
       <div className="page-head">
         <span className={`save-state${saveState === "erro" ? " erro" : ""}`} role="status">
           {SAVE_LABEL[saveState]}

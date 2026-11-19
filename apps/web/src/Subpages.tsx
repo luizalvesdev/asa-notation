@@ -8,11 +8,12 @@ export function childPages(nodes: readonly TreeNode[], pageId: string): TreeNode
   return nodes.filter((n) => n.parentId === pageId).sort((a, b) => (a.position < b.position ? -1 : a.position > b.position ? 1 : 0));
 }
 
-export function Subpages({ pageId, nodes }: { pageId: string; nodes: readonly TreeNode[] }) {
+/** `side`: coluna à direita do texto (telas largas); senão, embaixo do texto (telas estreitas). */
+export function Subpages({ pageId, nodes, side = false }: { pageId: string; nodes: readonly TreeNode[]; side?: boolean }) {
   const children = childPages(nodes, pageId);
   if (children.length === 0) return null;
   return (
-    <section className="page-foot" aria-label="Páginas dentro desta">
+    <section className={side ? "subpages-side" : "page-foot subpages-foot"} aria-label="Páginas dentro desta">
       <span className="eyebrow">
         {children.length} {children.length === 1 ? "página" : "páginas"} dentro
       </span>
