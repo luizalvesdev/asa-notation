@@ -306,6 +306,28 @@ function Tokens({ onToast }: { onToast: (t: Toast) => void }) {
         </select>
         <button className="btn btn-sec" type="submit" disabled={name.trim() === ""}>Novo token</button>
       </form>
+      <McpHelp />
+    </div>
+  );
+}
+
+/** Como ligar o Claude Code e o Claude Desktop às notas pelo servidor MCP do app. */
+function McpHelp() {
+  const url = `${location.origin}/api/mcp`;
+  const code = `claude mcp add --transport http --scope user asa ${url} \\
+  --header "Authorization: Bearer SEU_TOKEN"`;
+  const desktop = JSON.stringify({ mcpServers: { asa: { command: "npx", args: ["-y", "mcp-remote", url, "--header", "Authorization:Bearer SEU_TOKEN"] } } }, null, 2);
+  const pre = { margin: 0, padding: 12, fontSize: 12, overflowX: "auto", background: "var(--bg-2, rgba(127,127,127,.08))", borderRadius: 8, whiteSpace: "pre" } as const;
+  return (
+    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+      <b style={{ fontWeight: 600 }}>Usar no Claude (MCP)</b>
+      <span style={{ fontSize: 13, color: "var(--text-2)" }}>
+        O Claude Code e o Claude Desktop leem e escrevem nas suas notas, tarefas e Inbox. Com token de leitura, só consultam. Com token de leitura e escrita, criam e editam na hora (o próprio Claude pede sua permissão antes de cada ferramenta).
+      </span>
+      <span className="label">Claude Code (terminal)</span>
+      <pre style={pre}>{code}</pre>
+      <span className="label">Claude Desktop (claude_desktop_config.json)</span>
+      <pre style={pre}>{desktop}</pre>
     </div>
   );
 }

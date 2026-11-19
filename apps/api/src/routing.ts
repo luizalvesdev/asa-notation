@@ -13,6 +13,8 @@ export interface Ctx {
   now: number;
   /** A requisição traz uma sessão válida ou um token de API. */
   authenticated: boolean;
+  /** Quem pode escrever: a sessão e o token de escrita. Um token de leitura só chega aqui em rotas com `readTokenPost`. */
+  canWrite: boolean;
 }
 
 export interface Route {
@@ -20,6 +22,8 @@ export interface Route {
   pattern: RegExp;
   access: Access;
   handle: (ctx: Ctx) => Promise<ApiResponse>;
+  /** Só token de API (nunca cookie), e aceita POST de token de leitura: a própria rota decide o que é escrita (ex.: o MCP, onde tudo é POST). */
+  readTokenPost?: boolean;
 }
 
 export const json = (status: number, body: unknown, cookies?: string[]): ApiResponse =>

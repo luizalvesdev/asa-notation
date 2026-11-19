@@ -31,6 +31,7 @@ import { PgSettingsStore } from "./settings/store.js";
 import { tokenRoutes } from "./tokens/routes.js";
 import { runPushJob, type PushDeps } from "./push/job.js";
 import { pushRoutes } from "./push/routes.js";
+import { mcpRoutes } from "./mcp/routes.js";
 import { PgPushStore } from "./push/store.js";
 import type { PushFetch } from "./push/webpush.js";
 import { PgTokenStore } from "./tokens/store.js";
@@ -113,6 +114,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     }),
     ...tokenRoutes(tokenStore),
     ...pushRoutes(pushDeps(sql, config, now, pushFetch)),
+    ...mcpRoutes({ settings: settingsStore, tasks: taskStore, goals: goalStore, pages: pageStore, captures: captureStore, study: studyStore, now }),
     ...exportRoutes(sql, now),
   ];
 
@@ -134,9 +136,13 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
       const token = bearer ? await tokenStore.verify(bearer) : null;
       if (token) {
         if (route.access === "owner") return forbidden();
-        if (!SAFE_METHODS.has(req.method) && token.scope !== "write") return json(403, { error: "read_only_token" });
-        return route.handle({ req, match, now: nowMs, authenticated: true });
+        const canWrite = token.scope === "write";
+        if (!SAFE_METHODS.has(req.method) && !canWrite && !(route.readTokenPost && req.method === "POST")) return json(403, { error: "read_only_token" });
+        return route.handle({ req, match, now: nowMs, authenticated: true, canWrite });
       }
+
+      // Rotas de token (MCP) não aceitam cookie: sem token válido, 401 para o cliente saber que é a credencial.
+      if (route.readTokenPost) return unauthorized();
 
       // Cookie de sessão é enviado sozinho pelo navegador: toda escrita precisa vir de uma origem conhecida.
       if (!SAFE_METHODS.has(req.method) && !config.origins.includes(req.headers?.origin ?? "")) return forbidden();
@@ -148,7 +154,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
       );
       const authenticated = session?.typ === "session";
       if (route.access !== "public" && !authenticated) return unauthorized();
-      return route.handle({ req, match, now: nowMs, authenticated });
+      return route.handle({ req, match, now: nowMs, authenticated, canWrite: authenticated });
     }
     return pathMatched ? json(405, { error: "method_not_allowed" }) : notFound();
   };

@@ -20,12 +20,14 @@ Atualizado depois do primeiro ciclo completo de telas.
 
 **Web Push** (19/11): os check-ins chegam como notificação do sistema com o app fechado. Configurações > Rotina > "Ligar neste aparelho". Um agendamento (EventBridge, `PushSchedule`, padrão de meia em meia hora das 7:00 às 22:30 de Brasília, para poupar as horas de compute do Neon) chama a mesma Lambda com `{"job":"push"}`: gera os check-ins vencidos e manda os avisos não lidos das últimas 12 h, fora do horário de silêncio. Chaves VAPID criadas no primeiro uso e guardadas cifradas na tabela `secrets`; cifra aes128gcm e VAPID implementados com `node:crypto` e conferidos contra a implementação de referência (`http_ece`). Só aceita endpoints dos serviços de push (FCM, Mozilla, Apple, Windows). No iPhone, só com o app instalado na tela de início.
 
+**MCP** (19/11): `POST /api/mcp` (Streamable HTTP, sem estado, só JSON) expõe ao Claude Code e ao Claude Desktop as mesmas ferramentas dos assistentes: buscar e ler notas, listar páginas, tarefas, metas, Inbox e baralhos; criar páginas, tarefas e capturas, acrescentar e trocar seções, mover, renomear e apagar (lixeira). Autentica só por token de API: token de leitura vê só as ferramentas de leitura; de escrita executa na hora, sem rascunho (quem pede permissão é o cliente). Instruções de conexão em Configurações > API.
+
 **Ficou de fora**:
 
 - Blocos de embed e colunas.
 - Mapa mental como tela própria: o Renato gera um diagrama `mindmap` em Mermaid como rascunho de página.
 - Pesquisa com citações (Perplexity) e resumo e quiz com Gemini: o quiz e a sessão guiada rodam no Tutor, com o Claude.
-- Streaming das respostas dos assistentes e servidor MCP.
+- Streaming das respostas dos assistentes em produção (o API Gateway HTTP entrega os eventos juntos no fim).
 - Captura por e-mail ou compartilhamento do Android.
 - Importação direta por token do Notion ou do GitHub: a importação lê o `.zip` exportado ou uma pasta de Markdown.
 - Edição de um card depois de criado, tabela CSV do Notion e imagens locais na importação.

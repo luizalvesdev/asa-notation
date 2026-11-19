@@ -10,9 +10,8 @@ import type { PgSecretStore } from "../secrets/store.js";
 import type { PgSettingsStore } from "../settings/store.js";
 import { localParts } from "../notifications/checkins.js";
 import type { PgTaskStore } from "../tasks/store.js";
-import { ACTIONS } from "./actions.js";
 import { runTurn, trimHistory, type AgentConfig } from "./agent.js";
-import { markdownToDoc } from "./markdown.js";
+import { executeDraft } from "./execute.js";
 import type { Agent, DraftKind, PgChatStore } from "./store.js";
 import { systemPrompt, toolsFor, type StoreContext } from "./tools.js";
 
@@ -48,32 +47,7 @@ function providerFailure(err: ProviderError) {
 export function chatRoutes(deps: Deps): Route[] {
   const { chat, secrets, settings, fetchImpl } = deps;
 
-  /** Executa um rascunho (aprovado pelo usuário ou, no modo automático, na hora). Lança com a mensagem do erro se não der. */
-  async function execute(kind: DraftKind, payload: Record<string, unknown>, stores: StoreContext): Promise<Record<string, unknown>> {
-    if (kind === "tasks") {
-      const tasks = payload.tasks as { title: string; date: string | null; time: string | null }[];
-      const ids: string[] = [];
-      for (const t of tasks) {
-        const created = await deps.tasks.create({ title: t.title, parentId: null, date: t.date, time: t.time, recurrence: null, goalId: null });
-        if (created.kind === "ok") ids.push(created.task.id);
-      }
-      return { created: ids.length, ids, message: `${ids.length} ${ids.length === 1 ? "tarefa criada" : "tarefas criadas"}.` };
-    }
-    if (kind === "capture") {
-      const created = await deps.captures.create({ text: payload.text as string, kind: (payload.kind as never) ?? null });
-      return { id: created.id, message: "Captura salva na Inbox." };
-    }
-    if (kind === "action") {
-      const def = ACTIONS[String(payload.tool)];
-      if (!def) throw new Error("Ação desconhecida.");
-      return { ...(await def.run((payload.input ?? {}) as Record<string, unknown>, stores)) };
-    }
-    const p = payload as { title: string; markdown?: string; mermaid?: string; parentId: string | null };
-    const body = p.mermaid ? { type: "doc", content: [{ type: "mermaid", attrs: { code: p.mermaid } }] } : markdownToDoc(p.markdown ?? "");
-    const parentId = p.parentId && (await deps.pages.get(p.parentId)) ? p.parentId : null;
-    const page = await deps.pages.create({ parentId, title: p.title, icon: null, body });
-    return { pageId: page?.id ?? null, message: `Página “${p.title}” criada.` };
-  }
+  const execute = (kind: DraftKind, payload: Record<string, unknown>, stores: StoreContext) => executeDraft(kind, payload, stores);
 
   const storesFor = async (nowMs: number): Promise<StoreContext> => ({
     tasks: deps.tasks,
