@@ -1,4 +1,9 @@
-export type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
+import { StreamError, assemble, parseSse, streamErrorStatus } from "./stream.js";
+
+export type FetchLike = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal },
+) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown>; /** Corpo em pedaços, para respostas em fluxo. */ body?: AsyncIterable<Uint8Array> | null }>;
 
 export interface TextBlock {
   type: "text";
@@ -34,6 +39,8 @@ export interface ModelRequest {
   messages: ModelMessage[];
   tools: ToolSpec[];
   maxTokens?: number;
+  /** Se vier, o provedor responde em fluxo e avisa a cada pedaço de texto (a resposta completa ainda é devolvida no fim). */
+  onText?: (delta: string) => void;
 }
 
 export interface ModelResponse {
@@ -71,9 +78,17 @@ export function createModel(apiKey: string, model: string, fetchImpl: FetchLike,
       const res = await fetchImpl(URL, {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model, max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS, system: req.system, messages: req.messages, ...(req.tools.length > 0 ? { tools: req.tools } : {}) }),
+        body: JSON.stringify({ model, max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS, system: req.system, messages: req.messages, ...(req.tools.length > 0 ? { tools: req.tools } : {}), ...(req.onText ? { stream: true } : {}) }),
         signal: controller.signal,
       });
+      if (req.onText && res.ok && res.body) {
+        try {
+          return await assemble(parseSse(res.body), req.onText);
+        } catch (err) {
+          if (err instanceof StreamError) throw new ProviderError(streamErrorStatus(err.kind), err.message);
+          throw err;
+        }
+      }
       const data = (await res.json().catch(() => null)) as { content?: Block[]; stop_reason?: string; error?: { message?: string } } | null;
       if (!res.ok) throw new ProviderError(res.status, data?.error?.message ?? `HTTP ${res.status}`);
       return { content: data?.content ?? [], stopReason: data?.stop_reason ?? "end_turn" };

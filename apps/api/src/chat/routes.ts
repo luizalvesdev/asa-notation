@@ -4,13 +4,14 @@ import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
 import type { PgPageStore } from "../pages/store.js";
 import type { PgStudyStore } from "../study/store.js";
+import type { ApiRequest, ApiResponse } from "../http.js";
 import { UUID_SOURCE, badRequest, isRecord, json, notFound, type Route } from "../routing.js";
 import type { PgSecretStore } from "../secrets/store.js";
 import type { PgSettingsStore } from "../settings/store.js";
 import { localParts } from "../notifications/checkins.js";
 import type { PgTaskStore } from "../tasks/store.js";
 import { ACTIONS } from "./actions.js";
-import { runTurn, trimHistory } from "./agent.js";
+import { runTurn, trimHistory, type AgentConfig } from "./agent.js";
 import { markdownToDoc } from "./markdown.js";
 import type { Agent, DraftKind, PgChatStore } from "./store.js";
 import { systemPrompt, toolsFor, type StoreContext } from "./tools.js";
@@ -83,6 +84,76 @@ export function chatRoutes(deps: Deps): Route[] {
     today: localParts(nowMs, (await settings.get()).timezone).date,
   });
 
+  /** Um turno de conversa. `hooks` (só no modo em fluxo) recebem o texto aos poucos e o andamento das ferramentas. */
+  async function sendTurn(req: ApiRequest, now: number, hooks: Pick<AgentConfig, "onText" | "onStep" | "onTool"> = {}) {
+    const body = isRecord(req.body) ? req.body : {};
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    if (!isAgent(body.agent)) return badRequest("invalid_agent");
+    if (text === "" || text.length > MAX_TEXT) return badRequest("invalid_text");
+    if (body.conversationId !== undefined && typeof body.conversationId !== "string") return badRequest("invalid_conversation");
+    const agent = body.agent;
+
+    const model = await deps.provider.forTurn();
+    if (!model) return json(412, { error: "no_key" });
+
+    let conversation = body.conversationId ? await chat.get(body.conversationId as string) : null;
+    if (body.conversationId && (!conversation || conversation.agent !== agent)) return notFound();
+    const conversationId = conversation?.id ?? (await chat.create(agent, "")).id;
+    conversation = conversation ?? (await chat.get(conversationId))!;
+
+    const config = await settings.get();
+    const today = localParts(now, config.timezone).date;
+    const draftIds: string[] = [];
+    const stores = await storesFor(now);
+    const { specs, handlers } = toolsFor(agent, {
+      ...stores,
+      submit: async (kind: DraftKind, payload, danger = false) => {
+        const id = await chat.addDraft(conversationId, kind, payload);
+        draftIds.push(id);
+        // Modo automático: criar e editar rodam na hora; apagar e reescrever tudo sempre esperam o "Aprovar".
+        if (!config.aiAutoApply || danger) return { done: false };
+        try {
+          const result = await execute(kind, payload, stores);
+          await chat.decide(id, "approved", result);
+          return { done: true, message: String(result.message ?? "Pronto.") };
+        } catch (err) {
+          // Falhou: o rascunho não serve a ninguém. O erro volta ao modelo como resultado da ferramenta.
+          await chat.removeDraft(id);
+          draftIds.splice(draftIds.indexOf(id), 1);
+          throw err;
+        }
+      },
+    });
+
+    const history = trimHistory(await chat.replay(conversationId));
+    let turn;
+    try {
+      turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone, config.aiAutoApply), specs, handlers, model, ...hooks });
+    } catch (err) {
+      if (err instanceof ProviderError) {
+        // Rascunhos criados antes da falha não servem a ninguém.
+        return providerFailure(err);
+      }
+      throw err;
+    }
+
+    // Guarda o turno: o que o usuário viu fica visível; chamadas e resultados de ferramenta ficam só para o histórico.
+    // Nunca deixa a resposta em branco: se o modelo só chamou ferramentas, diz o que aconteceu.
+    if (turn.text === "") turn.text = draftIds.length > 0 ? (config.aiAutoApply ? "Pronto." : "Deixei um rascunho para você aprovar.") : "Não consegui responder agora. Tente de novo ou peça de outro jeito.";
+    let finalId = "";
+    for (let i = 0; i < turn.messages.length; i++) {
+      const m = turn.messages[i]!;
+      const isFinal = i === turn.messages.length - 1 && m.role === "assistant";
+      const isUserText = i === 0;
+      const id = await chat.add(conversationId, m.role, m.content, isUserText ? text : isFinal ? turn.text : "", isUserText || isFinal);
+      if (isFinal) finalId = id;
+    }
+    await chat.attachDrafts(draftIds, finalId);
+    await chat.touch(conversationId, text.slice(0, 60));
+    const messages = await chat.visible(conversationId);
+    return json(200, { conversation: await chat.get(conversationId), messages });
+  }
+
   return [
     {
       method: "GET",
@@ -151,74 +222,15 @@ export function chatRoutes(deps: Deps): Route[] {
       method: "POST",
       pattern: /^\/chat\/send$/,
       access: "session",
-      handle: async ({ req, now }) => {
-        const body = isRecord(req.body) ? req.body : {};
-        const text = typeof body.text === "string" ? body.text.trim() : "";
-        if (!isAgent(body.agent)) return badRequest("invalid_agent");
-        if (text === "" || text.length > MAX_TEXT) return badRequest("invalid_text");
-        if (body.conversationId !== undefined && typeof body.conversationId !== "string") return badRequest("invalid_conversation");
-        const agent = body.agent;
-
-        const model = await deps.provider.forTurn();
-        if (!model) return json(412, { error: "no_key" });
-
-        let conversation = body.conversationId ? await chat.get(body.conversationId as string) : null;
-        if (body.conversationId && (!conversation || conversation.agent !== agent)) return notFound();
-        const conversationId = conversation?.id ?? (await chat.create(agent, "")).id;
-        conversation = conversation ?? (await chat.get(conversationId))!;
-
-        const config = await settings.get();
-        const today = localParts(now, config.timezone).date;
-        const draftIds: string[] = [];
-        const stores = await storesFor(now);
-        const { specs, handlers } = toolsFor(agent, {
-          ...stores,
-          submit: async (kind: DraftKind, payload, danger = false) => {
-            const id = await chat.addDraft(conversationId, kind, payload);
-            draftIds.push(id);
-            // Modo automático: criar e editar rodam na hora; apagar e reescrever tudo sempre esperam o "Aprovar".
-            if (!config.aiAutoApply || danger) return { done: false };
-            try {
-              const result = await execute(kind, payload, stores);
-              await chat.decide(id, "approved", result);
-              return { done: true, message: String(result.message ?? "Pronto.") };
-            } catch (err) {
-              // Falhou: o rascunho não serve a ninguém. O erro volta ao modelo como resultado da ferramenta.
-              await chat.removeDraft(id);
-              draftIds.splice(draftIds.indexOf(id), 1);
-              throw err;
-            }
-          },
-        });
-
-        const history = trimHistory(await chat.replay(conversationId));
-        let turn;
-        try {
-          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone, config.aiAutoApply), specs, handlers, model });
-        } catch (err) {
-          if (err instanceof ProviderError) {
-            // Rascunhos criados antes da falha não servem a ninguém.
-            return providerFailure(err);
-          }
-          throw err;
-        }
-
-        // Guarda o turno: o que o usuário viu fica visível; chamadas e resultados de ferramenta ficam só para o histórico.
-        // Nunca deixa a resposta em branco: se o modelo só chamou ferramentas, diz o que aconteceu.
-        if (turn.text === "") turn.text = draftIds.length > 0 ? (config.aiAutoApply ? "Pronto." : "Deixei um rascunho para você aprovar.") : "Não consegui responder agora. Tente de novo ou peça de outro jeito.";
-        let finalId = "";
-        for (let i = 0; i < turn.messages.length; i++) {
-          const m = turn.messages[i]!;
-          const isFinal = i === turn.messages.length - 1 && m.role === "assistant";
-          const isUserText = i === 0;
-          const id = await chat.add(conversationId, m.role, m.content, isUserText ? text : isFinal ? turn.text : "", isUserText || isFinal);
-          if (isFinal) finalId = id;
-        }
-        await chat.attachDrafts(draftIds, finalId);
-        await chat.touch(conversationId, text.slice(0, 60));
-        const messages = await chat.visible(conversationId);
-        return json(200, { conversation: await chat.get(conversationId), messages });
-      },
+      handle: async ({ req, now }) => sendTurn(req, now),
+    },
+    {
+      // Mesmo pedido do /chat/send, mas a resposta chega em eventos SSE: `delta` (texto), `step` (nova ida ao modelo),
+      // `tool` (ferramenta rodando) e, no fim, `done` (igual ao corpo do /chat/send) ou `error` (status e corpo do erro).
+      method: "POST",
+      pattern: /^\/chat\/stream$/,
+      access: "session",
+      handle: async ({ req, now }) => ({ status: 200, body: null, stream: eventStream((hooks) => sendTurn(req, now, hooks)) }),
     },
     {
       method: "POST",
@@ -247,4 +259,52 @@ export function chatRoutes(deps: Deps): Route[] {
       },
     },
   ];
+}
+
+type Hooks = Pick<AgentConfig, "onText" | "onStep" | "onTool">;
+
+/**
+ * Transforma um turno em fluxo de eventos: o que os ganchos emitem sai na hora; no fim vem `done` com a resposta
+ * (ou `error`). O turno roda sozinho e nunca lança: qualquer falha vira um evento `error`.
+ */
+export async function* eventStream(run: (hooks: Hooks) => Promise<ApiResponse>): AsyncGenerator<unknown> {
+  const queue: unknown[] = [];
+  let wake: (() => void) | null = null;
+  const push = (event: unknown) => {
+    queue.push(event);
+    wake?.();
+  };
+  let result: ApiResponse | { error: true } | null = null;
+  void run({
+    onText: (text) => push({ type: "delta", text }),
+    onStep: () => push({ type: "step" }),
+    onTool: (tool) => push({ type: "tool", ...tool }),
+  }).then(
+    (res) => {
+      result = res;
+      wake?.();
+    },
+    (err) => {
+      console.error(err);
+      result = { error: true };
+      wake?.();
+    },
+  );
+
+  while (true) {
+    while (queue.length > 0) yield queue.shift();
+    if (result !== null) break;
+    await new Promise<void>((resolve) => {
+      wake = resolve;
+      // Evento ou resultado pode ter chegado entre o teste acima e este ponto.
+      if (queue.length > 0 || result !== null) resolve();
+    });
+    wake = null;
+  }
+  while (queue.length > 0) yield queue.shift();
+
+  const final = result as ApiResponse | { error: true };
+  if ("error" in final) yield { type: "error", status: 500, body: { error: "internal_error" } };
+  else if (final.status === 200) yield { type: "done", ...(final.body as object) };
+  else yield { type: "error", status: final.status, body: final.body };
 }

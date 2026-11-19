@@ -9,7 +9,7 @@ import { mockProvider } from "./dev-ai-mock.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "./auth/config.js";
 import { hashPassword } from "./auth/password.js";
 import { PgAuthStore } from "./auth/store.js";
-import type { ApiRequest } from "./http.js";
+import { sseEvent, type ApiRequest } from "./http.js";
 import { readMigrations } from "./migrations.js";
 import type { SqlClient } from "./sql.js";
 
@@ -112,10 +112,23 @@ const server = createServer(async (incoming, outgoing) => {
       body,
     };
     const res = await handle(req);
+    if (res.stream) {
+      // Fluxo de verdade: cada evento sai assim que chega.
+      outgoing.statusCode = res.status;
+      outgoing.setHeader("content-type", "text/event-stream");
+      outgoing.setHeader("cache-control", "no-cache, no-transform");
+      outgoing.setHeader("x-accel-buffering", "no");
+      if (res.cookies && res.cookies.length > 0) outgoing.setHeader("set-cookie", res.cookies);
+      outgoing.flushHeaders();
+      for await (const event of res.stream) outgoing.write(sseEvent(event));
+      outgoing.end();
+      return;
+    }
     send(res.status, res.body, res.cookies);
   } catch (err) {
     console.error(err);
-    send(500, { error: "internal_error" });
+    if (outgoing.headersSent) outgoing.end();
+    else send(500, { error: "internal_error" });
   }
 });
 

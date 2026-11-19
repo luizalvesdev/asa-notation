@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import type { ApiRequest, ApiResponse } from "./http.js";
+import { sseEvent, type ApiRequest, type ApiResponse } from "./http.js";
 
 export type Api = (req: ApiRequest) => Promise<ApiResponse>;
 
@@ -44,6 +44,12 @@ export function createLambdaHandler(getApi: () => Promise<Api>) {
     };
     try {
       const res = await (await getApi())(req);
+      if (res.stream) {
+        // O API Gateway HTTP não repassa em fluxo: junta os eventos e devolve no fim.
+        let text = "";
+        for await (const event of res.stream) text += sseEvent(event);
+        return { statusCode: res.status, headers: { "content-type": "text/event-stream", "cache-control": "no-cache" }, body: text, ...(res.cookies?.length ? { cookies: res.cookies } : {}) };
+      }
       return jsonResult(res.status, res.body, res.cookies);
     } catch (err) {
       console.error(err);

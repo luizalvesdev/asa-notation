@@ -14,7 +14,7 @@ import { studyRoutes } from "./study/routes.js";
 import { PgStudyStore } from "./study/store.js";
 import { PgTaskStore } from "./tasks/store.js";
 import type { FetchLike } from "./ai/anthropic.js";
-import type { AiConfig, BedrockInvoke } from "./ai/bedrock.js";
+import type { AiConfig, BedrockInvoke, BedrockStream } from "./ai/bedrock.js";
 import { createProvider } from "./ai/provider.js";
 import { chatRoutes } from "./chat/routes.js";
 import { PgChatStore } from "./chat/store.js";
@@ -46,11 +46,13 @@ export interface AppDeps {
   ai?: AiConfig;
   /** Troca a chamada ao Bedrock nos testes. */
   bedrockInvoke?: BedrockInvoke;
+  /** Troca o fluxo do Bedrock nos testes. */
+  bedrockStream?: BedrockStream;
 }
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke }: AppDeps): Api {
+export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke, bedrockStream }: AppDeps): Api {
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
   const tokenStore = new PgTokenStore(sql, now);
@@ -73,7 +75,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     ...chatRoutes({
       chat: new PgChatStore(sql, now),
       secrets: secretStore,
-      provider: createProvider({ config: ai, secrets: secretStore, fetchImpl, ...(bedrockInvoke ? { bedrockInvoke } : {}) }),
+      provider: createProvider({ config: ai, secrets: secretStore, fetchImpl, ...(bedrockInvoke ? { bedrockInvoke } : {}), ...(bedrockStream ? { bedrockStream } : {}) }),
       settings: settingsStore,
       tasks: taskStore,
       goals: goalStore,

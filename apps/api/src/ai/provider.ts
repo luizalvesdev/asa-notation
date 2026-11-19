@@ -1,5 +1,5 @@
 import { DEFAULT_MODEL, TURN_BUDGET_MS, createBudgetedModel, withBudget, type FetchLike, type ModelFn } from "./anthropic.js";
-import { createBedrockModel, sdkInvoke, type AiConfig, type BedrockInvoke } from "./bedrock.js";
+import { createBedrockModel, sdkInvoke, sdkStream, type AiConfig, type BedrockInvoke, type BedrockStream } from "./bedrock.js";
 import type { PgSecretStore } from "../secrets/store.js";
 
 export const KEY_NAME = "anthropic";
@@ -18,16 +18,19 @@ interface Deps {
   fetchImpl: FetchLike;
   /** Só para o Bedrock: troca o SDK nos testes. */
   bedrockInvoke?: BedrockInvoke;
+  /** Só para o Bedrock: troca o fluxo nos testes. */
+  bedrockStream?: BedrockStream;
 }
 
-export function createProvider({ config, secrets, fetchImpl, bedrockInvoke }: Deps): AiProvider {
+export function createProvider({ config, secrets, fetchImpl, bedrockInvoke, bedrockStream }: Deps): AiProvider {
   if (config.provider === "bedrock") {
     const invoke = bedrockInvoke ?? sdkInvoke(config.region);
+    const stream = bedrockStream ?? (bedrockInvoke ? undefined : sdkStream(config.region));
     return {
       name: "bedrock",
       model: config.modelId,
       // Credenciais vêm do papel IAM da Lambda: não há chave para guardar.
-      forTurn: async () => withBudget((timeoutMs) => createBedrockModel(config.modelId, invoke, timeoutMs), TURN_BUDGET_MS),
+      forTurn: async () => withBudget((timeoutMs) => createBedrockModel(config.modelId, invoke, timeoutMs, stream), TURN_BUDGET_MS),
     };
   }
   return {

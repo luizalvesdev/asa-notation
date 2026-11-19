@@ -11,6 +11,12 @@ export interface AgentConfig {
   specs: ToolSpec[];
   handlers: Record<string, ToolHandler>;
   model: (req: ModelRequest) => Promise<ModelResponse>;
+  /** Pedaços de texto do modelo, conforme chegam (só se o provedor responde em fluxo). */
+  onText?: (delta: string) => void;
+  /** Uma nova ida ao modelo começou (depois de ferramentas): o texto parcial anterior deixa de valer. */
+  onStep?: () => void;
+  /** Uma ferramenta vai rodar / terminou. */
+  onTool?: (event: { name: string; phase: "start" | "end" }) => void;
 }
 
 export interface TurnResult {
@@ -31,7 +37,8 @@ export async function runTurn(history: ModelMessage[], userText: string, config:
   const all = () => [...history, ...fresh];
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    const response = await config.model({ system: config.system, messages: all(), tools: config.specs });
+    if (step > 0) config.onStep?.();
+    const response = await config.model({ system: config.system, messages: all(), tools: config.specs, ...(config.onText ? { onText: config.onText } : {}) });
 
     // Resposta cortada no limite de tokens: uma chamada de ferramenta no meio fica incompleta e não pode ser executada.
     if (response.stopReason === "max_tokens") {
@@ -55,11 +62,13 @@ export async function runTurn(history: ModelMessage[], userText: string, config:
         results.push({ type: "tool_result", tool_use_id: call.id, content: `Ferramenta desconhecida: ${call.name}`, is_error: true });
         continue;
       }
+      config.onTool?.({ name: call.name, phase: "start" });
       try {
         results.push({ type: "tool_result", tool_use_id: call.id, content: (await handler(call.input)).slice(0, MAX_TOOL_RESULT) });
       } catch (err) {
         results.push({ type: "tool_result", tool_use_id: call.id, content: err instanceof Error ? err.message : "Erro na ferramenta", is_error: true });
       }
+      config.onTool?.({ name: call.name, phase: "end" });
     }
     fresh.push({ role: "user", content: results });
   }

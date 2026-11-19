@@ -1,3 +1,4 @@
+import { StreamError, assemble, type StreamEvent, streamErrorStatus } from "./stream.js";
 import { DEFAULT_MAX_TOKENS, ProviderError, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
 
 export type AiConfig = { provider: "anthropic" } | { provider: "bedrock"; modelId: string; region: string };
@@ -16,11 +17,22 @@ export function bedrockBody(req: ModelRequest): string {
   });
 }
 
-export function createBedrockModel(modelId: string, invoke: BedrockInvoke, timeoutMs: number): ModelFn {
+/** Chamada em fluxo ao Bedrock: devolve os eventos já decodificados. Erros saem como ProviderError. */
+export type BedrockStream = (input: { modelId: string; body: string; signal: AbortSignal }) => AsyncIterable<StreamEvent>;
+
+export function createBedrockModel(modelId: string, invoke: BedrockInvoke, timeoutMs: number, stream?: BedrockStream): ModelFn {
   return async (req: ModelRequest): Promise<ModelResponse> => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
+      if (req.onText && stream) {
+        try {
+          return await assemble(stream({ modelId, body: bedrockBody(req), signal: controller.signal }), req.onText);
+        } catch (err) {
+          if (err instanceof StreamError) throw new ProviderError(streamErrorStatus(err.kind), err.message);
+          throw err;
+        }
+      }
       const res = await invoke({ modelId, body: bedrockBody(req), signal: controller.signal });
       const data = res.json as { content?: Block[]; stop_reason?: string; message?: string } | null;
       if (res.status < 200 || res.status >= 300) throw new ProviderError(res.status, data?.message ?? `HTTP ${res.status}`);
@@ -70,6 +82,32 @@ export function sdkInvoke(region: string): BedrockInvoke {
       const name = err instanceof Error ? err.name : "";
       if (name === "AbortError") throw err;
       return { status: bedrockErrorStatus(name), json: { message: err instanceof Error ? err.message : "erro" } };
+    }
+  };
+}
+
+/** Fluxo de verdade (InvokeModelWithResponseStream). Cada pedaço traz um evento JSON no mesmo formato da API da Anthropic. */
+export function sdkStream(region: string): BedrockStream {
+  return async function* ({ modelId, body, signal }) {
+    const m = await import("@aws-sdk/client-bedrock-runtime");
+    let out: { body?: AsyncIterable<{ chunk?: { bytes?: Uint8Array } }> };
+    try {
+      out = (await new m.BedrockRuntimeClient({ region }).send(new m.InvokeModelWithResponseStreamCommand({ modelId, contentType: "application/json", accept: "application/json", body }), { abortSignal: signal })) as never;
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "";
+      if (name === "AbortError") throw err;
+      throw new ProviderError(bedrockErrorStatus(name), err instanceof Error ? err.message : "erro");
+    }
+    const decoder = new TextDecoder();
+    try {
+      for await (const part of out.body ?? []) {
+        if (part.chunk?.bytes) yield JSON.parse(decoder.decode(part.chunk.bytes)) as StreamEvent;
+      }
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "";
+      if (name === "AbortError" || err instanceof ProviderError) throw err;
+      // Erros no meio do fluxo (limite, indisponibilidade) vêm com o nome da exceção.
+      throw new ProviderError(bedrockErrorStatus(name), err instanceof Error ? err.message : "erro");
     }
   };
 }
