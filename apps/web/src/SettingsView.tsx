@@ -279,7 +279,7 @@ function Tokens({ onToast }: { onToast: (t: Toast) => void }) {
           </div>
         </div>
       )}
-      <div className="dgrid card" role="table" aria-label="Tokens" style={{ ["--cols" as string]: "minmax(0, 1.3fr) 140px 130px 150px", overflow: "hidden" }}>
+      <div className="dgrid card tokens" role="table" aria-label="Tokens" style={{ ["--cols" as string]: "minmax(0, 1.3fr) 140px 130px 150px", overflow: "hidden" }}>
         <div className="drow hd" role="row"><span role="columnheader">Nome</span><span role="columnheader">Escopo</span><span role="columnheader">Último uso</span><span role="columnheader" /></div>
         {tokens === null && <div className="drow" role="row"><span className="sk" style={{ height: 14, margin: "0 10px" }} /></div>}
         {tokens?.length === 0 && <div className="drow" role="row"><span style={{ color: "var(--text-3)" }}>Nenhum token ainda.</span></div>}
