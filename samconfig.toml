@@ -6,7 +6,15 @@ capabilities = ["CAPABILITY_IAM"]
 resolve_s3 = true
 confirm_changeset = false
 fail_on_empty_changeset = false
-parameter_overrides = "AllowedOrigins=https://duduc2056whpm.cloudfront.net"
+parameter_overrides = [
+  "DatabaseUrlParam=/asa-notation/database-url",
+  "SessionSecretParam=/asa-notation/session-secret",
+  "AllowedOrigins=https://asa.luizalves.dev",
+  "AiProvider=bedrock",
+  "BedrockModelId=global.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "DomainName=asa.luizalves.dev",
+  "CertificateArn=arn:aws:acm:us-east-1:830955874031:certificate/ceceb07e-d465-4b45-b33b-d999c07eb996",
+]
 
 [default.global.parameters]
 region = "sa-east-1"
