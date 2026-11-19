@@ -32,8 +32,23 @@ Parameters:
     Default: http://localhost:5173
     Description: Origens do app web, separadas por vírgula
 
+  DomainName:
+    Type: String
+    Default: ""
+    Description: Domínio próprio do app (ex. asa.luizalves.dev). Vazio usa só o endereço do CloudFront
+  CertificateArn:
+    Type: String
+    Default: ""
+    Description: Certificado do ACM em us-east-1 para o domínio (obrigatório com DomainName)
+
+  PushSchedule:
+    Type: String
+    Default: rate(15 minutes)
+    Description: Com que frequência o servidor gera os check-ins vencidos e manda por Web Push. Cada execução acorda o Neon
+
 Conditions:
   UseBedrock: !Equals [!Ref AiProvider, bedrock]
+  UseDomain: !And [!Not [!Equals [!Ref DomainName, ""]], !Not [!Equals [!Ref CertificateArn, ""]]]
 
 Resources:
   Api:
@@ -100,6 +115,12 @@ Resources:
             ApiId: !Ref Api
             Method: ANY
             Path: /{proxy+}
+        # Check-ins e lembretes com o app fechado: gera o que venceu e manda por Web Push.
+        PushJob:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref PushSchedule
+            Input: '{"job":"push"}'
 
   WebBucket:
     Type: AWS::S3::Bucket
@@ -162,6 +183,13 @@ Resources:
       DistributionConfig:
         Enabled: true
         Comment: asa-notation
+        Aliases: !If [UseDomain, [!Ref DomainName], !Ref AWS::NoValue]
+        ViewerCertificate: !If
+          - UseDomain
+          - AcmCertificateArn: !Ref CertificateArn
+            SslSupportMethod: sni-only
+            MinimumProtocolVersion: TLSv1.2_2021
+          - !Ref AWS::NoValue
         DefaultRootObject: index.html
         HttpVersion: http2and3
         PriceClass: PriceClass_All
