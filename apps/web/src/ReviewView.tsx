@@ -5,6 +5,7 @@ import { pageHash, routeHash } from "./nav";
 import { applyGrade, clozeAnswers, clozeSegments, current, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize, type Session } from "./study-logic";
 import type { Grade, QueueCard } from "./study-types";
 import { localDayStartIso } from "./tasks-dates";
+import { ActiveClock, checkAnswer, expectedAnswer, formatSeconds, loadTypedAnswers, suggestGrade } from "./typed-answer";
 
 type Load = { status: "carregando" } | { status: "erro" } | { status: "pronto"; session: Session };
 
@@ -45,6 +46,12 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
   const [attempt, setAttempt] = useState(0);
   const [editing, setEditing] = useState(false);
   const startedAt = useRef(Date.now());
+  // Responder digitando: o tempo até lembrar (só com o Asa em foco) sugere a nota.
+  const [typing] = useState(loadTypedAnswers);
+  const [typed, setTyped] = useState("");
+  const [verdict, setVerdict] = useState<{ correct: boolean; latency: number | null; suggestion: Grade | null } | null>(null);
+  const clock = useRef(new ActiveClock());
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let live = true;
@@ -69,13 +76,51 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
     setLoad((l) => (l.status === "pronto" ? { status: "pronto", session: reveal(l.session) } : l));
   }, []);
 
+  // Cada card novo (ou "refazer") zera a resposta e o cronômetro.
+  const cardKey = card ? `${card.id}-${session?.results.length}` : "";
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    clock.current = new ActiveClock();
+    setTyped("");
+    setVerdict(null);
+    if (!typing || !card) return;
+    const active = () => document.visibilityState === "visible" && document.hasFocus();
+    const sync = () => (active() ? clock.current.start() : clock.current.pause());
+    sync();
+    window.addEventListener("focus", sync);
+    window.addEventListener("blur", sync);
+    document.addEventListener("visibilitychange", sync);
+    requestAnimationFrame(() => inputRef.current?.focus());
+    return () => {
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("blur", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardKey, retry, typing]);
+
+  const submitTyped = useCallback(() => {
+    if (!card || !session || session.revealed) return;
+    clock.current.pause();
+    const correct = checkAnswer(typed, expectedAnswer(card));
+    const latency = clock.current.latency();
+    setVerdict({ correct, latency, suggestion: suggestGrade(correct, latency) });
+    flip();
+  }, [card, session, typed, flip]);
+
+  const redo = useCallback(() => {
+    setLoad((l) => (l.status === "pronto" ? { status: "pronto", session: { ...l.session, revealed: false } } : l));
+    setRetry((n) => n + 1);
+  }, []);
+
   const grade = useCallback(
     async (value: Grade) => {
       if (!session || !card || !session.revealed || busy) return;
       setBusy(true);
       setFailed(false);
       try {
-        const response = await studyApi.review(card.id, value, Date.now() - session.shownAt);
+        const spent = typing ? Math.round(clock.current.elapsed()) : Date.now() - session.shownAt;
+        const response = await studyApi.review(card.id, value, spent);
         setLoad((l) => (l.status === "pronto" ? { status: "pronto", session: applyGrade(l.session, value, response, Date.now()) } : l));
       } catch {
         setFailed(true);
@@ -83,7 +128,7 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
         setBusy(false);
       }
     },
-    [session, card, busy],
+    [session, card, busy, typing],
   );
 
   useEffect(() => {
@@ -100,15 +145,22 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
       } else if (e.key === " " || e.key === "Enter") {
         if (session && !session.revealed && card) {
           e.preventDefault();
-          flip();
+          if (typing) inputRef.current?.focus();
+          else flip();
+        } else if (e.key === "Enter" && session?.revealed && verdict?.suggestion) {
+          e.preventDefault();
+          void grade(verdict.suggestion);
         }
+      } else if ((e.key === "r" || e.key === "R") && verdict && !verdict.correct && session?.revealed) {
+        e.preventDefault();
+        redo();
       } else if (["1", "2", "3", "4"].includes(e.key)) {
         void grade(Number(e.key) as Grade);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [session, card, flip, grade, editing, onExit]);
+  }, [session, card, flip, grade, editing, onExit, typing, verdict, redo]);
 
   const back = onExit ? (
     <button className="btn btn-fan btn-sm" type="button" onClick={onExit}>
@@ -237,14 +289,78 @@ export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
             </button>
           </div>
         )}
-        {!s.revealed && !editing && (
+        {!s.revealed && !editing && typing && (
+          <form
+            className="row"
+            style={{ gap: 8 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitTyped();
+            }}
+          >
+            <input
+              ref={inputRef}
+              className="inp grow1"
+              value={typed}
+              placeholder={card.kind === "cloze" ? "O que falta nas lacunas…" : "Sua resposta…"}
+              aria-label="Sua resposta"
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(e) => {
+                clock.current.key();
+                setTyped(e.target.value);
+              }}
+              style={{ height: 48, fontSize: "calc(16px * var(--fs, 1))" }}
+            />
+            <button className="btn btn-pri" type="submit" style={{ height: 48 }}>
+              Conferir <span className="kbd" style={{ background: "transparent", color: "inherit", borderColor: "currentColor" }}>enter</span>
+            </button>
+            <button
+              className="btn btn-fan"
+              type="button"
+              style={{ height: 48 }}
+              onClick={() => {
+                clock.current.pause();
+                setTyped("");
+                setVerdict({ correct: false, latency: clock.current.latency(), suggestion: 1 });
+                flip();
+              }}
+            >
+              Não sei
+            </button>
+          </form>
+        )}
+        {!s.revealed && !editing && !typing && (
           <button className="btn btn-pri" type="button" onClick={flip} style={{ height: 48, fontSize: "calc(15px * var(--fs, 1))" }}>
             Mostrar resposta <span className="kbd" style={{ background: "transparent", color: "inherit", borderColor: "currentColor" }}>espaço</span>
           </button>
         )}
+        {s.revealed && verdict && (
+          <div className="card" role="status" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6, borderColor: verdict.correct ? "var(--success)" : "var(--danger)" }}>
+            <span className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+              <b style={{ fontWeight: 600, color: verdict.correct ? "var(--success)" : "var(--danger)" }}>{verdict.correct ? "Certo" : "Você errou"}</b>
+              <span className="muted" style={{ fontSize: "calc(13px * var(--fs, 1))" }}>
+                {verdict.latency === null ? "tempo não medido (ficou parado mais de 1 min)" : `lembrou em ${formatSeconds(verdict.latency)}`}
+              </span>
+              {!verdict.correct && (
+                <button className="btn btn-sec btn-sm" type="button" onClick={redo} style={{ marginLeft: "auto" }}>
+                  Refazer agora <span className="kbd">r</span>
+                </button>
+              )}
+            </span>
+            {typed.trim() !== "" && (
+              <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)" }}>
+                Você digitou: <span style={{ color: "var(--text)" }}>{typed}</span>
+              </span>
+            )}
+            <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>
+              {verdict.suggestion ? <>Sugestão: <b style={{ fontWeight: 600 }}>{RATES.find((r) => r.grade === verdict.suggestion)!.name}</b> · enter aceita, ou escolha outra (1–4)</> : "Escolha a nota (1–4)."}
+            </span>
+          </div>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
           {RATES.map((r, i) => (
-            <button key={r.grade} className="rate" type="button" disabled={!s.revealed || busy} tabIndex={s.revealed ? 0 : -1} onClick={() => void grade(r.grade)} style={{ transitionDelay: `${i * 30}ms` }}>
+            <button key={r.grade} className="rate" type="button" disabled={!s.revealed || busy} tabIndex={s.revealed ? 0 : -1} onClick={() => void grade(r.grade)} style={{ transitionDelay: `${i * 30}ms`, ...(s.revealed && verdict?.suggestion === r.grade ? { boxShadow: `inset 0 0 0 2px ${r.color}` } : {}) }}>
               <span style={{ font: "600 calc(14px * var(--fs, 1))/calc(18px * var(--fs, 1)) var(--sans)", color: r.color }}>{r.name}</span>
               <span>{formatInterval(now, card.preview[r.grade])}</span>
               <span className="kpad" style={{ marginTop: 2 }}>{r.grade}</span>

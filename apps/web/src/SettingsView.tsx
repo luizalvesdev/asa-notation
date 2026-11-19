@@ -12,6 +12,7 @@ import { TEXT_SIZES, applyTextSize, loadTextSize, type TextSize } from "./text-s
 import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
 import { loadReviewOnOpen, saveReviewOnOpen } from "./review-on-open";
+import { loadTypedAnswers, saveTypedAnswers } from "./typed-answer";
 
 interface SettingsViewProps {
   preference: Preference;
@@ -91,6 +92,7 @@ function General({ settings, save, preference, onPreference }: { settings: Setti
   const [reduce, setReduce] = useState(loadReduceMotion);
   const [textSize, setTextSize] = useState<TextSize>(loadTextSize);
   const [reviewOnOpen, setReviewOnOpen] = useState(loadReviewOnOpen);
+  const [typedAnswers, setTypedAnswers] = useState(loadTypedAnswers);
   const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
 
   return (
@@ -130,6 +132,13 @@ function General({ settings, save, preference, onPreference }: { settings: Setti
           <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", fontWeight: 400 }}>Se há cards para hoje, o app abre direto neles. Vale só para este aparelho.</span>
         </span>
         <span className={`sw${reviewOnOpen ? " on" : ""}`}><span className="knob" /></span>
+      </button>
+      <button className="tog" type="button" role="switch" aria-checked={typedAnswers} onClick={() => { const next = !typedAnswers; setTypedAnswers(next); saveTypedAnswers(next); }} style={{ padding: 0, color: "var(--text)", justifyContent: "space-between", maxWidth: 520, height: "auto", minHeight: 40 }}>
+        <span className="col" style={{ textAlign: "left" }}>
+          <span>Responder os cards digitando</span>
+          <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", fontWeight: 400 }}>O Asa confere a resposta e sugere a nota pelo tempo que você levou para lembrar. Vale só para este aparelho; no celular começa desligado.</span>
+        </span>
+        <span className={`sw${typedAnswers ? " on" : ""}`}><span className="knob" /></span>
       </button>
     </div>
   );
