@@ -189,3 +189,28 @@ body,
     animation: slideup var(--medio) var(--entrada) both;
   }
 }
+
+/* Prévia do conteúdo num cartão de aprovação */
+.draft-prev {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.draft-prev summary {
+  cursor: pointer;
+  width: fit-content;
+  color: var(--accent);
+}
+
+.draft-prev pre {
+  margin: 6px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: 400 12px/18px var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

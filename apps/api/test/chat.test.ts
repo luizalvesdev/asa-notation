@@ -647,6 +647,7 @@ describe("assistentes com poder sobre o app", () => {
     await send("renato", "o que tenho?");
     const out = JSON.parse((provider.calls.at(-1)!.body.messages.at(-1)!.content as { content: string }[])[0]!.content) as { title: string; parentId: string | null }[];
     expect(out.map((n) => n.title).sort()).toEqual(["Cache", "System Design"]);
+    expect((out as unknown as { title: string; path: string }[]).find((n) => n.title === "Cache")!.path).toBe("System Design / Cache");
     expect(out.find((n) => n.title === "Cache")!.parentId).toBe(parent);
   });
 
@@ -657,6 +658,7 @@ describe("assistentes com poder sobre o app", () => {
     expect(system).toContain("append_to_page");
     expect(system).toContain("pergunte ao usuário se quer uma página nova");
     expect(system).toContain("NÃO peça confirmação por texto");
+    expect(system).toContain("NÃO escolha uma");
   });
 
   it("tutor continua só lendo", async () => {

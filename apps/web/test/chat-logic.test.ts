@@ -77,3 +77,23 @@ describe("ações gerais dos assistentes", () => {
     expect(draftTarget({ kind: "tasks", payload: {}, result: null })).toEqual({ route: "hoje" });
   });
 });
+
+describe("prévia do conteúdo no cartão", () => {
+  it("página proposta mostra o Markdown; diagrama vira bloco mermaid", () => {
+    expect(describeDraft({ kind: "page", payload: { title: "T", markdown: "# Oi\n\ntexto" } }).preview).toBe("# Oi\n\ntexto");
+    expect(describeDraft({ kind: "page", payload: { title: "T", mermaid: "graph TD\n  A-->B" } }).preview).toBe("```mermaid\ngraph TD\n  A-->B\n```");
+  });
+
+  it("ações que escrevem conteúdo mostram o Markdown; as outras não têm prévia", () => {
+    const append = describeDraft({ kind: "action", payload: { tool: "append_to_page", summary: "s", danger: false, input: { markdown: "## Novo\n\nx" } } });
+    expect(append.preview).toBe("## Novo\n\nx");
+    expect(describeDraft({ kind: "action", payload: { tool: "delete_page", summary: "s", danger: true, input: { id: "1" } } }).preview).toBeUndefined();
+    expect(describeDraft({ kind: "tasks", payload: { tasks: [] } }).preview).toBeUndefined();
+  });
+
+  it("conteúdo muito grande é cortado", () => {
+    const v = describeDraft({ kind: "page", payload: { title: "T", markdown: "x".repeat(5000) } });
+    expect(v.preview!.length).toBeLessThan(3010);
+    expect(v.preview!.endsWith("…")).toBe(true);
+  });
+});

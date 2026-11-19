@@ -16,7 +16,7 @@ Prioridades:
 
 Atualizado depois do primeiro ciclo completo de telas.
 
-**Feito**: todo o bloco A (workspace e editor, exceto embed e colunas), B (databases), D (tarefas e metas, com subtarefas e recorrência), E (rotina e acompanhamento, com avisos do app aberto), F (captura e organização), G (assistentes, sem streaming), H (estudo: trilhas, cards, revisão FSRS, estatísticas, quiz e sessão guiada pelo Tutor) e I (login por senha, PWA, importação, backup, tokens e configurações), mais Mermaid, canvas e exportação SVG/PNG do bloco C.
+**Feito**: todo o bloco A (workspace e editor, exceto embed e colunas), B (databases), D (tarefas e metas, com subtarefas e recorrência), E (rotina e acompanhamento, com avisos do app aberto), F (captura e organização), G (assistentes, com streaming do texto no servidor de desenvolvimento), H (estudo: trilhas, cards, revisão FSRS, estatísticas, quiz e sessão guiada pelo Tutor) e I (login por senha, PWA, importação, backup, tokens e configurações), mais Mermaid, canvas e exportação SVG/PNG do bloco C.
 
 **Ficou de fora**:
 

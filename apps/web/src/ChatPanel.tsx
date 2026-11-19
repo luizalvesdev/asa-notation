@@ -71,6 +71,12 @@ function DraftCard({ draft, agent, onChange, onDataChanged, onToast }: { draft: 
       <div className="col" style={{ gap: 4, fontSize: 13 }}>
         {view.lines.map((line, i) => <span key={i} style={{ overflowWrap: "anywhere" }}>{line}</span>)}
       </div>
+      {view.preview && (
+        <details className="draft-prev">
+          <summary>Ver o conteúdo completo</summary>
+          <pre>{view.preview}</pre>
+        </details>
+      )}
       <div className="row" style={{ gap: 4 }}>
         <button className="btn btn-ink btn-sm" type="button" disabled={busy} onClick={() => void decide("approve")}>{view.approve}</button>
         <button className="btn btn-fan btn-sm" type="button" disabled={busy} onClick={() => void decide("discard")} style={{ color: "var(--text-2)" }}>Descartar</button>

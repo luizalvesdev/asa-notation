@@ -137,6 +137,45 @@ input.p-title::placeholder {
   padding: 0;
 }
 
+/* Bloco de código com seletor de linguagem */
+.ProseMirror .code-block {
+  position: relative;
+}
+
+.ProseMirror .code-bar {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity var(--rapido) var(--padrao);
+}
+
+.ProseMirror .code-block:hover .code-bar,
+.ProseMirror .code-block:focus-within .code-bar {
+  opacity: 1;
+}
+
+.ProseMirror .code-lang {
+  font: 500 11px/16px var(--sans);
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.ProseMirror .code-lang-ro {
+  font: 500 11px/16px var(--sans);
+  color: var(--text-3);
+}
+
+/* Em leitura o nome da linguagem fica sempre visível, discreto. */
+.ProseMirror .code-block .code-lang-ro {
+  opacity: 0.9;
+}
+
 /* Destaque de sintaxe (lowlight/highlight.js): cores do design, claro e escuro. */
 .ProseMirror pre .hljs-comment,
 .ProseMirror pre .hljs-quote { color: var(--text-3); font-style: italic; }

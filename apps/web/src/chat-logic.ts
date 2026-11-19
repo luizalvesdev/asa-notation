@@ -6,7 +6,12 @@ export interface DraftView {
   lines: string[];
   /** Verbo do botão de aprovar. */
   approve: string;
+  /** Conteúdo que vai ser escrito (Markdown), para conferir antes de aprovar. */
+  preview?: string;
 }
+
+const MAX_PREVIEW = 3000;
+const clipPreview = (text: string) => (text.length > MAX_PREVIEW ? `${text.slice(0, MAX_PREVIEW)}\n…` : text);
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -30,10 +35,13 @@ export function describeDraft(draft: Pick<Draft, "kind" | "payload">): DraftView
     const tool = String(p.tool ?? "");
     const danger = p.danger === true;
     const verb = tool.startsWith("delete_") ? "Apagar" : tool === "rewrite_page" ? "Reescrever" : tool.startsWith("create_") ? "Criar" : tool.startsWith("append_") ? "Acrescentar" : "Aplicar";
-    return { title: danger ? "Precisa da sua aprovação" : "Rascunho", lines: [String(p.summary ?? "")], approve: verb };
+    const input = (p.input ?? {}) as Record<string, unknown>;
+    const md = typeof input.markdown === "string" ? input.markdown : "";
+    return { title: danger ? "Precisa da sua aprovação" : "Rascunho", lines: [String(p.summary ?? "")], approve: verb, ...(md.trim() ? { preview: clipPreview(md) } : {}) };
   }
   const body = typeof p.mermaid === "string" ? "Diagrama Mermaid" : String(p.markdown ?? "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 4).join(" · ");
-  return { title: `Rascunho · página “${String(p.title ?? "")}”`, lines: body ? [body.length > 160 ? `${body.slice(0, 160)}…` : body] : [], approve: "Criar página" };
+  const full = typeof p.mermaid === "string" ? `\`\`\`mermaid\n${p.mermaid}\n\`\`\`` : String(p.markdown ?? "");
+  return { title: `Rascunho · página “${String(p.title ?? "")}”`, lines: body ? [body.length > 160 ? `${body.slice(0, 160)}…` : body] : [], approve: "Criar página", ...(full.trim() ? { preview: clipPreview(full) } : {}) };
 }
 
 /** Texto do que aconteceu depois de aprovar. */

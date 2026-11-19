@@ -4,6 +4,8 @@ import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import type { Extensions } from "@tiptap/react";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { CodeBlockView } from "./CodeBlockView";
 import StarterKit from "@tiptap/starter-kit";
 import { lowlight } from "./code-highlight";
 import { Callout, Column, Columns, Embed, Mermaid, Ui } from "./editor-nodes";
@@ -13,7 +15,7 @@ export function contentExtensions(): Extensions {
   return [
     // Link interno só navega com Ctrl/Cmd+clique (ver Editor); nunca abre sozinho ao editar.
     StarterKit.configure({ link: { openOnClick: false }, codeBlock: false }),
-    CodeBlockLowlight.configure({ lowlight, defaultLanguage: null }),
+    CodeBlockLowlight.extend({ addNodeView: () => ReactNodeViewRenderer(CodeBlockView) }).configure({ lowlight, defaultLanguage: null }),
     TaskList,
     TaskItem.configure({ nested: true }),
     Details.configure({ persist: true }),
