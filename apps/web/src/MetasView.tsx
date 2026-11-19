@@ -276,7 +276,8 @@ export function MetasView({ onToast }: MetasViewProps) {
 
   return (
     <div className={`metas${explicit ? " has-sel" : ""}`} style={{ display: "flex", minHeight: "100%" }}>
-      <div className="metas-list" style={{ flex: "1 1 420px", borderRight: "1px solid var(--border)" }}>
+      {/* Sem meta para mostrar, a lista ocupa a tela toda (nada de painel vazio ao lado). */}
+      <div className="metas-list" style={{ flex: "1 1 420px", ...(ready && effective ? { borderRight: "1px solid var(--border)" } : {}) }}>
         <div style={{ padding: "32px 28px 120px", display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
             <Title>Metas</Title>
@@ -347,8 +348,9 @@ export function MetasView({ onToast }: MetasViewProps) {
         </div>
       </div>
 
+      {ready && effective && (
       <div className="metas-detail" style={{ flex: "1 1 520px" }}>
-        {ready && effective && (
+        {(
           <GoalDetail
             key={effective.id}
             goal={effective}
@@ -361,6 +363,7 @@ export function MetasView({ onToast }: MetasViewProps) {
           />
         )}
       </div>
+      )}
     </div>
   );
 }

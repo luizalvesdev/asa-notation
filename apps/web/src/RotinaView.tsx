@@ -180,7 +180,7 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
   const s = settings ?? DEFAULT_SETTINGS;
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 32, padding: "36px 40px 120px", maxWidth: 1200 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 32, padding: "36px 40px 120px" }}>
       <div style={{ flex: "999 1 520px", minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
         <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
           <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Rotina</h1>
