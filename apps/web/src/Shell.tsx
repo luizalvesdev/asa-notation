@@ -30,6 +30,7 @@ import { AWAY_MS, hasCardsToday, isStartHash, loadReviewOnOpen } from "./review-
 import { localDate, localDayStartIso, localTimeZone } from "./tasks-dates";
 import { CheckinReport, todaySummary } from "./CheckinReport";
 import type { Stats } from "./study-types";
+import { Presence } from "./Presence";
 
 const SIDE_KEY = "asa:side-width";
 const CHAT_KEY = "asa:chat-width";
@@ -505,7 +506,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           <Sidebar {...sidebarProps} collapsed={false} inDrawer onToggleCollapsed={() => undefined} onNavigate={() => setDrawer(false)} />
         </div>
       </div>
-      {checkin && (
+      <Presence show={checkin}>
         <div className="checkin-scrim" role="dialog" aria-modal="true" aria-label="Revisão do dia">
           <div className="checkin-box">
             <Suspense fallback={<ScreenFallback />}>
@@ -513,15 +514,17 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             </Suspense>
           </div>
         </div>
-      )}
-      {report && (
-        <div className="checkin-scrim" role="dialog" aria-modal="true" aria-label="Resumo do estudo de hoje">
-          <div className="checkin-box">
-            <CheckinReport stats={report} onClose={() => setReport(null)} />
+      </Presence>
+      <Presence show={report !== null}>
+        {report && (
+          <div className="checkin-scrim" role="dialog" aria-modal="true" aria-label="Resumo do estudo de hoje">
+            <div className="checkin-box">
+              <CheckinReport stats={report} onClose={() => setReport(null)} />
+            </div>
           </div>
-        </div>
-      )}
-      {searchOpen && (
+        )}
+      </Presence>
+      <Presence show={searchOpen}>
         <SearchPalette
           nodes={pages.nodes}
           onClose={() => setSearchOpen(false)}
@@ -538,9 +541,11 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             location.hash = routeHash("lixeira");
           }}
         />
-      )}
-      {captureOpen && <CapturePanel dark={dark} offline={!online} queued={pending.length} onClose={() => setCaptureOpen(false)} onSave={saveCapture} />}
-      {ctxMenu && <ContextMenu menu={ctxMenu} dark={dark} onAction={runMenuAction} onClose={() => setCtxMenu(null)} />}
+      </Presence>
+      <Presence show={captureOpen}>
+        <CapturePanel dark={dark} offline={!online} queued={pending.length} onClose={() => setCaptureOpen(false)} onSave={saveCapture} />
+      </Presence>
+      <Presence show={ctxMenu !== null}>{ctxMenu && <ContextMenu menu={ctxMenu} dark={dark} onAction={runMenuAction} onClose={() => setCtxMenu(null)} />}</Presence>
       <div className="toasts">
         <div className={`toast${toast ? " on" : ""}`} role="status">
           {toast?.text}

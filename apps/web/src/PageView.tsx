@@ -14,6 +14,7 @@ import { IconPicker } from "./IconPicker";
 import { SharePopover } from "./SharePopover";
 import { Icon } from "./icons";
 import type { Page, TreeNode } from "./pages-types";
+import { Presence } from "./Presence";
 
 interface PageViewProps {
   pageId: string;
@@ -191,7 +192,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
             Compartilhar
           </button>
-          {panel === "share" && <SharePopover pageId={initial.id} onClose={() => setPanel(null)} />}
+          <Presence show={panel === "share"}><SharePopover pageId={initial.id} onClose={() => setPanel(null)} /></Presence>
         </span>
         <button
           className="btn btn-fan btn-sm"
@@ -262,7 +263,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
       <Editor initial={initial.body} focusSignal={focusBody} pages={nodes} selfId={initial.id} onChange={(doc) => saver.current?.queue({ body: doc })} />
       <Subpages pageId={initial.id} nodes={nodes} />
       <Backlinks pageId={initial.id} />
-      {panel === "history" && <HistoryPanel pageId={initial.id} currentBody={historyBody} onClose={() => setPanel(null)} onRestored={() => { setPanel(null); saver.current?.discard(); onReload(); }} />}
+      <Presence show={panel === "history"}><HistoryPanel pageId={initial.id} currentBody={historyBody} onClose={() => setPanel(null)} onRestored={() => { setPanel(null); saver.current?.discard(); onReload(); }} /></Presence>
     </div>
   );
 }

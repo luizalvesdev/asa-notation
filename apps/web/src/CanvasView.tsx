@@ -9,6 +9,7 @@ import { Icon } from "./icons";
 import type { Page } from "./pages-types";
 import { ShapeEl, ShapesSvg } from "./ShapesSvg";
 import { SharePopover } from "./SharePopover";
+import { Presence } from "./Presence";
 
 interface CanvasViewProps {
   page: Page;
@@ -245,7 +246,7 @@ export function CanvasView({ page, onSaved, onDelete }: CanvasViewProps) {
           <CoverPicker cover={cover} onChange={(next) => { setCover(next); saver.current?.queue({ cover: next }); }} />
           <span style={{ position: "relative" }}>
             <button className="btn btn-fan btn-sm" type="button" aria-expanded={sharing} onClick={() => setSharing((v) => !v)}>Compartilhar</button>
-            {sharing && <SharePopover pageId={page.id} onClose={() => setSharing(false)} />}
+            <Presence show={sharing}><SharePopover pageId={page.id} onClose={() => setSharing(false)} /></Presence>
           </span>
           <button className="btn btn-fan btn-sm" type="button" onClick={() => onDelete(page)}><Icon name="trash" />Excluir</button>
         </div>

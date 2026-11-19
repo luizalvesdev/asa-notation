@@ -11,6 +11,7 @@ import type { Page, TreeNode } from "./pages-types";
 import { PageView } from "./PageView";
 import type { Toast } from "./toast";
 import { useDatabase } from "./use-database";
+import { Presence } from "./Presence";
 
 interface DatabaseViewProps {
   page: Page;
@@ -83,8 +84,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
           </button>
         ))}
         <button ref={addAnchor} className="btn btn-fan btn-sm" type="button" aria-label="Nova view" aria-haspopup="menu" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)} style={{ alignSelf: "center" }}><Icon name="plus" /></button>
-        {addOpen && (
-          <Popover anchor={addAnchor} onClose={() => setAddOpen(false)} width={200}>
+        <Presence show={addOpen}><Popover anchor={addAnchor} onClose={() => setAddOpen(false)} width={200}>
             <div role="menu" aria-label="Nova view">
               <div className="mgroup">Nova view</div>
               {(Object.keys(VIEW_LABEL) as ViewType[]).map((type) => (
@@ -96,8 +96,7 @@ export function DatabaseView({ page, nodes, onSaved, onDelete, onToast }: Databa
                 }}><Icon name={VIEW_ICON[type]} />{VIEW_LABEL[type]}</button>
               ))}
             </div>
-          </Popover>
-        )}
+          </Popover></Presence>
       </div>
 
       {view && (

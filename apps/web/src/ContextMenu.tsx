@@ -31,6 +31,8 @@ export function ContextMenu({ menu, dark, onAction, onClose }: ContextMenuProps)
     const down = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && onClose();
     const close = () => onClose();
     const key = (e: KeyboardEvent) => {
+      // Fechando (animação de saída): não responde mais ao teclado.
+      if (ref.current?.closest(".leaving")) return;
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowDown") {
         e.preventDefault();

@@ -4,6 +4,7 @@ import { pagesApi } from "./api";
 import { COLOR_BADGE, type Option, type Property, type PropValue, type Row } from "./db-types";
 import { displayTitle } from "./pages-tree";
 import { useDismiss } from "./use-dismiss";
+import { Presence } from "./Presence";
 
 export function OptionBadge({ option }: { option: Option }) {
   return <span className={COLOR_BADGE[option.color ?? "gray"] ?? "badge"} style={{ height: 20 }}>{option.name}</span>;
@@ -121,8 +122,7 @@ function SelectEditor({ prop, value, onChange, cell }: EditorProps) {
       <button className="plain" type="button" aria-label={prop.name} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)} style={{ ...(cell ? bare : { minHeight: 32, padding: "0 8px" }), display: "flex", alignItems: "center", cursor: "pointer", textAlign: "left" }}>
         {current ? <OptionBadge option={current} /> : <span style={{ color: "var(--text-3)" }}>Vazio</span>}
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)}>
           <div role="listbox" aria-label={prop.name}>
             {prop.options.map((o) => (
               <button key={o.id} className={`plain mrow${o.id === value ? " sel" : ""}`} type="button" role="option" aria-selected={o.id === value} onClick={() => { onChange(o.id); setOpen(false); }}>
@@ -132,8 +132,7 @@ function SelectEditor({ prop, value, onChange, cell }: EditorProps) {
             {prop.options.length === 0 && <div className="mrow dis">Sem opções. Edite a propriedade para criar.</div>}
             {current && <button className="plain mrow" type="button" onClick={() => { onChange(null); setOpen(false); }}>Limpar</button>}
           </div>
-        </Popover>
-      )}
+        </Popover></Presence>
     </div>
   );
 }
@@ -152,8 +151,7 @@ function MultiEditor({ prop, value, onChange, cell }: EditorProps) {
       <button className="plain" type="button" aria-label={prop.name} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)} style={{ ...(cell ? bare : { minHeight: 32, padding: "0 8px" }), display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", cursor: "pointer", textAlign: "left" }}>
         {chosen.length > 0 ? chosen.map((o) => <OptionBadge key={o.id} option={o} />) : <span style={{ color: "var(--text-3)" }}>Vazio</span>}
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)}>
           {prop.options.map((o) => (
             <button key={o.id} className="plain mrow" type="button" role="checkbox" aria-checked={ids.includes(o.id)} onClick={() => toggle(o.id)}>
               <span className={`cb${ids.includes(o.id) ? " on" : ""}`} style={{ width: 16, height: 16 }}><svg className="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" pathLength="1" /></svg></span>
@@ -161,8 +159,7 @@ function MultiEditor({ prop, value, onChange, cell }: EditorProps) {
             </button>
           ))}
           {prop.options.length === 0 && <div className="mrow dis">Sem opções. Edite a propriedade para criar.</div>}
-        </Popover>
-      )}
+        </Popover></Presence>
     </div>
   );
 }
@@ -182,8 +179,7 @@ function RelationEditor({ prop, value, onChange, cell }: EditorProps) {
       <button className="plain" type="button" aria-label={prop.name} aria-expanded={open} onClick={() => setOpen((v) => !v)} style={{ ...(cell ? bare : { minHeight: 32, padding: "0 8px" }), display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", cursor: "pointer", textAlign: "left" }}>
         {ids.length > 0 && rows ? ids.map((id) => <span key={id} className="mention">{titleOf(id)}</span>) : <span style={{ color: "var(--text-3)" }}>Vazio</span>}
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} width={260}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={260}>
           {rows === null && <div className="mrow dis">Carregando…</div>}
           {rows?.length === 0 && <div className="mrow dis">Sem linhas na database ligada.</div>}
           <div style={{ maxHeight: 240, overflow: "auto" }}>
@@ -194,8 +190,7 @@ function RelationEditor({ prop, value, onChange, cell }: EditorProps) {
               </button>
             ))}
           </div>
-        </Popover>
-      )}
+        </Popover></Presence>
     </div>
   );
 }

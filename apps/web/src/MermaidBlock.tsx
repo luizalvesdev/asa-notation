@@ -4,6 +4,7 @@ import { downloadFile } from "./download";
 import { renderDiagram } from "./mermaid-render";
 import { INITIAL_VIEW, isInitial, panBy, wheelFactor, zoomAt, type View } from "./pan-zoom";
 import { standaloneSvg, svgToPng } from "./svg-export";
+import { Presence } from "./Presence";
 
 /** Bloco de diagrama: o código fica num campo ao lado e o desenho se atualiza enquanto se digita. */
 export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeViewProps) {
@@ -100,16 +101,14 @@ export function MermaidBlock({ node, updateAttributes, editor, selected }: NodeV
           </span>
         )}
       </div>
-      {editable && open && (
-        <textarea
+      <Presence show={editable && open}><textarea
           className="inp mono mermaid-code"
           value={code}
           rows={Math.min(14, Math.max(4, code.split("\n").length + 1))}
           spellCheck={false}
           aria-label="Código do diagrama"
           onChange={(e) => updateAttributes({ code: e.target.value })}
-        />
-      )}
+        /></Presence>
       {error ? (
         <div className="mermaid-error" role="alert">
           Não foi possível desenhar: {error}

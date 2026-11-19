@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Popover } from "./db-cells";
+import { Presence } from "./Presence";
 
 export const COVER_CSS: Record<string, string> = {
   sunrise: "linear-gradient(120deg, #f6d365 0%, #fda085 100%)",
@@ -42,8 +43,7 @@ export function CoverPicker({ cover, onChange }: CoverPickerProps) {
       <button ref={anchor} className="btn btn-fan btn-sm" type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         {cover ? "Trocar capa" : "Capa"}
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} width={280}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={280}>
           <div role="dialog" aria-label="Escolher capa" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
               {Object.entries(COVER_CSS).map(([name, css]) => (
@@ -56,8 +56,7 @@ export function CoverPicker({ cover, onChange }: CoverPickerProps) {
             </form>
             {cover && <button className="btn btn-fan btn-sm" type="button" style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => pick(null)}>Remover capa</button>}
           </div>
-        </Popover>
-      )}
+        </Popover></Presence>
     </>
   );
 }

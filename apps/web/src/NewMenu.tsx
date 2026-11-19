@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Popover } from "./db-cells";
 import { Icon } from "./icons";
 import { TEMPLATES } from "./templates";
+import { Presence } from "./Presence";
 
 interface NewMenuProps {
   onCreate: (extra: { title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "canvas" }) => void;
@@ -20,8 +21,7 @@ export function NewMenu({ onCreate }: NewMenuProps) {
       <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Novo a partir de modelo" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)} style={{ width: 22, height: 22 }}>
         <Icon name="more" />
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} width={270}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={270}>
           <div role="menu" aria-label="Novo">
             <div className="mgroup">Em branco</div>
             <button className="plain mrow" type="button" role="menuitem" onClick={() => pick({})}>
@@ -53,8 +53,7 @@ export function NewMenu({ onCreate }: NewMenuProps) {
               </button>
             ))}
           </div>
-        </Popover>
-      )}
+        </Popover></Presence>
     </span>
   );
 }

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Popover } from "./db-cells";
+import { Presence } from "./Presence";
 
 const EMOJIS = ["📄", "📝", "📚", "📖", "📓", "🗒️", "🗂️", "📌", "⭐", "💡", "🎯", "🚀", "🧠", "🔬", "🧪", "💻", "⚙️", "🛠️", "🔒", "🔑", "📊", "📈", "🗓️", "⏰", "✅", "❤️", "🔥", "🌱", "🌍", "🏠", "🎵", "🎬", "🍎", "☕", "✈️", "🏃", "💰", "🧾", "📦", "🔗"];
 
@@ -29,8 +30,7 @@ export function IconPicker({ icon, onChange }: IconPickerProps) {
       <button ref={anchor} className="btn btn-fan btn-sm" type="button" aria-haspopup="dialog" aria-expanded={open} aria-label={icon ? "Trocar ícone da página" : "Adicionar ícone à página"} onClick={() => setOpen((v) => !v)} style={{ fontSize: icon ? 18 : 12 }}>
         {icon ?? "Ícone"}
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} width={280}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={280}>
           <div role="dialog" aria-label="Escolher ícone" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 2 }}>
               {EMOJIS.map((e) => (
@@ -43,8 +43,7 @@ export function IconPicker({ icon, onChange }: IconPickerProps) {
             </form>
             {icon && <button className="btn btn-fan btn-sm" type="button" style={{ alignSelf: "flex-start", color: "var(--danger)" }} onClick={() => pick(null)}>Remover ícone</button>}
           </div>
-        </Popover>
-      )}
+        </Popover></Presence>
     </>
   );
 }

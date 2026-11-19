@@ -9,6 +9,7 @@ import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
 import { useDismiss } from "./use-dismiss";
 import { useInbox } from "./use-inbox";
+import { Presence } from "./Presence";
 
 interface InboxViewProps {
   nodes: TreeNode[];
@@ -249,17 +250,15 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
             <button className="btn btn-sm" type="button" style={{ color: "inherit" }} aria-expanded={bulkMenu === "kind"} onClick={() => setBulkMenu(bulkMenu === "kind" ? null : "kind")}>
               Classificar…
             </button>
-            {bulkMenu === "kind" && (
-              <div style={{ position: "absolute", bottom: 38, right: 0, color: "var(--text)" }}>
+            <Presence show={bulkMenu === "kind"}><div style={{ position: "absolute", bottom: 38, right: 0, color: "var(--text)" }}>
                 <KindMenu current={null} onPick={(kind) => classify(chosen, kind)} onClose={() => setBulkMenu(null)} />
-              </div>
-            )}
+              </div></Presence>
           </span>
           <span style={{ position: "relative" }}>
             <button className="btn btn-sm" type="button" style={{ color: "inherit" }} aria-expanded={bulkMenu === "move"} onClick={() => setBulkMenu(bulkMenu === "move" ? null : "move")}>
               Mover para…
             </button>
-            {bulkMenu === "move" && <MoveMenu nodes={nodes} onPick={move} onClose={() => setBulkMenu(null)} />}
+            <Presence show={bulkMenu === "move"}><MoveMenu nodes={nodes} onPick={move} onClose={() => setBulkMenu(null)} /></Presence>
           </span>
           <button className="btn btn-sm" type="button" style={{ color: "inherit" }} onClick={() => archive(chosen)}>
             Arquivar
@@ -322,11 +321,9 @@ function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMe
               #{tag}
             </span>
           ))}
-          {menuOpen && (
-            <div style={{ position: "absolute", top: 28, left: 0 }}>
+          <Presence show={menuOpen}><div style={{ position: "absolute", top: 28, left: 0 }}>
               <KindMenu current={item.kind} onPick={onKind} onClose={onCloseMenu} />
-            </div>
-          )}
+            </div></Presence>
         </div>
       </div>
     </div>

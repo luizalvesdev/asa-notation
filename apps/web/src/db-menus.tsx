@@ -3,6 +3,7 @@ import { Popover } from "./db-cells";
 import { newId, newProperty, NO_VALUE_OPS, OPS_BY_TYPE, removeProperty } from "./db-logic";
 import { COLOR_BADGE, OP_LABEL, OPTION_COLORS, TYPE_LABEL, type Filter, type FilterOp, type Option, type Property, type PropertyType, type Schema, type Sort, type View } from "./db-types";
 import { Icon, type IconName } from "./icons";
+import { Presence } from "./Presence";
 
 interface Common {
   schema: Schema;
@@ -22,13 +23,11 @@ function MenuButton({ icon, label, count, children, width }: { icon: IconName; l
         {label}
         {(count ?? 0) > 0 && <span className="badge ac" style={{ height: 16, padding: "0 5px", fontSize: "calc(11px * var(--fs, 1))" }}>{count}</span>}
       </button>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} width={width ?? 340}>
+      <Presence show={open}><Popover anchor={anchor} onClose={() => setOpen(false)} width={width ?? 340}>
           <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }} role="dialog" aria-label={label}>
             {children(() => setOpen(false))}
           </div>
-        </Popover>
-      )}
+        </Popover></Presence>
     </span>
   );
 }
