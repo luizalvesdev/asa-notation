@@ -198,10 +198,20 @@ describe("trimHistory", () => {
 
 interface Reply { status: number; body: unknown }
 
+/** Tira as marcações de cache (testadas em ai-cache.test.ts) para os testes olharem só o conteúdo. */
+function withoutCache(body: Record<string, unknown>) {
+  const strip = (v: unknown): unknown => (Array.isArray(v) ? v.map(strip) : typeof v === "object" && v !== null ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== "cache_control").map(([k, x]) => [k, strip(x)])) : v);
+  const out = strip(body) as { system: unknown; messages: { content: unknown }[] };
+  if (Array.isArray(out.system)) out.system = (out.system as { text: string }[]).map((b) => b.text).join("");
+  const last = out.messages.at(-1);
+  if (last && Array.isArray(last.content) && last.content.length === 1 && (last.content[0] as { type: string }).type === "text") last.content = (last.content[0] as { text: string }).text;
+  return out as never;
+}
+
 function fakeProvider(replies: Reply[] = []) {
   const calls: { headers: Record<string, string>; body: { messages: ModelMessage[]; tools?: { name: string }[]; system: string; max_tokens: number } }[] = [];
   const fetchImpl = async (_url: string, init: { headers: Record<string, string>; body: string }) => {
-    calls.push({ headers: init.headers, body: JSON.parse(init.body) });
+    calls.push({ headers: init.headers, body: withoutCache(JSON.parse(init.body)) });
     const r = replies.shift() ?? { status: 200, body: { content: [{ type: "text", text: "ok" }], stop_reason: "end_turn" } };
     return { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => r.body };
   };

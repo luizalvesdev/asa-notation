@@ -21,7 +21,17 @@ export interface ToolResultBlock {
   content: string;
   is_error?: boolean;
 }
-export type Block = TextBlock | ToolUseBlock | ToolResultBlock;
+/** Raciocínio do modelo (modelos novos pensam por padrão). Volta igual nas chamadas seguintes do mesmo turno. */
+export interface ThinkingBlock {
+  type: "thinking";
+  thinking: string;
+  signature: string;
+}
+export interface RedactedThinkingBlock {
+  type: "redacted_thinking";
+  data: string;
+}
+export type Block = TextBlock | ToolUseBlock | ToolResultBlock | ThinkingBlock | RedactedThinkingBlock;
 
 export interface ModelMessage {
   role: "user" | "assistant";
@@ -39,6 +49,8 @@ export interface ModelRequest {
   messages: ModelMessage[];
   tools: ToolSpec[];
   maxTokens?: number;
+  /** Cache de prompt (padrão: ligado). Desligue em chamadas avulsas, que pagariam a escrita sem nunca ler. */
+  cache?: boolean;
   /** Se vier, o provedor responde em fluxo e avisa a cada pedaço de texto (a resposta completa ainda é devolvida no fim). */
   onText?: (delta: string) => void;
 }
@@ -46,6 +58,33 @@ export interface ModelRequest {
 export interface ModelResponse {
   content: Block[];
   stopReason: string;
+}
+
+const EPHEMERAL = { type: "ephemeral" } as const;
+
+/**
+ * Corpo comum da API de Mensagens, com cache de prompt: marca o fim das ferramentas, do sistema e da última mensagem.
+ * Assim, no laço de ferramentas e na conversa seguinte (até 5 minutos), o começo repetido sai pelo preço de leitura do cache.
+ * Prefixos abaixo do mínimo do modelo (4096 tokens no Haiku 4.5) simplesmente não entram no cache, sem erro nem custo a mais.
+ */
+export function messagesBody(req: ModelRequest): Record<string, unknown> {
+  const base = { max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS };
+  if (req.cache === false) return { ...base, system: req.system, messages: req.messages, ...(req.tools.length > 0 ? { tools: req.tools } : {}) };
+  const tools = req.tools.map((t, i) => (i === req.tools.length - 1 ? { ...t, cache_control: EPHEMERAL } : t));
+  const messages = req.messages.map((m, i) => {
+    if (i !== req.messages.length - 1) return m;
+    const blocks: Block[] = typeof m.content === "string" ? [{ type: "text", text: m.content }] : m.content;
+    const last = blocks.length - 1;
+    // Blocos de raciocínio não aceitam marcação de cache.
+    if (last < 0 || blocks[last]!.type === "thinking" || blocks[last]!.type === "redacted_thinking") return m;
+    return { role: m.role, content: blocks.map((b, j) => (j === last ? { ...b, cache_control: EPHEMERAL } : b)) };
+  });
+  return {
+    ...base,
+    system: [{ type: "text", text: req.system, cache_control: EPHEMERAL }],
+    messages,
+    ...(tools.length > 0 ? { tools } : {}),
+  };
 }
 
 /** Falha da chamada ao provedor, com o status que ele devolveu. */
@@ -78,7 +117,7 @@ export function createModel(apiKey: string, model: string, fetchImpl: FetchLike,
       const res = await fetchImpl(URL, {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model, max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS, system: req.system, messages: req.messages, ...(req.tools.length > 0 ? { tools: req.tools } : {}), ...(req.onText ? { stream: true } : {}) }),
+        body: JSON.stringify({ model, ...messagesBody(req), ...(req.onText ? { stream: true } : {}) }),
         signal: controller.signal,
       });
       if (req.onText && res.ok && res.body) {

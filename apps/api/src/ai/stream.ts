@@ -1,7 +1,13 @@
-import type { Block, ModelResponse } from "./anthropic.js";
+import type { Block, ModelResponse, RedactedThinkingBlock, ThinkingBlock } from "./anthropic.js";
 
 /** Evento do fluxo de mensagens do Claude (o mesmo formato na API da Anthropic e no Bedrock). */
-export type StreamEvent = { type?: string; index?: number; content_block?: { type?: string; id?: string; name?: string; text?: string }; delta?: { type?: string; text?: string; partial_json?: string; stop_reason?: string }; error?: { type?: string; message?: string } };
+export type StreamEvent = {
+  type?: string;
+  index?: number;
+  content_block?: { type?: string; id?: string; name?: string; text?: string; thinking?: string; signature?: string; data?: string };
+  delta?: { type?: string; text?: string; partial_json?: string; stop_reason?: string; thinking?: string; signature?: string };
+  error?: { type?: string; message?: string };
+};
 
 /** Falha que veio dentro do fluxo (o HTTP já tinha respondido 200). */
 export class StreamError extends Error {
@@ -47,7 +53,7 @@ export async function* parseSse(body: AsyncIterable<Uint8Array | string>): Async
  * Chamadas de ferramenta chegam em pedaços de JSON e só valem no fim do bloco.
  */
 export async function assemble(events: AsyncIterable<StreamEvent>, onText?: (delta: string) => void): Promise<ModelResponse> {
-  const blocks: ({ type: "text"; text: string } | { type: "tool_use"; id: string; name: string; json: string })[] = [];
+  const blocks: ({ type: "text"; text: string } | { type: "tool_use"; id: string; name: string; json: string } | ThinkingBlock | RedactedThinkingBlock)[] = [];
   let stopReason = "end_turn";
 
   for await (const event of events) {
@@ -56,6 +62,8 @@ export async function assemble(events: AsyncIterable<StreamEvent>, onText?: (del
     if (event.type === "content_block_start" && event.content_block) {
       const b = event.content_block;
       if (b.type === "tool_use") blocks[index] = { type: "tool_use", id: b.id ?? "", name: b.name ?? "", json: "" };
+      else if (b.type === "thinking") blocks[index] = { type: "thinking", thinking: b.thinking ?? "", signature: b.signature ?? "" };
+      else if (b.type === "redacted_thinking") blocks[index] = { type: "redacted_thinking", data: b.data ?? "" };
       else {
         blocks[index] = { type: "text", text: b.text ?? "" };
         if (b.text) onText?.(b.text);
@@ -67,6 +75,10 @@ export async function assemble(events: AsyncIterable<StreamEvent>, onText?: (del
         onText?.(event.delta.text);
       } else if (event.delta.type === "input_json_delta" && block?.type === "tool_use") {
         block.json += event.delta.partial_json ?? "";
+      } else if (event.delta.type === "thinking_delta" && block?.type === "thinking") {
+        block.thinking += event.delta.thinking ?? "";
+      } else if (event.delta.type === "signature_delta" && block?.type === "thinking") {
+        block.signature += event.delta.signature ?? "";
       }
     } else if (event.type === "message_delta" && event.delta?.stop_reason) {
       stopReason = event.delta.stop_reason;
@@ -78,6 +90,9 @@ export async function assemble(events: AsyncIterable<StreamEvent>, onText?: (del
     if (!block) continue;
     if (block.type === "text") {
       if (block.text !== "") content.push({ type: "text", text: block.text });
+    } else if (block.type === "thinking" || block.type === "redacted_thinking") {
+      // Mesmo vazio (texto omitido), o bloco volta inteiro com a assinatura.
+      content.push(block);
     } else {
       let input: Record<string, unknown> = {};
       try {

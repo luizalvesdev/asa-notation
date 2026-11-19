@@ -1,5 +1,5 @@
 import { StreamError, assemble, type StreamEvent, streamErrorStatus } from "./stream.js";
-import { DEFAULT_MAX_TOKENS, ProviderError, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
+import { ProviderError, messagesBody, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
 
 export type AiConfig = { provider: "anthropic" } | { provider: "bedrock"; modelId: string; region: string };
 
@@ -8,13 +8,7 @@ export type BedrockInvoke = (input: { modelId: string; body: string; signal: Abo
 
 /** Mensagens do Claude no Bedrock usam o mesmo formato da API da Anthropic, com `anthropic_version` no corpo. */
 export function bedrockBody(req: ModelRequest): string {
-  return JSON.stringify({
-    anthropic_version: "bedrock-2023-05-31",
-    max_tokens: req.maxTokens ?? DEFAULT_MAX_TOKENS,
-    system: req.system,
-    messages: req.messages,
-    ...(req.tools.length > 0 ? { tools: req.tools } : {}),
-  });
+  return JSON.stringify({ anthropic_version: "bedrock-2023-05-31", ...messagesBody(req) });
 }
 
 /** Chamada em fluxo ao Bedrock: devolve os eventos já decodificados. Erros saem como ProviderError. */

@@ -9,7 +9,15 @@ const MODEL = "us.anthropic.claude-test-v1:0";
 
 describe("corpo da chamada ao Bedrock", () => {
   it("usa o formato de mensagens da Anthropic com anthropic_version", () => {
-    expect(JSON.parse(bedrockBody(req))).toEqual({ anthropic_version: "bedrock-2023-05-31", max_tokens: 100, system: "sistema", messages: [{ role: "user", content: "oi" }], tools: [{ name: "t", description: "d", input_schema: { type: "object" } }] });
+    const c = { type: "ephemeral" };
+    expect(JSON.parse(bedrockBody(req))).toEqual({
+      anthropic_version: "bedrock-2023-05-31",
+      max_tokens: 100,
+      system: [{ type: "text", text: "sistema", cache_control: c }],
+      messages: [{ role: "user", content: [{ type: "text", text: "oi", cache_control: c }] }],
+      tools: [{ name: "t", description: "d", input_schema: { type: "object" }, cache_control: c }],
+    });
+    expect(JSON.parse(bedrockBody({ ...req, cache: false }))).toEqual({ anthropic_version: "bedrock-2023-05-31", max_tokens: 100, system: "sistema", messages: [{ role: "user", content: "oi" }], tools: [{ name: "t", description: "d", input_schema: { type: "object" } }] });
   });
   it("sem ferramentas, não manda o campo tools; max_tokens tem padrão", () => {
     const body = JSON.parse(bedrockBody({ system: "s", messages: [], tools: [] }));
