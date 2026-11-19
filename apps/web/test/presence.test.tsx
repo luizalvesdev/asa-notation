@@ -20,7 +20,10 @@ describe("Presence", () => {
     view(true, "menu aberto");
     expect(box.querySelector(".presence:not(.leaving) .menu")?.textContent).toBe("menu aberto");
 
+    const node = box.querySelector(".menu");
     view(false, "mudou depois de fechar");
+    // O mesmo elemento continua montado (nada remonta, o que reiniciaria a animação de entrada).
+    expect(box.querySelector(".menu")).toBe(node);
     // Continua na tela, congelado como estava, marcado para a animação de saída.
     expect(box.querySelector(".presence.leaving .menu")?.textContent).toBe("menu aberto");
     act(() => vi.advanceTimersByTime(EXIT_MS + 1));

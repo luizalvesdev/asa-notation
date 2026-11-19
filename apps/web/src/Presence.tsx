@@ -7,30 +7,30 @@ export const EXIT_MS = 140;
  * Mantém o conteúdo na tela durante a animação de saída, em vez de sumir de uma vez.
  * Enquanto sai, o conteúdo fica congelado como estava (as props do último render aberto)
  * e recebe `.presence.leaving` (o CSS anima e bloqueia cliques).
+ * O mesmo elemento continua montado do aberto até o fim da saída: nada remonta (o que reiniciaria animações).
  */
 export function Presence({ show, children }: { show: boolean; children: ReactNode }) {
   const last = useRef<ReactNode>(null);
   const [leaving, setLeaving] = useState(false);
-  const wasShown = useRef(show);
+  const [prev, setPrev] = useState(show);
 
   if (show) last.current = children;
+  // Estado derivado no próprio render: no mesmo quadro em que `show` vira false, já está saindo.
+  if (prev !== show) {
+    setPrev(show);
+    setLeaving(!show);
+  }
 
   useEffect(() => {
-    if (show) {
-      wasShown.current = true;
-      setLeaving(false);
-      return;
-    }
-    if (!wasShown.current) return;
-    wasShown.current = false;
-    setLeaving(true);
+    if (!leaving) return;
     const t = window.setTimeout(() => {
       setLeaving(false);
       last.current = null;
     }, EXIT_MS);
     return () => window.clearTimeout(t);
-  }, [show]);
+  }, [leaving]);
 
-  if (!show && !leaving) return null;
+  const out = !show && (leaving || prev !== show);
+  if (!show && !out) return null;
   return <div className={`presence${show ? "" : " leaving"}`} style={{ display: "contents" }}>{show ? children : last.current}</div>;
 }
