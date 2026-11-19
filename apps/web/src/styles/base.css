@@ -28,14 +28,14 @@
 .btn-sm{height:28px;padding:0 10px;font-size:calc(12px * var(--fs, 1))}
 .btn-ico{width:32px;padding:0}
 .btn-ico.btn-sm{width:28px}
-.btn-pri,.ds a.btn-pri{background:var(--accent);color:var(--on-accent)}
+.btn-pri,.ds .btn-pri,.ds a.btn-pri{background:var(--accent);color:var(--on-accent)}
 .btn-pri:hover{background:var(--accent-hover)}
 .btn-sec{background:var(--surface);border-color:var(--border-2)}
 .btn-sec:hover{background:var(--hover)}
 .btn-fan:hover{background:var(--hover)}
 .btn-fan.on{background:var(--hover)}
 .btn-ink{background:var(--text);color:var(--bg)}
-.btn-perigo{background:var(--danger-soft);color:var(--danger)}
+.btn-perigo,.ds .btn-perigo{background:var(--danger-soft);color:var(--danger)}
 .btn-perigo:hover{background:var(--danger);color:var(--bg)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .btn-load::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:40%;background:currentColor;opacity:.7;animation:prog 1.2s linear infinite}
