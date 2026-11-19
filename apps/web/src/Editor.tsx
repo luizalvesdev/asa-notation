@@ -64,6 +64,15 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
     if (focusSignal > 0) editor?.commands.focus("start");
   }, [focusSignal, editor]);
 
+  // Mouse saiu da página: tira o destaque do bloco.
+  useEffect(() => {
+    if (!editor) return;
+    const area = editor.view.dom.closest(".page") ?? editor.view.dom;
+    const clear = () => editor.view.dom.querySelectorAll(".blk-hover").forEach((el) => el.classList.remove("blk-hover"));
+    area.addEventListener("mouseleave", clear);
+    return () => area.removeEventListener("mouseleave", clear);
+  }, [editor]);
+
   /** Botão +: abre um parágrafo novo logo abaixo do bloco e já digita "/" para abrir o menu. */
   const addBelow = () => {
     if (!editor || !target) return;
@@ -78,7 +87,18 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId }: Editor
   return (
     <>
       {editor && (
-        <DragHandle editor={editor} nested onNodeChange={({ node, pos }) => setTarget(node ? { pos, size: node.nodeSize } : null)}>
+        <DragHandle
+          editor={editor}
+          nested
+          onNodeChange={({ node, pos }) => {
+            setTarget(node ? { pos, size: node.nodeSize } : null);
+            // Destaca o bloco sob o mouse: mostra a área inteira que a alça move.
+            const view = editor.view;
+            view.dom.querySelectorAll(".blk-hover").forEach((el) => el.classList.remove("blk-hover"));
+            const dom = node && pos >= 0 ? view.nodeDOM(pos) : null;
+            if (dom instanceof HTMLElement) dom.classList.add("blk-hover");
+          }}
+        >
           <div className="dh">
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Adicionar bloco abaixo" onClick={addBelow}>
               <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">

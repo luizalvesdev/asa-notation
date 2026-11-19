@@ -14,7 +14,8 @@ import { Callout, Column, Columns, Embed, Mermaid, Ui } from "./editor-nodes";
 export function contentExtensions(): Extensions {
   return [
     // Link interno só navega com Ctrl/Cmd+clique (ver Editor); nunca abre sozinho ao editar.
-    StarterKit.configure({ link: { openOnClick: false }, codeBlock: false }),
+    // Linha de destino ao arrastar um bloco: na cor de destaque e mais grossa, para ver bem onde ele vai cair.
+    StarterKit.configure({ link: { openOnClick: false }, codeBlock: false, dropcursor: { color: "var(--accent)", width: 3, class: "drop-line" } }),
     CodeBlockLowlight.extend({ addNodeView: () => ReactNodeViewRenderer(CodeBlockView) }).configure({ lowlight, defaultLanguage: null }),
     TaskList,
     TaskItem.configure({ nested: true }),

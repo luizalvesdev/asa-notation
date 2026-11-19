@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ApiError, isConflict, pagesApi } from "./api";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
 import { Backlinks } from "./Backlinks";
@@ -113,6 +113,18 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
   const [panel, setPanel] = useState<"history" | "share" | null>(null);
   const [schema, setSchema] = useState<Schema | null>(null);
   const [rowProps, setRowProps] = useState<Record<string, PropValue>>((initial.props ?? {}) as Record<string, PropValue>);
+  // Altura do título dentro da página: a lista "páginas dentro" começa ali (muda com a capa e o tamanho da tela).
+  const titleRef = useRef<HTMLInputElement>(null);
+  const [titleTop, setTitleTop] = useState(0);
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const measure = () => setTitleTop(el.offsetTop);
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (el.offsetParent) ro.observe(el.offsetParent);
+    return () => ro.disconnect();
+  }, [cover]);
 
   // Linha de database: busca o esquema da database para mostrar as propriedades.
   useEffect(() => {
@@ -176,7 +188,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
   return (
     <div className="page">
       <Cover cover={cover} />
-      <Subpages pageId={initial.id} nodes={nodes} side />
+      <Subpages pageId={initial.id} nodes={nodes} side top={titleTop} />
       <div className="page-head">
         <span className={`save-state${saveState === "erro" ? " erro" : ""}`} role="status">
           {SAVE_LABEL[saveState]}
@@ -231,6 +243,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload }: PageEditorP
         </div>)}</Reveal>
 
       <input
+        ref={titleRef}
         className="p-title"
         value={title}
         placeholder="Sem título"

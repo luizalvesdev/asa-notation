@@ -74,6 +74,30 @@ input.p-title::placeholder {
   overflow-wrap: anywhere;
 }
 
+/* A faixa à esquerda (onde ficam a alça e o +) também conta como "sobre o bloco": a alça aparece sem precisar mirar no texto. */
+.page .ProseMirror {
+  padding-left: 56px;
+  margin-left: -56px;
+}
+
+/* Bloco sob o mouse: leve fundo azul na área inteira que a alça move. */
+.ProseMirror .blk-hover {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 6px;
+  transition: background-color var(--instante) var(--padrao), box-shadow var(--instante) var(--padrao);
+}
+
+/* Arrastando: o bloco de origem fica apagado e a linha de destino bem visível. */
+.ProseMirror.ProseMirror-focused .ProseMirror-selectednode,
+.ProseMirror .ProseMirror-selectednode {
+  transition: opacity var(--rapido) var(--padrao);
+}
+.drop-line {
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 .ProseMirror > * + * {
   margin-top: 6px;
 }
@@ -590,21 +614,29 @@ input.p-title::placeholder {
 /* Páginas dentro desta: coluna à direita do texto quando há espaço; senão, embaixo. */
 .subpage { gap: 8px; border-radius: 6px; }
 .page-foot .subpage + .subpage { margin-top: -6px; }
-.subpages-side { display: none; }
+.subpages-rail { display: none; }
 @media (min-width: 1500px) {
+  /* Trilho da altura da página inteira, à direita do texto; a lista dentro dele gruda no topo ao rolar. */
+  .subpages-rail {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% - 24px);
+    width: 240px;
+    pointer-events: none;
+  }
   .subpages-side {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    position: absolute;
-    /* Sem top: fica na altura em que estaria no fluxo, logo abaixo da capa. */
-    left: calc(100% - 24px);
-    width: 240px;
-    margin-top: 72px;
+    position: sticky;
+    top: 16px;
     padding-left: 16px;
     border-left: 1px solid var(--border);
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 120px);
     overflow-y: auto;
+    pointer-events: auto;
   }
   .subpages-side .eyebrow { margin-bottom: 6px; }
   .page-foot.subpages-foot { display: none; }
