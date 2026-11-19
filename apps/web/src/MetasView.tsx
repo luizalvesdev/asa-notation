@@ -8,6 +8,7 @@ import { TaskRow } from "./TaskRow";
 import type { TaskItem } from "./tasks-types";
 import type { Toast } from "./toast";
 import { useGoalDetail, useGoals } from "./use-goals";
+import { useContextItems } from "./use-context-items";
 
 interface MetasViewProps {
   onToast: (toast: Toast) => void;
@@ -19,11 +20,26 @@ function Title({ children }: { children: string }) {
   return <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>{children}</h1>;
 }
 
-function GoalCard({ goal, today, selected, onPick }: { goal: Goal; today: string; selected: boolean; onPick: () => void }) {
+interface GoalCardProps {
+  goal: Goal;
+  today: string;
+  selected: boolean;
+  onPick: () => void;
+  onToggleDone: () => void;
+  onDelete: () => void;
+}
+
+function GoalCard({ goal, today, selected, onPick, onToggleDone, onDelete }: GoalCardProps) {
   const status = goalStatus(goal, today);
   const pct = goalPct(goal);
+  const menuRef = useContextItems<HTMLButtonElement>(() => [
+    { label: "Abrir", run: onPick },
+    { label: goal.done ? "Reabrir meta" : "Concluir meta", run: onToggleDone },
+    { label: "Apagar meta", danger: true, run: onDelete },
+  ]);
   return (
     <button
+      ref={menuRef}
       className="plain card goal-card"
       type="button"
       aria-pressed={selected}
@@ -316,7 +332,15 @@ export function MetasView({ onToast }: MetasViewProps) {
           {ready && (
             <div className="col" style={{ gap: 8 }}>
               {shown.map((goal) => (
-                <GoalCard key={goal.id} goal={goal} today={today} selected={effective?.id === goal.id} onPick={() => setPicked(goal.id)} />
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  today={today}
+                  selected={effective?.id === goal.id}
+                  onPick={() => setPicked(goal.id)}
+                  onToggleDone={() => void goals.update(goal.id, { done: !goal.done }).then((ok) => !ok && onToast({ text: "Não foi possível atualizar a meta." }))}
+                  onDelete={() => deleteGoal(goal)}
+                />
               ))}
             </div>
           )}

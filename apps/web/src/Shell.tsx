@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { ApiError, capturesApi, pagesApi } from "./api";
 import { BottomNav } from "./BottomNav";
 import { ContextMenu, type OpenMenu } from "./ContextMenu";
-import { keepsNativeMenu, type ContextTarget, type MenuAction } from "./context-menu";
+import { keepsNativeMenu, localItemsAt, type ContextTarget, type MenuAction } from "./context-menu";
 import { OPEN_CHAT_EVENT, type Agent, type OpenChatRequest } from "./chat-types";
 import { CapturePanel } from "./CapturePanel";
 import { Icon, ThemeIcon } from "./icons";
@@ -272,15 +272,19 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       event.preventDefault();
       const pageEl = el.closest("[data-page-id]");
       const link = el.closest("a[href]");
+      const local = localItemsAt(el);
+      const hasSelection = (window.getSelection()?.toString() ?? "") !== "";
       let target: ContextTarget;
-      if (pageEl) {
+      if (local) {
+        target = { kind: "local", items: local, hasSelection };
+      } else if (pageEl) {
         const id = pageEl.getAttribute("data-page-id")!;
         target = { kind: "page", id, favorite: !!nodesRef.current.find((n) => n.id === id)?.favorite };
       } else if (link) {
         const href = link.getAttribute("href") ?? "";
         target = { kind: "link", href, internal: href.startsWith("#/") };
       } else {
-        target = { kind: "none", hasSelection: (window.getSelection()?.toString() ?? "") !== "" };
+        target = { kind: "none", hasSelection };
       }
       setCtxMenu({ x: event.clientX, y: event.clientY, target });
     };
@@ -291,6 +295,10 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const runMenuAction = useCallback(
     (action: MenuAction, target: ContextTarget) => {
       setCtxMenu(null);
+      if (action.startsWith("local:")) {
+        if (target.kind === "local") target.items[Number(action.slice(6))]?.run();
+        return;
+      }
       const copy = (text: string, done: string) =>
         void navigator.clipboard.writeText(text).then(() => setToast({ text: done })).catch(() => setToast({ text: "Não foi possível copiar." }));
       if (target.kind === "page") {
@@ -307,7 +315,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           if (target.internal) location.hash = target.href;
           else window.open(target.href, "_blank", "noopener,noreferrer");
         } else if (action === "copy-href") copy(target.internal ? `${location.origin}/${target.href}` : target.href, "Endereço copiado");
-      } else if (action === "copy-text") copy(window.getSelection()?.toString() ?? "", "Copiado");
+      }
+      // Ações gerais: valem em qualquer menu (vêm depois do divisor).
+      if (action === "copy-text") copy(window.getSelection()?.toString() ?? "", "Copiado");
       else if (action === "new-page") void createPage(null);
       else if (action === "capture") setCaptureOpen(true);
       else if (action === "search") setSearchOpen(true);

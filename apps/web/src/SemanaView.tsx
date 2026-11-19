@@ -7,6 +7,7 @@ import { addDays, dayOfMonth, formatWeekRange, formatWhen, localDate, weekDates,
 import { groupByDate } from "./tasks-logic";
 import type { TaskItem } from "./tasks-types";
 import { useTasks } from "./use-tasks";
+import { useContextItems } from "./use-context-items";
 
 interface SemanaViewProps {
   onToast: (toast: Toast) => void;
@@ -15,10 +16,29 @@ interface SemanaViewProps {
 /** Só tarefas simples (sem recorrência) mudam de dia por arrastar. */
 const movable = (item: TaskItem) => item.recurrence === null;
 
-function WeekCard({ item, onToggle, onDragStart, onDragEnd }: { item: TaskItem; onToggle: (item: TaskItem) => void; onDragStart: (item: TaskItem) => void; onDragEnd: () => void }) {
+interface WeekCardProps {
+  item: TaskItem;
+  today: string;
+  onToggle: (item: TaskItem) => void;
+  onMove: (item: TaskItem, date: string) => void;
+  onRemove: (item: TaskItem) => void;
+  onDragStart: (item: TaskItem) => void;
+  onDragEnd: () => void;
+}
+
+function WeekCard({ item, today, onToggle, onMove, onRemove, onDragStart, onDragEnd }: WeekCardProps) {
   const canMove = movable(item);
+  const tomorrow = addDays(today, 1);
+  const menuRef = useContextItems(() => [
+    { label: item.done ? "Reabrir" : "Concluir", run: () => onToggle(item) },
+    ...(canMove && item.date !== today ? [{ label: "Mover para hoje", run: () => onMove(item, today) }] : []),
+    ...(canMove && item.date !== tomorrow ? [{ label: "Mover para amanhã", run: () => onMove(item, tomorrow) }] : []),
+    ...(canMove && item.date ? [{ label: "Uma semana depois", run: () => onMove(item, addDays(item.date!, 7)) }] : []),
+    { label: "Apagar tarefa", danger: true, run: () => onRemove(item) },
+  ]);
   return (
     <div
+      ref={menuRef}
       className="wcard-wrap"
       draggable={canMove}
       onDragStart={(e) => {
@@ -113,8 +133,16 @@ export function SemanaView({ onToast }: SemanaViewProps) {
       drop(date);
     },
   });
+  const remove = (item: TaskItem) =>
+    void tasks.remove(item).then((ok) => {
+      if (!ok) return fail("Não foi possível apagar a tarefa.");
+      onToast({ text: "Tarefa apagada", action: { label: "Desfazer", run: () => void tasks.restore(item.id) } });
+    });
   const cardProps = {
+    today,
     onToggle: toggle,
+    onMove: moveTo,
+    onRemove: remove,
     onDragStart: (item: TaskItem) => {
       dragging.current = item;
     },

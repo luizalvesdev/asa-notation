@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AddTask } from "./AddTask";
 import { Icon } from "./icons";
+import { useContextItems } from "./use-context-items";
 import type { TaskItem } from "./tasks-types";
 
 interface TaskRowProps {
@@ -33,9 +34,16 @@ export function TaskRow({ item, when, whenLate, onToggle, onToggleSubtask, onRem
   const [open, setOpen] = useState(false);
   const subDone = item.subtasks.filter((s) => s.done).length;
   const hasSubs = item.subtasks.length > 0;
+  const menuRef = useContextItems(() => [
+    { label: item.done ? "Reabrir" : "Concluir", run: () => onToggle(item) },
+    ...(extra ? [{ label: extra.label, run: () => extra.run(item) }] : []),
+    ...(onAddSubtask ? [{ label: "Adicionar subtarefa", run: () => setOpen(true) }] : []),
+    ...(hasSubs ? [{ label: open ? "Esconder subtarefas" : "Mostrar subtarefas", run: () => setOpen((v) => !v) }] : []),
+    { label: "Apagar tarefa", danger: true, run: () => onRemove(item) },
+  ]);
 
   return (
-    <div className="col">
+    <div className="col" ref={menuRef}>
       <div className="task">
         <button className="plain row" type="button" role="checkbox" aria-checked={item.done} onClick={() => onToggle(item)} style={{ gap: 12, flex: 1, minWidth: 0 }}>
           <Check on={item.done} />

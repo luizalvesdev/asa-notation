@@ -10,6 +10,7 @@ import { clozeSegments, estimateMinutes } from "./study-logic";
 import type { Candidate, CardKind, Deck, StudyCard } from "./study-types";
 import type { Toast } from "./toast";
 import { useStudyOverview } from "./use-study";
+import { ContextBox } from "./ContextBox";
 
 interface StudyViewProps {
   nodes: TreeNode[];
@@ -67,7 +68,15 @@ function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; on
   return (
     <div className="col">
       {cards.map((card) => (
-        <div key={card.id} className="row" style={{ gap: 12, minHeight: 44, borderTop: "1px solid var(--border)", padding: "6px 0", alignItems: "flex-start" }}>
+        <ContextBox
+          key={card.id}
+          items={() => [
+            { label: "Editar card", run: () => setEditing(card.id) },
+            { label: "Apagar card", danger: true, run: () => setConfirm(card.id) },
+          ]}
+          className="row"
+          style={{ gap: 12, minHeight: 44, borderTop: "1px solid var(--border)", padding: "6px 0", alignItems: "flex-start" }}
+        >
           <span className="badge out" style={{ height: 18, fontSize: "calc(11px * var(--fs, 1))" }}>{card.kind === "basic" ? "básico" : "lacuna"}</span>
           {editing === card.id ? (
             <CardEditor
@@ -94,7 +103,7 @@ function DeckCards({ deckId, onChanged, onToast }: { deckId: string | "none"; on
               <button className="btn btn-fan btn-sm" type="button" onClick={() => setConfirm(card.id)}>Apagar</button>
             </>
           )}
-        </div>
+        </ContextBox>
       ))}
     </div>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./icons";
+import { useContextItems } from "./use-context-items";
 import { KIND_COLOR, KIND_LABEL, KINDS, type Capture, type Kind, type KindFilter } from "./captures-types";
 import { removePending, usePending } from "./outbox";
 import { displayTitle } from "./pages-tree";
@@ -284,8 +285,14 @@ interface CardProps {
 }
 
 function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMenu, onKind, onArchive }: CardProps) {
+  const menuRef = useContextItems(() => [
+    { label: selected ? "Desmarcar" : "Selecionar", run: () => onToggle(false) },
+    { label: item.kind ? "Mudar classificação" : "Classificar", run: onOpenMenu },
+    { label: "Copiar texto", run: () => void navigator.clipboard.writeText(item.text).catch(() => undefined) },
+    { label: "Arquivar", run: onArchive },
+  ]);
   return (
-    <div className="card enter inbox-card" style={{ display: "flex", gap: 12, padding: "12px 14px", boxShadow: selected ? "inset 0 0 0 2px var(--accent)" : undefined }}>
+    <div ref={menuRef} className="card enter inbox-card" style={{ display: "flex", gap: 12, padding: "12px 14px", boxShadow: selected ? "inset 0 0 0 2px var(--accent)" : undefined }}>
       <button className="plain" type="button" role="checkbox" aria-checked={selected} aria-label="Selecionar" onClick={(e) => onToggle(e.shiftKey)} style={{ paddingTop: 1 }}>
         <Check on={selected} />
       </button>

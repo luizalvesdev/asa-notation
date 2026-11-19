@@ -5,6 +5,7 @@ import type { Notification } from "./routine-types";
 import { groupNotifications } from "./routine-logic";
 import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
+import { ContextBox } from "./ContextBox";
 
 interface NotificationsViewProps {
   onChanged: () => void;
@@ -115,7 +116,15 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
             <div key={g.name} className="col" style={{ gap: 2 }}>
               <div className="eyebrow" style={{ padding: "14px 4px 6px" }}>{g.name}</div>
               {g.items.map((n) => (
-                <div key={n.id} className="enter" style={{ display: "flex", gap: 12, padding: 12, borderRadius: 10, background: n.read ? "transparent" : "var(--accent-soft)" }}>
+                <ContextBox
+                  key={n.id}
+                  items={() => [
+                    ...(n.link ? [{ label: "Abrir", run: () => { if (!n.read) void toggleRead(n); location.hash = n.link!.replace(/^#?/, "#"); } }] : []),
+                    { label: n.read ? "Marcar como não lida" : "Marcar como lida", run: () => void toggleRead(n) },
+                  ]}
+                  className="enter"
+                  style={{ display: "flex", gap: 12, padding: 12, borderRadius: 10, background: n.read ? "transparent" : "var(--accent-soft)" }}
+                >
                   <span className="av h">H</span>
                   <div className="col grow1" style={{ gap: 4, minWidth: 0 }}>
                     <span className="row" style={{ gap: 8 }}>
@@ -129,7 +138,7 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
                       <button className="btn btn-fan btn-sm" type="button" onClick={() => void toggleRead(n)} style={{ color: "var(--text-2)" }}>{n.read ? "Marcar como não lida" : "Marcar como lida"}</button>
                     </span>
                   </div>
-                </div>
+                </ContextBox>
               ))}
             </div>
           ))}
