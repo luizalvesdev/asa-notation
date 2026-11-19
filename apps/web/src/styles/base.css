@@ -191,6 +191,8 @@ textarea.inp{height:auto;padding:8px 10px;resize:none}
 .drawer .pane > dc-import{display:block;height:100%}
 .drawer .side{width:100%}
 /* overlays */
+.checkin-scrim{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim);backdrop-filter:blur(2px);animation:enter var(--medio) var(--padrao) both}
+.checkin-box{width:100%;max-width:720px;max-height:100%;overflow-y:auto;border-radius:20px;background:var(--bg);border:1px solid var(--border);box-shadow:var(--e2)}
 .overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;background:var(--scrim)}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--e3);overflow:hidden;width:640px;max-width:calc(100% - 32px)}
 .palette{width:640px;max-width:calc(100% - 32px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--e3);overflow:hidden;animation:rise var(--rapido) var(--entrada) both}

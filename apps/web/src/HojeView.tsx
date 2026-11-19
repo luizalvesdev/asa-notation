@@ -49,7 +49,7 @@ export function HojeView({ onToast }: HojeViewProps) {
   const rowProps = { onToggle: toggle, onToggleSubtask: toggleSub, onRemove: remove, onAddSubtask: (parentId: string, title: string) => tasks.addSubtask(parentId, title) };
 
   return (
-    <div style={{ padding: "40px 40px 120px", maxWidth: 780 }}>
+    <div style={{ padding: "40px 40px 120px" }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Hoje</h1>
         <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>

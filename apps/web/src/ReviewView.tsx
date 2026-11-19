@@ -37,7 +37,8 @@ function Back({ card }: { card: QueueCard }) {
   );
 }
 
-export function ReviewView() {
+/** `onExit`: a revisão abre como check-in (modal sobre Hoje); sair, Esc e o fim fecham o modal em vez de ir ao Estudo. */
+export function ReviewView({ onExit }: { onExit?: () => void } = {}) {
   const [load, setLoad] = useState<Load>({ status: "carregando" });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -91,7 +92,8 @@ export function ReviewView() {
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
       if (editing) return;
       if (e.key === "Escape") {
-        location.hash = routeHash("estudo");
+        if (onExit) onExit();
+        else location.hash = routeHash("estudo");
       } else if (e.key === "e" && card) {
         e.preventDefault();
         setEditing(true);
@@ -106,9 +108,13 @@ export function ReviewView() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [session, card, flip, grade, editing]);
+  }, [session, card, flip, grade, editing, onExit]);
 
-  const back = (
+  const back = onExit ? (
+    <button className="btn btn-fan btn-sm" type="button" onClick={onExit}>
+      Depois <span className="kbd">esc</span>
+    </button>
+  ) : (
     <a className="btn btn-fan btn-sm" href={routeHash("estudo")}>
       Sair <span className="kbd">esc</span>
     </a>
@@ -139,7 +145,7 @@ export function ReviewView() {
       <div className="col rise" style={{ padding: "80px 20px", maxWidth: 640, margin: "0 auto", alignItems: "center", gap: 12, textAlign: "center" }}>
         <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(34px * var(--fs, 1))", lineHeight: "calc(40px * var(--fs, 1))" }}>Nada para revisar</h1>
         <p className="muted">Todos os cards estão em dia. Volte mais tarde.</p>
-        <a className="btn btn-pri" href={routeHash("estudo")}>Voltar ao Estudo</a>
+        {onExit ? <button className="btn btn-pri" type="button" onClick={onExit}>Fechar</button> : <a className="btn btn-pri" href={routeHash("estudo")}>Voltar ao Estudo</a>}
       </div>
     );
   }
@@ -172,8 +178,11 @@ export function ReviewView() {
           ))}
         </div>
         <div className="row" style={{ gap: 8, justifyContent: "center" }}>
-          <a className="btn btn-pri" href={routeHash("hoje")}>Ir para Hoje</a>
-          <a className="btn btn-sec" href={routeHash("estudo")}>Voltar ao Estudo</a>
+          {onExit ? (
+            <button className="btn btn-pri" type="button" onClick={onExit}>Seguir para o dia</button>
+          ) : (
+            <a className="btn btn-pri" href={routeHash("estudo")}>Voltar ao Estudo</a>
+          )}
           <button className="btn btn-fan" type="button" onClick={() => setAttempt((a) => a + 1)}>Revisar de novo</button>
         </div>
       </div>

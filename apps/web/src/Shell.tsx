@@ -127,7 +127,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Foco no estudo: ao entrar (ou voltar depois de um tempo longe) pela tela inicial, abre a revisão se há cards para hoje.
+  // Check-in de estudo: ao entrar (ou voltar depois de um tempo longe) pela tela inicial, abre Hoje
+  // com a revisão por cima, num modal, se há cards para hoje.
+  const [checkin, setCheckin] = useState(false);
   useEffect(() => {
     let hiddenAt: number | null = null;
     const offer = () => {
@@ -135,7 +137,9 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       studyApi
         .overview(localDayStartIso())
         .then((o) => {
-          if (hasCardsToday(o) && isStartHash(location.hash)) location.hash = routeHash("revisao");
+          if (!hasCardsToday(o) || !isStartHash(location.hash)) return;
+          if (location.hash !== routeHash("hoje")) location.hash = routeHash("hoje");
+          setCheckin(true);
         })
         .catch(() => undefined);
     };
@@ -489,6 +493,15 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           <Sidebar {...sidebarProps} collapsed={false} inDrawer onToggleCollapsed={() => undefined} onNavigate={() => setDrawer(false)} />
         </div>
       </div>
+      {checkin && (
+        <div className="checkin-scrim" role="dialog" aria-modal="true" aria-label="Revisão do dia">
+          <div className="checkin-box">
+            <Suspense fallback={<ScreenFallback />}>
+              <ReviewView onExit={() => setCheckin(false)} />
+            </Suspense>
+          </div>
+        </div>
+      )}
       {searchOpen && (
         <SearchPalette
           nodes={pages.nodes}
