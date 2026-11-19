@@ -20,6 +20,15 @@ describe("markdown", () => {
   });
 });
 
+describe("links", () => {
+  it("espaço do link vai para fora; imagem com link vira só imagem; banner com utm sai", () => {
+    const md = toMarkdown(
+      '<p>Veja o <a href="https://a.com/x">artigo sobre IA </a>, depois.</p><p><a href="https://a.com/img"><img src="https://cdn.x/foto.png" alt="foto"></a></p><p><a href="https://www.alura.com.br/promocao/blackfriday?utm_source=blog"><img src="https://cdn.x/banner.png" alt="Banner"></a></p>',
+    );
+    expect(md).toBe("Veja o [artigo sobre IA](https://a.com/x), depois.\n\n![foto](https://cdn.x/foto.png)");
+  });
+});
+
 describe("transcrição", () => {
   it("acha o bloco de transcrição da aula e tira o título", () => {
     document.body.innerHTML = `<nav>Menu</nav><section class="video-transcription"><h3>Transcrição</h3><p>${LONG}</p></section>`;

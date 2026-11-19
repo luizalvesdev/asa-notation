@@ -34,10 +34,27 @@ export function toMarkdown(html: string | Node): string {
       return /^https?:\/\//i.test(src) ? `\n\n![${(img.getAttribute("alt") ?? "").replace(/[\[\]\n]/g, " ").trim()}](${src})\n\n` : "";
     },
   });
+  td.addRule("links", {
+    filter: (node) => node.nodeName === "A" && !!node.getAttribute("href"),
+    replacement: (content, node) => {
+      const a = node as HTMLAnchorElement;
+      const href = a.getAttribute("href") ?? "";
+      // Imagem com link em volta fica só a imagem; banner de propaganda (link com utm_) sai.
+      if ((a.textContent ?? "").trim() === "" && a.querySelector("img")) return /[?&]utm_/i.test(href) ? "" : content;
+      const text = content.trim();
+      if (!text || !/^https?:\/\//i.test(href)) return content;
+      return `[${text.replace(/\s*\n\s*/g, " ")}](${href})`;
+    },
+  });
   td.remove(["script", "style", "noscript", "iframe", "button", "form"]);
   // O app não desfaz escapes do Markdown: sem eles o texto fica limpo.
   td.escape = (s: string) => s;
-  return td.turndown(html as string).replace(/\n{3,}/g, "\n\n").trim();
+  return td
+    .turndown(html as string)
+    // O espaço do fim de um link sai para fora dele; antes de pontuação, sobra ("texto ,").
+    .replace(/(\]\([^)\s]+\)) +(?=[.,;:!?)])/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 const clean = (s: string) => s.replace(/[ \t]+/g, " ").replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
