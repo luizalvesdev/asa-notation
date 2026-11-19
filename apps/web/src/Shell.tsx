@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ApiError, capturesApi, pagesApi } from "./api";
+import { ApiError, capturesApi, pagesApi, studyApi } from "./api";
 import { BottomNav } from "./BottomNav";
 import { ContextMenu, type OpenMenu } from "./ContextMenu";
 import { keepsNativeMenu, localItemsAt, type ContextTarget, type MenuAction } from "./context-menu";
@@ -26,6 +26,8 @@ import type { Toast } from "./toast";
 import { flushOutbox, removePending, submitCapture, usePending } from "./outbox";
 import { useUnread } from "./use-notifications";
 import { usePages, type CreateExtra } from "./use-pages";
+import { AWAY_MS, hasCardsToday, isStartHash, loadReviewOnOpen } from "./review-on-open";
+import { localDayStartIso } from "./tasks-dates";
 
 const SIDE_KEY = "asa:side-width";
 const CHAT_KEY = "asa:chat-width";
@@ -123,6 +125,30 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Foco no estudo: ao entrar (ou voltar depois de um tempo longe) pela tela inicial, abre a revisão se há cards para hoje.
+  useEffect(() => {
+    let hiddenAt: number | null = null;
+    const offer = () => {
+      if (!loadReviewOnOpen() || !isStartHash(location.hash)) return;
+      studyApi
+        .overview(localDayStartIso())
+        .then((o) => {
+          if (hasCardsToday(o) && isStartHash(location.hash)) location.hash = routeHash("revisao");
+        })
+        .catch(() => undefined);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") hiddenAt = Date.now();
+      else if (hiddenAt !== null && Date.now() - hiddenAt >= AWAY_MS) {
+        hiddenAt = null;
+        offer();
+      }
+    };
+    offer();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
   // "G e depois a letra" leva às telas. Não vale digitando num campo, com Ctrl/Alt/⌘ nem com uma janela aberta.

@@ -172,7 +172,8 @@ export function ReviewView() {
           ))}
         </div>
         <div className="row" style={{ gap: 8, justifyContent: "center" }}>
-          <a className="btn btn-pri" href={routeHash("estudo")}>Voltar ao Estudo</a>
+          <a className="btn btn-pri" href={routeHash("hoje")}>Ir para Hoje</a>
+          <a className="btn btn-sec" href={routeHash("estudo")}>Voltar ao Estudo</a>
           <button className="btn btn-fan" type="button" onClick={() => setAttempt((a) => a + 1)}>Revisar de novo</button>
         </div>
       </div>

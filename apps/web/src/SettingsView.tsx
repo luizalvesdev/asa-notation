@@ -11,6 +11,7 @@ import { loadReduceMotion, applyReduceMotion, type Preference } from "./theme";
 import { TEXT_SIZES, applyTextSize, loadTextSize, type TextSize } from "./text-size";
 import { formatAgo } from "./time-utils";
 import type { Toast } from "./toast";
+import { loadReviewOnOpen, saveReviewOnOpen } from "./review-on-open";
 
 interface SettingsViewProps {
   preference: Preference;
@@ -89,6 +90,7 @@ function General({ settings, save, preference, onPreference }: { settings: Setti
   const [tzError, setTzError] = useState(false);
   const [reduce, setReduce] = useState(loadReduceMotion);
   const [textSize, setTextSize] = useState<TextSize>(loadTextSize);
+  const [reviewOnOpen, setReviewOnOpen] = useState(loadReviewOnOpen);
   const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
 
   return (
@@ -121,6 +123,13 @@ function General({ settings, save, preference, onPreference }: { settings: Setti
           <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", fontWeight: 400 }}>Troca deslocamentos por opacidade. Também segue o sistema.</span>
         </span>
         <span className={`sw${reduce ? " on" : ""}`}><span className="knob" /></span>
+      </button>
+      <button className="tog" type="button" role="switch" aria-checked={reviewOnOpen} onClick={() => { const next = !reviewOnOpen; setReviewOnOpen(next); saveReviewOnOpen(next); }} style={{ padding: 0, color: "var(--text)", justifyContent: "space-between", maxWidth: 520, height: "auto", minHeight: 40 }}>
+        <span className="col" style={{ textAlign: "left" }}>
+          <span>Abrir a revisão ao entrar</span>
+          <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", fontWeight: 400 }}>Se há cards para hoje, o app abre direto neles. Vale só para este aparelho.</span>
+        </span>
+        <span className={`sw${reviewOnOpen ? " on" : ""}`}><span className="knob" /></span>
       </button>
     </div>
   );
