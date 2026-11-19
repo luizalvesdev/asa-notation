@@ -18,7 +18,7 @@ interface CanvasViewProps {
 
 const GLYPH: Record<Tool, string> = { select: "↖", hand: "✋", pen: "✎", rect: "▭", ellipse: "◯", line: "╱", arrow: "→", text: "T", eraser: "⌫" };
 const STROKES = [2, 4, 8];
-const SAVE_LABEL: Record<SaveState, string> = { salvo: "Salvo", pendente: "Alterações pendentes", salvando: "Salvando…", erro: "Falha ao salvar" };
+const SAVE_LABEL: Record<SaveState, string> = { salvo: "Salvo", pendente: "Editando…", salvando: "Salvando…", erro: "Falha ao salvar" };
 
 function initialShapes(body: unknown): Shape[] {
   const shapes = (body as { shapes?: unknown } | null)?.shapes;

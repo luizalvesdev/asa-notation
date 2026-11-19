@@ -95,7 +95,7 @@ interface PageEditorProps {
 
 const SAVE_LABEL: Record<SaveState, string> = {
   salvo: "Salvo",
-  pendente: "Alterações pendentes",
+  pendente: "Editando…",
   salvando: "Salvando…",
   erro: "Falha ao salvar",
 };

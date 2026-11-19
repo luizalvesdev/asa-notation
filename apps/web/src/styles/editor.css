@@ -38,6 +38,9 @@ input.p-title::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  /* Largura fixa para "Salvo", "Editando…" e "Salvando…": trocar o texto não empurra os botões. */
+  min-width: 10ch;
+  white-space: nowrap;
 }
 
 .save-state.erro {
