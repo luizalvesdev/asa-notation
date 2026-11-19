@@ -80,3 +80,18 @@ export function draftTarget(draft: Pick<Draft, "kind" | "payload" | "result">): 
   }
   return null;
 }
+
+/** O que o assistente está fazendo, em palavras, enquanto uma ferramenta roda. */
+export function toolLabel(name: string): string {
+  if (name === "list_tasks") return "Consultando suas tarefas…";
+  if (name === "list_goals") return "Consultando suas metas…";
+  if (name === "list_pages") return "Olhando suas páginas…";
+  if (name === "search_notes") return "Buscando nas suas notas…";
+  if (name === "read_note") return "Lendo a página…";
+  if (name === "list_inbox") return "Olhando a Inbox…";
+  if (name === "list_decks" || name === "list_weak_cards") return "Consultando seus estudos…";
+  if (/^(propose_|create_|append_|replace_|rewrite_)/.test(name)) return "Preparando o conteúdo…";
+  if (/^(update_|move_|archive_)/.test(name)) return "Preparando a alteração…";
+  if (name.startsWith("delete_")) return "Preparando a exclusão…";
+  return "Trabalhando…";
+}

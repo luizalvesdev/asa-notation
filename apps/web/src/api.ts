@@ -1,5 +1,6 @@
 import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-types";
 import { NetworkError } from "./capture-outbox";
+import { SseParser } from "./sse";
 import type { Capture, Counts, Kind, KindFilter } from "./captures-types";
 import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import type { Candidate, Deck, NewCardInput, Overview, QueueCard, ReviewResponse, Stats, StudyCard } from "./study-types";
@@ -152,12 +153,64 @@ export const aiApi = {
   removeKey: () => request<{ removed: number }>("DELETE", "/ai/key"),
 };
 
+export interface ChatStreamHandlers {
+  /** Pedaço de texto da resposta. */
+  onDelta: (text: string) => void;
+  /** O modelo vai responder de novo (depois de usar ferramentas): o texto parcial anterior deixa de valer. */
+  onStep: () => void;
+  onTool: (event: { name: string; phase: "start" | "end" }) => void;
+}
+
+type ChatResult = { conversation: Conversation; messages: ChatMessage[] };
+
 export const chatApi = {
   conversations: (agent: Agent) => request<{ conversations: Conversation[] }>("GET", `/chat/conversations?agent=${agent}`).then((r) => r.conversations),
   open: (id: string) => request<{ conversation: Conversation; messages: ChatMessage[] }>("GET", `/chat/conversations/${id}`),
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/chat/conversations/${id}`),
   send: (agent: Agent, text: string, conversationId: string | null) =>
-    request<{ conversation: Conversation; messages: ChatMessage[] }>("POST", "/chat/send", conversationId ? { agent, text, conversationId } : { agent, text }),
+    request<ChatResult>("POST", "/chat/send", conversationId ? { agent, text, conversationId } : { agent, text }),
+  /**
+   * Como `send`, mas o texto chega aos poucos. Se o servidor não tem a rota (versão antiga) cai no `send`.
+   * Onde a infraestrutura segura a resposta (API Gateway), os eventos chegam juntos no fim e tudo continua funcionando.
+   */
+  async stream(agent: Agent, text: string, conversationId: string | null, handlers: ChatStreamHandlers): Promise<ChatResult> {
+    const payload = conversationId ? { agent, text, conversationId } : { agent, text };
+    let res: Response;
+    try {
+      res = await fetch("/api/chat/stream", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    } catch {
+      throw new NetworkError("offline");
+    }
+    if (res.status === 401) onUnauthorized?.();
+    if (res.status === 404 || res.status === 405) return chatApi.send(agent, text, conversationId);
+    if (!res.ok || !res.body) throw new ApiError(res.status, await res.json().catch(() => null));
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    const parser = new SseParser();
+    let result: ChatResult | null = null;
+    const handle = (event: unknown) => {
+      const e = event as { type?: string; text?: string; name?: string; phase?: "start" | "end"; status?: number; body?: unknown };
+      if (e.type === "delta" && typeof e.text === "string") handlers.onDelta(e.text);
+      else if (e.type === "step") handlers.onStep();
+      else if (e.type === "tool" && typeof e.name === "string" && e.phase) handlers.onTool({ name: e.name, phase: e.phase });
+      else if (e.type === "done") result = { conversation: (event as ChatResult).conversation, messages: (event as ChatResult).messages };
+      else if (e.type === "error") throw new ApiError(e.status ?? 500, e.body ?? null);
+    };
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        for (const event of parser.push(decoder.decode(value, { stream: true }))) handle(event);
+      }
+      for (const event of parser.flush()) handle(event);
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      throw new NetworkError("interrupted");
+    }
+    if (!result) throw new NetworkError("interrupted");
+    return result;
+  },
   approve: (id: string) => request<{ status: "approved"; result: Record<string, unknown> }>("POST", `/chat/drafts/${id}/approve`),
   discard: (id: string) => request<{ status: "discarded" }>("POST", `/chat/drafts/${id}/discard`),
 };

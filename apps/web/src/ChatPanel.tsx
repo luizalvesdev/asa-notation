@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiApi, chatApi } from "./api";
-import { classifyChatError, describeDraft, describeResult, draftTarget, type ChatErrorKind } from "./chat-logic";
+import { classifyChatError, describeDraft, describeResult, draftTarget, toolLabel, type ChatErrorKind } from "./chat-logic";
 import { AGENTS, AGENT_HINT, AGENT_NAME, type Agent, type ChatMessage, type Conversation, type Draft } from "./chat-types";
 import { Icon } from "./icons";
 import { pageHash, routeHash } from "./nav";
@@ -90,6 +90,8 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
   const [showHistory, setShowHistory] = useState(false);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [streamText, setStreamText] = useState("");
+  const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<{ kind: ChatErrorKind; message: string } | null>(null);
   const body = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
@@ -109,7 +111,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
 
   useEffect(() => {
     body.current?.scrollTo({ top: body.current.scrollHeight });
-  }, [messages, sending]);
+  }, [messages, sending, streamText]);
 
   useEffect(() => {
     if (!active) return;
@@ -156,7 +158,11 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
       setText("");
       setMessages((list) => [...list, { id: `tmp-${list.length}`, role: "user", text: message, createdAt: new Date().toISOString(), drafts: [] }]);
       try {
-        const res = await chatApi.send(agent, message, conversation?.id ?? null);
+        const res = await chatApi.stream(agent, message, conversation?.id ?? null, {
+          onDelta: (piece) => setStreamText((t) => t + piece),
+          onStep: () => setStreamText(""),
+          onTool: (e) => setWorking(e.phase === "start" ? toolLabel(e.name) : null),
+        });
         setConversation(res.conversation);
         setMessages(res.messages);
         // No modo automático o assistente já mexeu no app: atualiza a barra lateral, as tarefas etc.
@@ -170,6 +176,8 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
         setText(message);
       } finally {
         setSending(false);
+        setStreamText("");
+        setWorking(null);
       }
     },
     [agent, conversation, sending, onDataChanged],
@@ -270,7 +278,11 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           {sending && (
             <div className="bub-a" aria-label={`${name} está respondendo`}>
               <span className={`av ${AVATAR[agent]}`}>{name[0]}</span>
-              <span className={agent === "renato" ? "rcaret" : "hcaret"} />
+              <div className="col" style={{ gap: 6, minWidth: 0, flex: 1 }}>
+                {streamText && <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{streamText}</div>}
+                {working && <span style={{ fontSize: 12, color: "var(--text-3)" }} aria-live="polite">{working}</span>}
+                <span className={agent === "renato" ? "rcaret" : "hcaret"} />
+              </div>
             </div>
           )}
           {error && (
