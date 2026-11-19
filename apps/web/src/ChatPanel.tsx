@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiApi, chatApi } from "./api";
-import { classifyChatError, describeDraft, describeResult, type ChatErrorKind } from "./chat-logic";
+import { classifyChatError, describeDraft, describeResult, draftTarget, type ChatErrorKind } from "./chat-logic";
 import { AGENTS, AGENT_HINT, AGENT_NAME, type Agent, type ChatMessage, type Conversation, type Draft } from "./chat-types";
 import { Icon } from "./icons";
 import { pageHash, routeHash } from "./nav";
@@ -40,7 +40,7 @@ function DraftCard({ draft, agent, onChange, onDataChanged, onToast }: { draft: 
       if (kind === "approve") {
         const res = await chatApi.approve(draft.id);
         onChange({ ...draft, status: "approved", result: res.result });
-        if (draft.kind === "page") onDataChanged();
+        onDataChanged();
       } else {
         await chatApi.discard(draft.id);
         onChange({ ...draft, status: "discarded" });
@@ -53,13 +53,13 @@ function DraftCard({ draft, agent, onChange, onDataChanged, onToast }: { draft: 
   };
 
   if (draft.status === "approved") {
-    const pageId = typeof draft.result?.pageId === "string" ? draft.result.pageId : null;
-    const link = pageId ? pageHash(pageId) : draft.kind === "tasks" ? routeHash("hoje") : routeHash("inbox");
+    const target = draftTarget(draft);
+    const link = target === null ? null : "page" in target ? pageHash(target.page) : routeHash(target.route);
     return (
       <div className="draft-ok enter">
         <svg className="ico" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "var(--success)" }}><path d="M5 12.5l4.5 4.5L19 7" /></svg>
         {describeResult(draft)}
-        <a className="btn btn-fan btn-sm" href={link} style={{ marginLeft: "auto" }}>Abrir</a>
+        {link && <a className="btn btn-fan btn-sm" href={link} style={{ marginLeft: "auto" }}>Abrir</a>}
       </div>
     );
   }
@@ -83,6 +83,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
   const [agent, setAgent] = useState<Agent>(() => request?.agent ?? loadAgent());
   const handled = useRef<number | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [autoApply, setAutoApply] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [history, setHistory] = useState<Conversation[] | null>(null);
@@ -96,7 +97,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
 
   useEffect(() => {
     let live = true;
-    aiApi.status().then((s) => live && setConfigured(s.configured)).catch(() => live && setConfigured(false));
+    aiApi.status().then((s) => { if (live) { setConfigured(s.configured); setAutoApply(s.autoApply); } }).catch(() => live && setConfigured(false));
     return () => {
       live = false;
     };
@@ -158,6 +159,8 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
         const res = await chatApi.send(agent, message, conversation?.id ?? null);
         setConversation(res.conversation);
         setMessages(res.messages);
+        // No modo automático o assistente já mexeu no app: atualiza a barra lateral, as tarefas etc.
+        if (res.messages.at(-1)?.drafts.some((d) => d.status === "approved")) onDataChanged();
       } catch (err) {
         const failure = classifyChatError(err);
         setError(failure);
@@ -169,7 +172,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
         setSending(false);
       }
     },
-    [agent, conversation, sending],
+    [agent, conversation, sending, onDataChanged],
   );
 
   // Pedido de fora: troca de agente e, se veio uma pergunta, envia depois de saber se há chave.
@@ -300,7 +303,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           />
           <button className="btn btn-pri btn-sm" type="submit" disabled={sending || text.trim() === "" || configured === false}>Enviar</button>
         </div>
-        <span style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6, display: "block" }}>{agent === "tutor" ? `${name} só conversa e lê suas notas: não altera nada.` : `${name} só faz rascunhos: nada é criado sem a sua aprovação.`} Enter envia, Shift+Enter quebra a linha.</span>
+        <span style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6, display: "block" }}>{agent === "tutor" ? `${name} só conversa e lê suas notas: não altera nada.` : autoApply ? `${name} cria e edita na hora; apagar sempre pede a sua aprovação.` : `${name} propõe e você aprova: nada é alterado sem o seu OK.`} Enter envia, Shift+Enter quebra a linha.</span>
       </form>
     </aside>
   );

@@ -5,6 +5,8 @@ export interface Settings {
   checkins: { plan: string; thursday: string; saturday: string };
   checkinsEnabled: { plan: boolean; thursday: boolean; saturday: boolean };
   quiet: { start: string; end: string };
+  /** Assistentes criam e editam na hora, sem cartão de aprovação (apagar sempre pede). */
+  aiAutoApply: boolean;
 }
 
 export interface ApiToken {
@@ -21,4 +23,5 @@ export const DEFAULT_SETTINGS: Settings = {
   checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" },
   checkinsEnabled: { plan: true, thursday: true, saturday: true },
   quiet: { start: "22:00", end: "07:30" },
+  aiAutoApply: false,
 };

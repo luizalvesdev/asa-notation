@@ -2,7 +2,7 @@ export type Agent = "hermes" | "renato" | "tutor";
 
 export const AGENTS: Agent[] = ["hermes", "renato", "tutor"];
 
-export type DraftKind = "tasks" | "capture" | "page";
+export type DraftKind = "tasks" | "capture" | "page" | "action";
 export type DraftStatus = "pending" | "approved" | "discarded";
 
 export interface Draft {

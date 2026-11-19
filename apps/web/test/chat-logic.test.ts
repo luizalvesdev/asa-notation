@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../src/api";
-import { classifyChatError, describeDraft, describeResult } from "../src/chat-logic";
+import { classifyChatError, describeDraft, describeResult, draftTarget } from "../src/chat-logic";
 import { NetworkError } from "../src/capture-outbox";
 
 describe("describeDraft", () => {
@@ -44,5 +44,36 @@ describe("classifyChatError", () => {
     expect(classifyChatError(new ApiError(502, { error: "provider_error", status: 400, detail: "Your credit balance is too low to access the Anthropic API." })).message).toContain("sem créditos");
     expect(classifyChatError(new ApiError(502, { error: "provider_error", status: 404, detail: "model: x" })).message).toContain("model: x");
     expect(classifyChatError(new NetworkError("offline")).kind).toBe("offline");
+  });
+});
+
+describe("ações gerais dos assistentes", () => {
+  const action = (tool: string, extra: Record<string, unknown> = {}) => ({ kind: "action" as const, payload: { tool, summary: "Resumo do que vai acontecer", danger: false, ...extra }, result: null });
+
+  it("mostra o resumo e o verbo certo no botão", () => {
+    expect(describeDraft(action("append_to_page"))).toEqual({ title: "Rascunho", lines: ["Resumo do que vai acontecer"], approve: "Acrescentar" });
+    expect(describeDraft(action("create_goal")).approve).toBe("Criar");
+    expect(describeDraft(action("update_task")).approve).toBe("Aplicar");
+  });
+
+  it("apagar e reescrever destacam que precisam de aprovação", () => {
+    const del = describeDraft(action("delete_page", { danger: true }));
+    expect(del).toMatchObject({ title: "Precisa da sua aprovação", approve: "Apagar" });
+    expect(describeDraft(action("rewrite_page", { danger: true })).approve).toBe("Reescrever");
+  });
+
+  it("depois de aprovar mostra a mensagem do servidor", () => {
+    expect(describeResult({ kind: "action", result: { message: "Seção “Cache” reescrita." } })).toBe("Seção “Cache” reescrita.");
+    expect(describeResult({ kind: "action", result: null })).toBe("Feito");
+  });
+
+  it("o Abrir leva à página, à tela certa ou a lugar nenhum", () => {
+    expect(draftTarget({ ...action("append_to_page"), result: { pageId: "p1" } })).toEqual({ page: "p1" });
+    expect(draftTarget(action("update_task"))).toEqual({ route: "hoje" });
+    expect(draftTarget(action("create_goal"))).toEqual({ route: "metas" });
+    expect(draftTarget(action("create_cards"))).toEqual({ route: "estudo" });
+    expect(draftTarget(action("archive_capture"))).toEqual({ route: "inbox" });
+    expect(draftTarget(action("delete_page", { danger: true }))).toBeNull();
+    expect(draftTarget({ kind: "tasks", payload: {}, result: null })).toEqual({ route: "hoje" });
   });
 });

@@ -117,7 +117,7 @@ export const studyApi = {
 
 export const settingsApi = {
   get: () => request<{ settings: Settings }>("GET", "/settings").then((r) => r.settings),
-  patch: (patch: { timezone?: string; weekStart?: 0 | 1; checkins?: Partial<Settings["checkins"]>; checkinsEnabled?: Partial<Settings["checkinsEnabled"]>; quiet?: Partial<Settings["quiet"]> }) =>
+  patch: (patch: { timezone?: string; weekStart?: 0 | 1; checkins?: Partial<Settings["checkins"]>; checkinsEnabled?: Partial<Settings["checkinsEnabled"]>; quiet?: Partial<Settings["quiet"]>; aiAutoApply?: boolean }) =>
     request<{ settings: Settings }>("PATCH", "/settings", patch).then((r) => r.settings),
 };
 
@@ -147,7 +147,7 @@ export const routineApi = {
 };
 
 export const aiApi = {
-  status: () => request<{ provider: "anthropic" | "bedrock"; configured: boolean; last4: string | null; model: string }>("GET", "/ai/status"),
+  status: () => request<{ provider: "anthropic" | "bedrock"; configured: boolean; last4: string | null; model: string; autoApply: boolean }>("GET", "/ai/status"),
   setKey: (key: string) => request<{ configured: boolean; last4: string }>("PUT", "/ai/key", { key }),
   removeKey: () => request<{ removed: number }>("DELETE", "/ai/key"),
 };

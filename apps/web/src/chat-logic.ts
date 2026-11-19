@@ -26,6 +26,12 @@ export function describeDraft(draft: Pick<Draft, "kind" | "payload">): DraftView
   if (draft.kind === "capture") {
     return { title: "Rascunho · captura para a Inbox", lines: [String(p.text ?? "")], approve: "Salvar na Inbox" };
   }
+  if (draft.kind === "action") {
+    const tool = String(p.tool ?? "");
+    const danger = p.danger === true;
+    const verb = tool.startsWith("delete_") ? "Apagar" : tool === "rewrite_page" ? "Reescrever" : tool.startsWith("create_") ? "Criar" : tool.startsWith("append_") ? "Acrescentar" : "Aplicar";
+    return { title: danger ? "Precisa da sua aprovação" : "Rascunho", lines: [String(p.summary ?? "")], approve: verb };
+  }
   const body = typeof p.mermaid === "string" ? "Diagrama Mermaid" : String(p.markdown ?? "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 4).join(" · ");
   return { title: `Rascunho · página “${String(p.title ?? "")}”`, lines: body ? [body.length > 160 ? `${body.slice(0, 160)}…` : body] : [], approve: "Criar página" };
 }
@@ -35,6 +41,7 @@ export function describeResult(draft: Pick<Draft, "kind" | "result">): string {
   const r = draft.result ?? {};
   if (draft.kind === "tasks") return plural(Number(r.created ?? 0), "tarefa criada", "tarefas criadas");
   if (draft.kind === "capture") return "Salva na Inbox";
+  if (draft.kind === "action") return typeof r.message === "string" ? r.message : "Feito";
   return "Página criada";
 }
 
@@ -54,4 +61,22 @@ export function classifyChatError(err: unknown): { kind: ChatErrorKind; message:
     return { kind: "other", message: `Não foi possível falar com o assistente.${typeof detail === "string" && detail ? ` (${detail})` : " Tente de novo."}` };
   }
   return { kind: "offline", message: "Sem conexão. A mensagem não foi enviada." };
+}
+
+/** Para onde o "Abrir" de um rascunho aprovado leva (ou null se não há para onde ir, como depois de apagar). */
+export function draftTarget(draft: Pick<Draft, "kind" | "payload" | "result">): { page: string } | { route: "hoje" | "metas" | "estudo" | "inbox" } | null {
+  const r = draft.result ?? {};
+  if (typeof r.pageId === "string") return { page: r.pageId };
+  if (draft.kind === "tasks") return { route: "hoje" };
+  if (draft.kind === "capture") return { route: "inbox" };
+  if (draft.kind === "action") {
+    const tool = String(draft.payload.tool ?? "");
+    if (tool.startsWith("delete_")) return null;
+    if (tool.endsWith("_task")) return { route: "hoje" };
+    if (tool.endsWith("_goal")) return { route: "metas" };
+    if (tool.endsWith("_deck") || tool.endsWith("_cards")) return { route: "estudo" };
+    if (tool === "archive_capture") return { route: "inbox" };
+    return null;
+  }
+  return null;
 }

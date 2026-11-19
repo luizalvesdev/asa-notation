@@ -2,7 +2,7 @@ import type { Row, SqlClient } from "../sql.js";
 import type { Block } from "../ai/anthropic.js";
 
 export type Agent = "hermes" | "renato" | "tutor";
-export type DraftKind = "tasks" | "capture" | "page";
+export type DraftKind = "tasks" | "capture" | "page" | "action";
 export type DraftStatus = "pending" | "approved" | "discarded";
 
 export interface Draft {
@@ -111,6 +111,10 @@ export class PgChatStore {
   async addDraft(conversationId: string, kind: DraftKind, payload: Record<string, unknown>): Promise<string> {
     const rows = await this.sql.query(`insert into ai_drafts (conversation_id, kind, payload, created_at) values ($1, $2, $3::jsonb, $4) returning id`, [conversationId, kind, JSON.stringify(payload), this.now()]);
     return rows[0]!.id as string;
+  }
+
+  async removeDraft(id: string): Promise<void> {
+    await this.sql.query(`delete from ai_drafts where id = $1`, [id]);
   }
 
   /** Liga os rascunhos criados durante o turno à mensagem final do assistente. */

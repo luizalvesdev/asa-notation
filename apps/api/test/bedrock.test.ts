@@ -87,7 +87,7 @@ describe("chat com Bedrock pela API", () => {
   });
 
   it("status mostra o provedor e dispensa chave", async () => {
-    expect((await app.call("GET", "/ai/status", { cookies })).body).toEqual({ provider: "bedrock", configured: true, last4: null, model: MODEL });
+    expect((await app.call("GET", "/ai/status", { cookies })).body).toEqual({ provider: "bedrock", configured: true, last4: null, model: MODEL, autoApply: false });
   });
 
   it("chave e remoção não se aplicam: o servidor cuida do acesso", async () => {

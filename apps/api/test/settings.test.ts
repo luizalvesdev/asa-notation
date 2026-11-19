@@ -15,6 +15,7 @@ interface SettingsJson {
   checkins: { plan: string; thursday: string; saturday: string };
   checkinsEnabled: { plan: boolean; thursday: boolean; saturday: boolean };
   quiet: { start: string; end: string };
+  aiAutoApply: boolean;
 }
 const get = async () => ((await app.call("GET", "/settings", { cookies })).body as { settings: SettingsJson }).settings;
 const patch = (body: unknown) => app.call("PATCH", "/settings", { cookies, body });
@@ -22,7 +23,7 @@ const patch = (body: unknown) => app.call("PATCH", "/settings", { cookies, body 
 describe("configurações", () => {
   it("exige sessão e devolve os padrões", async () => {
     expect((await app.call("GET", "/settings")).status).toBe(401);
-    expect(await get()).toEqual({ timezone: "America/Sao_Paulo", weekStart: 1, checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" }, checkinsEnabled: { plan: true, thursday: true, saturday: true }, quiet: { start: "22:00", end: "07:30" } });
+    expect(await get()).toEqual({ timezone: "America/Sao_Paulo", weekStart: 1, checkins: { plan: "08:30", thursday: "18:00", saturday: "10:00" }, checkinsEnabled: { plan: true, thursday: true, saturday: true }, quiet: { start: "22:00", end: "07:30" }, aiAutoApply: false });
   });
 
   it("muda só o que foi enviado", async () => {

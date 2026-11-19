@@ -145,8 +145,23 @@ function Routine({ settings, save }: { settings: Settings; save: ReturnType<type
   );
 }
 
-function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
-  const [status, setStatus] = useState<{ provider: "anthropic" | "bedrock"; configured: boolean; last4: string | null; model: string } | null>(null);
+function AutoApply({ settings, save }: { settings: Settings; save: (patch: Parameters<typeof settingsApi.patch>[0]) => Promise<boolean> }) {
+  const on = settings.aiAutoApply;
+  return (
+    <button className="tog" type="button" role="switch" aria-checked={on} onClick={() => void save({ aiAutoApply: !on })} style={{ padding: 0, color: "var(--text)", justifyContent: "space-between", maxWidth: 560, height: "auto", minHeight: 40 }}>
+      <span className="col" style={{ textAlign: "left" }}>
+        <span>Executar sem pedir aprovação</span>
+        <span style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 400 }}>Hermes e Renato criam e editam na hora, e dizem o que fizeram. Apagar e reescrever uma página inteira sempre pedem o seu OK.</span>
+      </span>
+      <span className={`sw${on ? " on" : ""}`}><span className="knob" /></span>
+    </button>
+  );
+}
+
+type AiStatus = { provider: "anthropic" | "bedrock"; configured: boolean; last4: string | null; model: string; autoApply?: boolean };
+
+function Assistants({ onToast, settings, save: saveSettings }: { onToast: (t: Toast) => void; settings: Settings | null; save: (patch: Parameters<typeof settingsApi.patch>[0]) => Promise<boolean> }) {
+  const [status, setStatus] = useState<AiStatus | null>(null);
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,6 +195,7 @@ function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
   if (status?.provider === "bedrock") {
     return (
       <div className="col enter" style={{ gap: 14 }}>
+        {settings && <AutoApply settings={settings} save={saveSettings} />}
         <p className="muted" style={{ fontSize: 14 }}>Os assistentes usam o Claude pelo Amazon Bedrock. O acesso é do servidor (papel IAM), então não há chave para cadastrar aqui.</p>
         <div className="card" style={{ padding: "14px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <span className="col grow1" style={{ minWidth: 200 }}>
@@ -194,6 +210,7 @@ function Assistants({ onToast }: { onToast: (t: Toast) => void }) {
 
   return (
     <div className="col enter" style={{ gap: 14 }}>
+      {settings && <AutoApply settings={settings} save={saveSettings} />}
       <p className="muted" style={{ fontSize: 14 }}>Hermes e Renato usam o Claude (Anthropic) com a sua chave. Ela fica cifrada no servidor e nunca volta inteira para a tela.</p>
       {status?.configured && (
         <div className="card" style={{ padding: "14px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -407,7 +424,7 @@ function Account({ onLogout, onToast }: { onLogout: () => void; onToast: (t: Toa
 export function SettingsView({ preference, onPreference, onLogout, onToast }: SettingsViewProps) {
   const [tab, setTab] = useState<Tab>("Geral");
   const { settings, failed, save } = useSettings(onToast);
-  const needsSettings = tab === "Geral" || tab === "Rotina";
+  const needsSettings = tab === "Geral" || tab === "Rotina" || tab === "Assistentes";
   const s = settings ?? DEFAULT_SETTINGS;
 
   return (
@@ -422,7 +439,7 @@ export function SettingsView({ preference, onPreference, onLogout, onToast }: Se
       {needsSettings && failed && <div className="card" role="alert" style={{ padding: 16, fontSize: 14 }}>Não foi possível carregar as configurações.</div>}
       {tab === "Geral" && settings && <General key="g" settings={s} save={save} preference={preference} onPreference={onPreference} />}
       {tab === "Rotina" && settings && <Routine key="r" settings={s} save={save} />}
-      {tab === "Assistentes" && <Assistants onToast={onToast} />}
+      {tab === "Assistentes" && <Assistants onToast={onToast} settings={settings} save={save} />}
       {tab === "API" && <Tokens onToast={onToast} />}
       {tab === "Dados" && <Data onToast={onToast} />}
       {tab === "Aplicativo" && <App />}

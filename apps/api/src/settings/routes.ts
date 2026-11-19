@@ -51,6 +51,10 @@ export function mergeSettings(current: Settings, body: Record<string, unknown>):
       next.quiet[key] = value;
     }
   }
+  if (body.aiAutoApply !== undefined) {
+    if (typeof body.aiAutoApply !== "boolean") return "invalid_ai_auto_apply";
+    next.aiAutoApply = body.aiAutoApply;
+  }
   return next;
 }
 

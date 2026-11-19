@@ -9,10 +9,11 @@ import type { PgSecretStore } from "../secrets/store.js";
 import type { PgSettingsStore } from "../settings/store.js";
 import { localParts } from "../notifications/checkins.js";
 import type { PgTaskStore } from "../tasks/store.js";
+import { ACTIONS } from "./actions.js";
 import { runTurn, trimHistory } from "./agent.js";
 import { markdownToDoc } from "./markdown.js";
 import type { Agent, DraftKind, PgChatStore } from "./store.js";
-import { systemPrompt, toolsFor } from "./tools.js";
+import { systemPrompt, toolsFor, type StoreContext } from "./tools.js";
 
 const KEY_NAME = "anthropic";
 const MAX_TEXT = 4000;
@@ -46,6 +47,42 @@ function providerFailure(err: ProviderError) {
 export function chatRoutes(deps: Deps): Route[] {
   const { chat, secrets, settings, fetchImpl } = deps;
 
+  /** Executa um rascunho (aprovado pelo usuário ou, no modo automático, na hora). Lança com a mensagem do erro se não der. */
+  async function execute(kind: DraftKind, payload: Record<string, unknown>, stores: StoreContext): Promise<Record<string, unknown>> {
+    if (kind === "tasks") {
+      const tasks = payload.tasks as { title: string; date: string | null; time: string | null }[];
+      const ids: string[] = [];
+      for (const t of tasks) {
+        const created = await deps.tasks.create({ title: t.title, parentId: null, date: t.date, time: t.time, recurrence: null, goalId: null });
+        if (created.kind === "ok") ids.push(created.task.id);
+      }
+      return { created: ids.length, ids, message: `${ids.length} ${ids.length === 1 ? "tarefa criada" : "tarefas criadas"}.` };
+    }
+    if (kind === "capture") {
+      const created = await deps.captures.create({ text: payload.text as string, kind: (payload.kind as never) ?? null });
+      return { id: created.id, message: "Captura salva na Inbox." };
+    }
+    if (kind === "action") {
+      const def = ACTIONS[String(payload.tool)];
+      if (!def) throw new Error("Ação desconhecida.");
+      return { ...(await def.run((payload.input ?? {}) as Record<string, unknown>, stores)) };
+    }
+    const p = payload as { title: string; markdown?: string; mermaid?: string; parentId: string | null };
+    const body = p.mermaid ? { type: "doc", content: [{ type: "mermaid", attrs: { code: p.mermaid } }] } : markdownToDoc(p.markdown ?? "");
+    const parentId = p.parentId && (await deps.pages.get(p.parentId)) ? p.parentId : null;
+    const page = await deps.pages.create({ parentId, title: p.title, icon: null, body });
+    return { pageId: page?.id ?? null, message: `Página “${p.title}” criada.` };
+  }
+
+  const storesFor = async (nowMs: number): Promise<StoreContext> => ({
+    tasks: deps.tasks,
+    goals: deps.goals,
+    pages: deps.pages,
+    captures: deps.captures,
+    study: deps.study,
+    today: localParts(nowMs, (await settings.get()).timezone).date,
+  });
+
   return [
     {
       method: "GET",
@@ -55,7 +92,7 @@ export function chatRoutes(deps: Deps): Route[] {
         const managed = deps.provider.name === "bedrock";
         const last4 = managed ? null : await secrets.last4(KEY_NAME);
         // No Bedrock não há chave: o acesso vem do papel IAM do servidor.
-        return json(200, { provider: deps.provider.name, configured: managed || last4 !== null, last4, model: deps.provider.model });
+        return json(200, { provider: deps.provider.name, configured: managed || last4 !== null, last4, model: deps.provider.model, autoApply: (await settings.get()).aiAutoApply });
       },
     },
     {
@@ -133,24 +170,31 @@ export function chatRoutes(deps: Deps): Route[] {
         const config = await settings.get();
         const today = localParts(now, config.timezone).date;
         const draftIds: string[] = [];
+        const stores = await storesFor(now);
         const { specs, handlers } = toolsFor(agent, {
-          tasks: deps.tasks,
-          goals: deps.goals,
-          pages: deps.pages,
-          captures: deps.captures,
-          study: deps.study,
-          today,
-          draft: async (kind: DraftKind, payload) => {
+          ...stores,
+          submit: async (kind: DraftKind, payload, danger = false) => {
             const id = await chat.addDraft(conversationId, kind, payload);
             draftIds.push(id);
-            return id;
+            // Modo automático: criar e editar rodam na hora; apagar e reescrever tudo sempre esperam o "Aprovar".
+            if (!config.aiAutoApply || danger) return { done: false };
+            try {
+              const result = await execute(kind, payload, stores);
+              await chat.decide(id, "approved", result);
+              return { done: true, message: String(result.message ?? "Pronto.") };
+            } catch (err) {
+              // Falhou: o rascunho não serve a ninguém. O erro volta ao modelo como resultado da ferramenta.
+              await chat.removeDraft(id);
+              draftIds.splice(draftIds.indexOf(id), 1);
+              throw err;
+            }
           },
         });
 
         const history = trimHistory(await chat.replay(conversationId));
         let turn;
         try {
-          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone), specs, handlers, model });
+          turn = await runTurn(history, text, { system: systemPrompt(agent, today, config.timezone, config.aiAutoApply), specs, handlers, model });
         } catch (err) {
           if (err instanceof ProviderError) {
             // Rascunhos criados antes da falha não servem a ninguém.
@@ -161,7 +205,7 @@ export function chatRoutes(deps: Deps): Route[] {
 
         // Guarda o turno: o que o usuário viu fica visível; chamadas e resultados de ferramenta ficam só para o histórico.
         // Nunca deixa a resposta em branco: se o modelo só chamou ferramentas, diz o que aconteceu.
-        if (turn.text === "") turn.text = draftIds.length > 0 ? "Deixei um rascunho para você aprovar." : "Não consegui responder agora. Tente de novo ou peça de outro jeito.";
+        if (turn.text === "") turn.text = draftIds.length > 0 ? (config.aiAutoApply ? "Pronto." : "Deixei um rascunho para você aprovar.") : "Não consegui responder agora. Tente de novo ou peça de outro jeito.";
         let finalId = "";
         for (let i = 0; i < turn.messages.length; i++) {
           const m = turn.messages[i]!;
@@ -180,7 +224,7 @@ export function chatRoutes(deps: Deps): Route[] {
       method: "POST",
       pattern: new RegExp(`^/chat/drafts/${ID}/(approve|discard)$`),
       access: "session",
-      handle: async ({ match }) => {
+      handle: async ({ match, now }) => {
         const draft = await chat.draft(match[1]!);
         if (!draft) return notFound();
         if (draft.status !== "pending") return json(409, { error: "already_decided" });
@@ -191,23 +235,11 @@ export function chatRoutes(deps: Deps): Route[] {
         }
 
         let result: Record<string, unknown>;
-        if (draft.kind === "tasks") {
-          const tasks = draft.payload.tasks as { title: string; date: string | null; time: string | null }[];
-          const ids: string[] = [];
-          for (const t of tasks) {
-            const created = await deps.tasks.create({ title: t.title, parentId: null, date: t.date, time: t.time, recurrence: null, goalId: null });
-            if (created.kind === "ok") ids.push(created.task.id);
-          }
-          result = { created: ids.length, ids };
-        } else if (draft.kind === "capture") {
-          const created = await deps.captures.create({ text: draft.payload.text as string, kind: (draft.payload.kind as never) ?? null });
-          result = { id: created.id };
-        } else {
-          const p = draft.payload as { title: string; markdown?: string; mermaid?: string; parentId: string | null };
-          const body = p.mermaid ? { type: "doc", content: [{ type: "mermaid", attrs: { code: p.mermaid } }] } : markdownToDoc(p.markdown ?? "");
-          const parentId = p.parentId && (await deps.pages.get(p.parentId)) ? p.parentId : null;
-          const page = await deps.pages.create({ parentId, title: p.title, icon: null, body });
-          result = { pageId: page?.id ?? null };
+        try {
+          result = await execute(draft.kind, draft.payload, await storesFor(now));
+        } catch (err) {
+          // Erro de validação da ação (página sumiu, seção não existe...): o rascunho continua pendente.
+          return json(422, { error: "action_failed", detail: err instanceof Error ? err.message.slice(0, 300) : "Falhou." });
         }
         // Só marca como aprovado se ninguém decidiu antes (duas abas).
         if (!(await chat.decide(draft.id, "approved", result))) return json(409, { error: "already_decided" });

@@ -3,6 +3,7 @@ import type { Block, ModelMessage, ModelRequest, ModelResponse } from "../src/ai
 import { ProviderError, createBudgetedModel, createModel } from "../src/ai/anthropic.js";
 import { MAX_STEPS, TRUNCATED, runTurn, trimHistory } from "../src/chat/agent.js";
 import { markdownToDoc } from "../src/chat/markdown.js";
+import { appendBlocks, asDoc, docToMarkdown, outline, readSection, replaceSection } from "../src/chat/doc-edit.js";
 import { decryptSecret, encryptSecret, secretsKey } from "../src/secrets/crypto.js";
 import { createTestApp, doc, type TestApp } from "./helpers.js";
 
@@ -310,9 +311,11 @@ describe("conversa com os assistentes", () => {
     await send({ agent: "hermes", text: "oi" });
     const call = provider.calls[0]!;
     expect(call.body.system).toContain("2026-11-18");
-    expect(call.body.system).toContain("NUNCA cria");
+    expect(call.body.system).toContain("rascunho que só vale depois que o usuário aprova");
+    expect(call.body.system).toContain("REGRA DE OURO");
     expect(call.body.system).toContain("texto simples");
-    expect(call.body.tools!.map((t) => t.name)).toEqual(["list_tasks", "list_goals", "propose_tasks", "propose_page", "propose_diagram"]);
+    const hermes = call.body.tools!.map((t) => t.name);
+    expect(hermes).toEqual(expect.arrayContaining(["list_tasks", "list_pages", "propose_tasks", "propose_page", "append_to_page", "update_task", "delete_page", "create_cards"]));
     replies.push(ok(text("ok")));
     await send({ agent: "renato", text: "oi" });
     expect(provider.calls[1]!.body.tools!.map((t) => t.name)).toContain("search_notes");
@@ -434,7 +437,7 @@ describe("conversa com os assistentes", () => {
     await app.call("POST", `/study/cards/${queue[0]!.id}/review`, { cookies, body: { rating: 1 } });
     replies.push(ok(tool("list_weak_cards", {})), ok(text("Vamos começar: o que você sabe sobre quorum?")));
     const res = await send({ agent: "tutor", text: "Me ajuda a estudar" });
-    expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(["list_weak_cards", "search_notes", "read_note"]);
+    expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(["list_weak_cards", "list_pages", "search_notes", "read_note"]);
     expect(provider.calls[0]!.body.system).toContain("socrático");
     expect(JSON.stringify(provider.calls[1]!.body.messages.at(-1))).toContain("O que é quorum?");
     expect(messages(res).at(-1)!.text).toContain("quorum");
@@ -451,5 +454,229 @@ describe("conversa com os assistentes", () => {
     replies.push(ok(text("ok")));
     const res = await send({ agent: "hermes", text: "oi" });
     expect((await send({ agent: "renato", text: "oi", conversationId: convId(res) })).status).toBe(404);
+  });
+});
+
+describe("edição de páginas pelos assistentes (doc-edit)", () => {
+  const p = (t: string) => ({ type: "paragraph", content: [{ type: "text", text: t }] });
+  const h = (level: number, t: string) => ({ type: "heading", attrs: { level }, content: [{ type: "text", text: t }] });
+  const page = { type: "doc", content: [h(2, "Cache"), p("c1"), h(3, "Redis"), p("r1"), h(2, "Filas"), p("f1")] };
+
+  it("vira Markdown e volta (código, mermaid, listas, marcas)", () => {
+    const md = "## Título\n\nUm **forte** e `code`.\n\n- a\n- b\n\n1. um\n2. dois\n\n```ts\nconst a = 1;\n```\n\n```mermaid\ngraph TD\n```";
+    expect(docToMarkdown(markdownToDoc(md))).toBe(md);
+  });
+
+  it("lista as seções", () => {
+    expect(outline(page)).toEqual([{ level: 2, text: "Cache" }, { level: 3, text: "Redis" }, { level: 2, text: "Filas" }]);
+  });
+
+  it("sem seção vai para o fim", () => {
+    const out = appendBlocks(page, [p("novo")]);
+    expect(out.placed).toBe("end");
+    expect(out.doc.content.at(-1)).toEqual(p("novo"));
+    expect(out.doc.content).toHaveLength(7);
+  });
+
+  it("com seção entra no fim dela, depois das subseções e antes da próxima do mesmo nível", () => {
+    const out = appendBlocks(page, [p("novo")], "cache");
+    expect(out.placed).toBe("section");
+    expect(out.doc.content.map((n) => (n as { content?: { text?: string }[] }).content?.[0]?.text)).toEqual(["Cache", "c1", "Redis", "r1", "novo", "Filas", "f1"]);
+  });
+
+  it("subseção: entra no fim dela só", () => {
+    const out = appendBlocks(page, [p("novo")], "Redis");
+    expect(out.doc.content.map((n) => (n as { content?: { text?: string }[] }).content?.[0]?.text)).toEqual(["Cache", "c1", "Redis", "r1", "novo", "Filas", "f1"]);
+  });
+
+  it("seção que não existe vira seção nova no fim, e acento e # não atrapalham", () => {
+    const out = appendBlocks(page, [p("x")], "## Consistência");
+    expect(out.placed).toBe("new_section");
+    expect(out.doc.content.slice(-2)).toEqual([h(2, "Consistência"), p("x")]);
+    expect(appendBlocks({ type: "doc", content: [h(2, "Consistência")] }, [p("y")], "consistencia").placed).toBe("section");
+  });
+
+  it("página vazia ou sem corpo", () => {
+    expect(appendBlocks(null, [p("a")]).doc.content).toEqual([p("a")]);
+    expect(asDoc(undefined)).toEqual({ type: "doc", content: [] });
+  });
+
+  it("troca só o miolo da seção; título e vizinhas ficam", () => {
+    const out = replaceSection(page, "Filas", [p("novo f")])!;
+    expect(out.doc.content.map((n) => (n as { content?: { text?: string }[] }).content?.[0]?.text)).toEqual(["Cache", "c1", "Redis", "r1", "Filas", "novo f"]);
+    expect(replaceSection(page, "Nada", [])).toBeNull();
+  });
+
+  it("lê uma seção", () => {
+    expect(readSection(page, "Redis")).toBe("### Redis\n\nr1");
+    expect(readSection(page, "Nada")).toBeNull();
+  });
+});
+
+describe("assistentes com poder sobre o app", () => {
+  let app: TestApp;
+  let cookies: Record<string, string>;
+  let replies: Reply[];
+  let provider: ReturnType<typeof fakeProvider>;
+  const para = (t: string) => ({ type: "paragraph", content: [{ type: "text", text: t }] });
+  const head = (t: string) => ({ type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: t }] });
+
+  beforeEach(async () => {
+    replies = [];
+    provider = fakeProvider(replies);
+    app = await createTestApp({ fetchImpl: provider.fetchImpl });
+    cookies = await app.owner();
+    replies.push(ok(text("ok")));
+    await app.call("PUT", "/ai/key", { cookies, body: { key: "sk-ant-api03-chave-de-teste-1234567890-ABCD" } });
+    provider.calls.length = 0;
+  });
+
+  interface Msg { text: string; drafts: { id: string; kind: string; status: string; payload: Record<string, any>; result: Record<string, any> | null }[] }
+  const send = async (agent: string, message: string) => ((await app.call("POST", "/chat/send", { cookies, body: { agent, text: message } })).body as { messages: Msg[] }).messages.at(-1)!;
+  const setAuto = (on: boolean) => app.call("PATCH", "/settings", { cookies, body: { aiAutoApply: on } });
+  const makePage = async (title: string, content: unknown[]) => ((await app.call("POST", "/pages", { cookies, body: { title, body: { type: "doc", content } } })).body as { page: { id: string } }).page.id;
+  const getPage = async (id: string) => ((await app.call("GET", `/pages/${id}`, { cookies })).body as { page: { body: { content: { type: string; content?: { text?: string }[] }[] } } }).page;
+  const heads = (page: { body: { content: { type: string; content?: { text?: string }[] }[] } }) => page.body.content.map((n) => n.content?.[0]?.text ?? n.type);
+  const lastToolResult = () => JSON.stringify(provider.calls.at(-1)!.body.messages.at(-1));
+
+  it("modo padrão: append_to_page vira rascunho e só mexe na página depois de aprovar", async () => {
+    const id = await makePage("System Design", [head("Cache"), para("c1"), head("Filas"), para("f1")]);
+    replies.push(ok(tool("append_to_page", { id, section: "Cache", markdown: "### CDN\n\nBorda perto do usuário." })), ok(text("Deixei um rascunho.")));
+    const msg = await send("renato", "Estudei CDN");
+    expect(msg.drafts).toHaveLength(1);
+    expect(msg.drafts[0]).toMatchObject({ kind: "action", status: "pending", payload: { tool: "append_to_page" } });
+    expect(msg.drafts[0]!.payload.summary).toContain("System Design");
+    expect(heads(await getPage(id))).toEqual(["Cache", "c1", "Filas", "f1"]);
+
+    const res = await app.call("POST", `/chat/drafts/${msg.drafts[0]!.id}/approve`, { cookies });
+    expect(res.body).toMatchObject({ status: "approved", result: { pageId: id } });
+    expect(heads(await getPage(id))).toEqual(["Cache", "c1", "CDN", "Borda perto do usuário.", "Filas", "f1"]);
+  });
+
+  it("modo automático: edita na hora, o modelo recebe 'Feito' e o cartão já vem aprovado", async () => {
+    await setAuto(true);
+    const id = await makePage("System Design", [head("Cache"), para("c1")]);
+    replies.push(ok(tool("append_to_page", { id, markdown: "## Filas\n\nf1" })), ok(text("Acrescentei.")));
+    const msg = await send("hermes", "Anota filas");
+    expect(msg.drafts[0]).toMatchObject({ kind: "action", status: "approved", result: { pageId: id } });
+    expect(lastToolResult()).toContain("Feito: ");
+    expect(heads(await getPage(id))).toEqual(["Cache", "c1", "Filas", "f1"]);
+    expect(provider.calls[0]!.body.system).toContain("modo automático");
+  });
+
+  it("modo automático: criar tarefa e meta direto; editar tarefa pelo id", async () => {
+    await setAuto(true);
+    const created = (await app.call("POST", "/tasks", { cookies, body: { title: "Velha", date: "2026-11-18" } })).body as { task: { id: string } };
+    replies.push(ok(tool("update_task", { id: created.task.id, title: "Nova", date: "2026-11-20", time: "10:00" }, "a"), tool("create_goal", { title: "Certificação", dueDate: "2027-03-01" }, "b")), ok(text("Pronto.")));
+    const msg = await send("hermes", "Reagenda e cria meta");
+    expect(msg.drafts.map((d) => d.status)).toEqual(["approved", "approved"]);
+    const tasks = (await app.call("GET", "/tasks", { cookies, query: { from: "2026-11-20", to: "2026-11-20", today: "2026-11-18" } })).body as { days: { title: string; time: string }[] };
+    expect(tasks.days[0]).toMatchObject({ title: "Nova", time: "10:00" });
+    expect(((await app.call("GET", "/goals", { cookies })).body as { goals: { title: string }[] }).goals.map((g) => g.title)).toContain("Certificação");
+  });
+
+  it("apagar SEMPRE pede aprovação, mesmo no modo automático; aprovado vai para a lixeira", async () => {
+    await setAuto(true);
+    const id = await makePage("Velha", [para("x")]);
+    replies.push(ok(tool("delete_page", { id })), ok(text("Deixei para você aprovar.")));
+    const msg = await send("renato", "Apaga a página Velha");
+    expect(msg.drafts[0]).toMatchObject({ status: "pending", payload: { danger: true } });
+    expect(lastToolResult()).toContain("Aguardando a aprovação");
+    expect((await app.call("GET", `/pages/${id}`, { cookies })).status).toBe(200);
+    await app.call("POST", `/chat/drafts/${msg.drafts[0]!.id}/approve`, { cookies });
+    expect((await app.call("GET", `/pages/${id}`, { cookies })).status).toBe(404);
+    const trash = (await app.call("GET", "/pages/trash", { cookies })).body as { items: { id: string }[] };
+    expect(trash.items.map((i) => i.id)).toContain(id);
+  });
+
+  it("reescrever a página inteira também exige aprovação", async () => {
+    await setAuto(true);
+    const id = await makePage("P", [para("a")]);
+    replies.push(ok(tool("rewrite_page", { id, markdown: "# Novo" })), ok(text("ok")));
+    expect((await send("hermes", "reescreve")).drafts[0]!.status).toBe("pending");
+  });
+
+  it("id inexistente: o erro volta ao modelo e nenhum rascunho fica", async () => {
+    await setAuto(true);
+    replies.push(ok(tool("append_to_page", { id: "00000000-0000-4000-8000-000000000000", markdown: "x" })), ok(text("Não achei a página.")));
+    const msg = await send("hermes", "anota");
+    expect(msg.drafts).toEqual([]);
+    expect(lastToolResult()).toContain("Página não encontrada");
+  });
+
+  it("falha na execução automática não deixa rascunho para trás", async () => {
+    await setAuto(true);
+    const id = await makePage("P", [head("A"), para("a")]);
+    replies.push(ok(tool("replace_section", { id, section: "Inexistente", markdown: "x" })), ok(text("Seção não existe.")));
+    const msg = await send("hermes", "troca");
+    expect(msg.drafts).toEqual([]);
+    expect(lastToolResult()).toContain("não encontrada");
+  });
+
+  it("aprovar quando a página sumiu: 422 e o rascunho continua pendente", async () => {
+    const id = await makePage("Some", [para("a")]);
+    replies.push(ok(tool("append_to_page", { id, markdown: "novo" })), ok(text("ok")));
+    const msg = await send("renato", "anota");
+    await app.call("DELETE", `/pages/${id}`, { cookies });
+    const res = await app.call("POST", `/chat/drafts/${msg.drafts[0]!.id}/approve`, { cookies });
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({ error: "action_failed" });
+    expect(((await app.call("GET", `/chat/conversations`, { cookies, query: { agent: "renato" } })).body as { conversations: unknown[] }).conversations).toHaveLength(1);
+  });
+
+  it("não edita databases nem quadros", async () => {
+    const db = ((await app.call("POST", "/pages", { cookies, body: { title: "DB", kind: "database" } })).body as { page: { id: string } }).page.id;
+    replies.push(ok(tool("append_to_page", { id: db, markdown: "x" })), ok(text("ok")));
+    await send("hermes", "anota");
+    expect(lastToolResult()).toContain("database ou um quadro");
+  });
+
+  it("read_note devolve Markdown e as seções; com section, só ela", async () => {
+    const id = await makePage("SD", [head("Cache"), para("c1"), head("Filas"), para("f1")]);
+    replies.push(ok(tool("read_note", { id }, "a"), tool("read_note", { id, section: "Filas" }, "b")), ok(text("ok")));
+    await send("renato", "lê");
+    const result = provider.calls.at(-1)!.body.messages.at(-1)!.content as { content: string }[];
+    expect(JSON.parse(result[0]!.content)).toMatchObject({ title: "SD", sections: ["## Cache", "## Filas"], markdown: "## Cache\n\nc1\n\n## Filas\n\nf1" });
+    expect(JSON.parse(result[1]!.content)).toEqual({ title: "SD", section: "## Filas\n\nf1" });
+  });
+
+  it("list_pages mostra a árvore para evitar duplicar assunto", async () => {
+    const parent = await makePage("System Design", [para("x")]);
+    await app.call("POST", "/pages", { cookies, body: { title: "Cache", parentId: parent } });
+    replies.push(ok(tool("list_pages", {})), ok(text("ok")));
+    await send("renato", "o que tenho?");
+    const out = JSON.parse((provider.calls.at(-1)!.body.messages.at(-1)!.content as { content: string }[])[0]!.content) as { title: string; parentId: string | null }[];
+    expect(out.map((n) => n.title).sort()).toEqual(["Cache", "System Design"]);
+    expect(out.find((n) => n.title === "Cache")!.parentId).toBe(parent);
+  });
+
+  it("o prompt manda criar página só se o assunto não tem relação (perguntar antes)", async () => {
+    replies.push(ok(text("ok")));
+    await send("renato", "oi");
+    const system = provider.calls[0]!.body.system;
+    expect(system).toContain("append_to_page");
+    expect(system).toContain("pergunte ao usuário se quer uma página nova");
+  });
+
+  it("tutor continua só lendo", async () => {
+    replies.push(ok(text("ok")));
+    await send("tutor", "oi");
+    expect(provider.calls[0]!.body.tools!.map((t) => t.name).some((n) => /^(propose_|append_|delete_|update_|create_)/.test(n))).toBe(false);
+  });
+
+  it("cards e baralhos pelo assistente", async () => {
+    await setAuto(true);
+    replies.push(ok(tool("create_deck", { title: "CAP" }, "a")), ok(text("ok")));
+    await send("renato", "cria baralho");
+    const deck = ((await app.call("GET", "/study/overview", { cookies, query: { dayStart: new Date().toISOString() } })).body as { decks: { id: string; title: string }[] }).decks[0]!;
+    expect(deck.title).toBe("CAP");
+    replies.push(ok(tool("create_cards", { deckId: deck.id, cards: [{ front: "O que é CAP?", back: "Consistência, disponibilidade, partição" }] })), ok(text("ok")));
+    const msg = await send("renato", "cria card");
+    expect(msg.drafts[0]).toMatchObject({ status: "approved", result: { message: "1 card criado." } });
+  });
+
+  it("configuração aiAutoApply valida o tipo", async () => {
+    expect((await app.call("PATCH", "/settings", { cookies, body: { aiAutoApply: "sim" } })).status).toBe(400);
+    expect((await setAuto(true)).body).toMatchObject({ settings: { aiAutoApply: true } });
   });
 });

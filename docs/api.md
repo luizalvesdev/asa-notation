@@ -147,7 +147,7 @@ Avaliação da semana: 60% taxa de tarefas concluídas + 40% dias com atividade.
 
 ## Assistentes (Hermes e Renato)
 
-Usam o Claude por um de dois provedores, escolhido no servidor por `AI_PROVIDER`: **Anthropic** (padrão; a chave do dono fica cifrada no banco) ou **Bedrock** (`AI_PROVIDER=bedrock`, `BEDROCK_MODEL_ID` e `BEDROCK_REGION` ou `AWS_REGION`; o acesso vem do papel IAM da Lambda, com `bedrock:InvokeModel`, e não há chave). A chave fica cifrada no banco (AES-256-GCM, derivada do segredo do servidor) e nunca volta inteira. **O assistente nunca escreve sozinho**: as ferramentas `propose_*` só criam rascunhos, e nada vira tarefa, captura ou página antes de `approve`.
+Usam o Claude por um de dois provedores, escolhido no servidor por `AI_PROVIDER`: **Anthropic** (padrão; a chave do dono fica cifrada no banco) ou **Bedrock** (`AI_PROVIDER=bedrock`, `BEDROCK_MODEL_ID` e `BEDROCK_REGION` ou `AWS_REGION`; o acesso vem do papel IAM da Lambda, com `bedrock:InvokeModel`, e não há chave). A chave fica cifrada no banco (AES-256-GCM, derivada do segredo do servidor) e nunca volta inteira. **Por padrão o assistente não escreve sozinho**: toda escrita (criar, editar, mover, apagar) vira um rascunho e só vale depois de `approve`. Com `aiAutoApply` ligado em `/settings` (Configurações > Assistentes), criar e editar rodam na hora e o rascunho já nasce `approved`; **apagar e reescrever uma página inteira sempre esperam o `approve`** (apagar vai para a lixeira). Rascunho de ação tem `kind: "action"` e `payload: { tool, input, summary, danger }`; aprovar uma ação que não vale mais (página apagada, seção inexistente) devolve 422 `action_failed` e o rascunho continua pendente.
 
 | Método | Rota | Acesso | Descrição |
 | --- | --- | --- | --- |
@@ -165,7 +165,7 @@ Usam o Claude por um de dois provedores, escolhido no servidor por `AI_PROVIDER`
 
 **Agentes**: `hermes`, `renato` e `tutor` (professor socrático: lê pontos fracos e notas, só conversa, não escreve).
 
-**Ferramentas.** Hermes: `list_tasks`, `list_goals`, `propose_tasks`. Tutor: `list_weak_cards`, `search_notes`, `read_note`. Renato: `search_notes`, `read_note`, `list_inbox`, `propose_capture`, `propose_page`, `propose_diagram` (Mermaid, inclusive `mindmap`). O texto das notas é tratado como dado, não como instrução. As respostas não usam streaming.
+**Ferramentas.** Hermes e Renato têm as mesmas, sobre todo o app. Leitura: `list_tasks`, `list_goals`, `list_pages` (árvore com ids), `search_notes`, `read_note` (Markdown, seções e `section` opcional), `list_inbox`, `list_decks`. Escrita: `propose_tasks`, `propose_capture`, `propose_page`, `propose_diagram` (Mermaid, inclusive `mindmap`), `update_task`, `delete_task`, `create_goal`, `update_goal`, `delete_goal`, `update_page` (título, ícone, favorita), `append_to_page` (no fim ou numa seção), `replace_section`, `rewrite_page`, `move_page`, `delete_page`, `create_deck`, `create_cards`, `archive_capture`. Tutor: `list_weak_cards`, `list_pages`, `search_notes`, `read_note` (só lê). **Regra de organização** (no prompt): antes de criar página ou registrar estudo, conferir `list_pages`; se já há página do mesmo assunto ou próximo, acrescentar nela numa seção com título, sem duplicar; se o assunto não tem relação com nenhuma página, perguntar ao usuário se quer uma página nova antes de criar. O texto das notas é tratado como dado, não como instrução. As respostas não usam streaming.
 
 ## Limites conhecidos
 
