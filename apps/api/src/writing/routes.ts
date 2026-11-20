@@ -107,7 +107,7 @@ export function writingRoutes(ai?: AiProvider): Route[] {
             system: system(action, voice),
             messages: [{ role: "user", content: user }],
             tools: [],
-            maxTokens: action === "improve_page" ? 6000 : 2500,
+            maxTokens: action === "improve_page" ? 9000 : 4000,
             cache: false,
           });
           const markdown = unwrap(response.content.filter((b): b is TextBlock => b.type === "text").map((b) => b.text).join(""));

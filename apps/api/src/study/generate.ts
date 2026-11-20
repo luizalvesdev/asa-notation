@@ -70,7 +70,7 @@ export async function generateCards(model: ModelFn, title: string, blocks: strin
     system: SYSTEM,
     messages: [{ role: "user", content: `${note}\n\nCrie os flashcards desta nota.` }],
     tools: [TOOL],
-    maxTokens: 3000,
+    maxTokens: 4500,
     // Uma chamada só por página: o cache pagaria a escrita sem leitura.
     cache: false,
   });

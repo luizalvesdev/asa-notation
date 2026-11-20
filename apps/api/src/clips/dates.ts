@@ -86,7 +86,7 @@ export async function extractDates(model: ModelFn, input: { title: string; url: 
     system: system(input.today, input.timezone),
     messages: [{ role: "user", content: `${page}\n\nEncontre os compromissos com data.` }],
     tools: [TOOL],
-    maxTokens: 4000,
+    maxTokens: 6000,
     cache: false,
   });
   const call = response.content.find((b): b is ToolUseBlock => b.type === "tool_use" && b.name === TOOL.name);

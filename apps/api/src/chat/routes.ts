@@ -1,4 +1,4 @@
-import { DEFAULT_MODEL, ProviderError, createModel, type FetchLike } from "../ai/anthropic.js";
+import { ProviderError, createModel, type FetchLike } from "../ai/anthropic.js";
 import type { AiProvider } from "../ai/provider.js";
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
@@ -150,7 +150,7 @@ export function chatRoutes(deps: Deps): Route[] {
         if (key.length < 20 || key.length > 300 || /\s/.test(key)) return badRequest("invalid_key");
         // Testa com uma chamada mínima antes de guardar.
         try {
-          await createModel(key, DEFAULT_MODEL, fetchImpl)({ system: "Responda apenas: ok", messages: [{ role: "user", content: "ok" }], tools: [], maxTokens: 8 });
+          await createModel(key, deps.provider.model, fetchImpl, undefined, deps.provider.effort)({ system: "Responda apenas: ok", messages: [{ role: "user", content: "ok" }], tools: [], maxTokens: 8 });
         } catch (err) {
           if (err instanceof ProviderError && (err.status === 401 || err.status === 403)) return badRequest("key_rejected");
           if (err instanceof ProviderError && err.status !== 0 && err.status !== 429) return json(502, { error: "provider_error" });

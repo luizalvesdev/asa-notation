@@ -236,6 +236,17 @@ describe("chave de IA", () => {
 
   const put = (key: string) => app.call("PUT", "/ai/key", { cookies, body: { key } });
 
+  it("usa o Haiku 5.5 por padrão e manda o modelo e o esforço configurados", async () => {
+    await put(KEY);
+    expect((provider.calls[0]!.body as unknown as { model: string }).model).toBe("claude-haiku-5-5");
+    expect(provider.calls[0]!.body).not.toHaveProperty("output_config");
+
+    const other = fakeProvider();
+    const configured = await createTestApp({ fetchImpl: other.fetchImpl, ai: { provider: "anthropic", model: "claude-sonnet-5-5", effort: "low" } });
+    await configured.call("PUT", "/ai/key", { cookies: await configured.owner(), body: { key: KEY } });
+    expect(other.calls[0]!.body).toMatchObject({ model: "claude-sonnet-5-5", output_config: { effort: "low" } });
+  });
+
   it("guarda depois de testar, mostra só o final e nunca devolve a chave", async () => {
     const res = await put(KEY);
     expect(res.body).toEqual({ configured: true, last4: "ABCD" });

@@ -97,10 +97,12 @@ export class ProviderError extends Error {
   }
 }
 
-/** Espaço de saída de um turno: uma página documentada pede alguns milhares de tokens (cerca de 230 tokens/s no Haiku). */
-export const DEFAULT_MAX_TOKENS = 4000;
+/** Espaço de saída de um turno: uma página documentada pede alguns milhares de tokens, e o raciocínio do Haiku 5.5 sai da mesma conta. */
+export const DEFAULT_MAX_TOKENS = 6000;
 
-export const DEFAULT_MODEL = "claude-sonnet-5-5";
+/** Modelo padrão na API da Anthropic. Troca-se com ANTHROPIC_MODEL. */
+export const DEFAULT_MODEL = "claude-haiku-5-5";
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 const URL = "https://api.anthropic.com/v1/messages";
 export const TIMEOUT_MS = 60_000;
 
@@ -109,7 +111,7 @@ export const TURN_BUDGET_MS = 24_000;
 const MIN_CALL_MS = 3_000;
 
 /** Chama a API de Mensagens do Claude. `fetchImpl` existe para os testes não saírem para a internet. */
-export function createModel(apiKey: string, model: string, fetchImpl: FetchLike, timeoutMs: number = TIMEOUT_MS): (req: ModelRequest) => Promise<ModelResponse> {
+export function createModel(apiKey: string, model: string, fetchImpl: FetchLike, timeoutMs: number = TIMEOUT_MS, effort?: Effort): (req: ModelRequest) => Promise<ModelResponse> {
   return async (req) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -117,7 +119,7 @@ export function createModel(apiKey: string, model: string, fetchImpl: FetchLike,
       const res = await fetchImpl(URL, {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model, ...messagesBody(req), ...(req.onText ? { stream: true } : {}) }),
+        body: JSON.stringify({ model, ...messagesBody(req), ...(effort ? { output_config: { effort } } : {}), ...(req.onText ? { stream: true } : {}) }),
         signal: controller.signal,
       });
       if (req.onText && res.ok && res.body) {
@@ -155,6 +157,6 @@ export function withBudget(make: (timeoutMs: number) => ModelFn, budgetMs: numbe
   };
 }
 
-export function createBudgetedModel(apiKey: string, model: string, fetchImpl: FetchLike, budgetMs: number = TURN_BUDGET_MS, clock: () => number = Date.now): ModelFn {
-  return withBudget((timeoutMs) => createModel(apiKey, model, fetchImpl, timeoutMs), budgetMs, clock);
+export function createBudgetedModel(apiKey: string, model: string, fetchImpl: FetchLike, budgetMs: number = TURN_BUDGET_MS, clock: () => number = Date.now, effort?: Effort): ModelFn {
+  return withBudget((timeoutMs) => createModel(apiKey, model, fetchImpl, timeoutMs, effort), budgetMs, clock);
 }

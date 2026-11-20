@@ -23,6 +23,15 @@ Parameters:
     Default: anthropic
     AllowedValues: [anthropic, bedrock]
     Description: anthropic usa a chave guardada no app (Configurações > Assistentes); bedrock usa o papel IAM da Lambda, sem chave
+  AnthropicModel:
+    Type: String
+    Default: claude-haiku-5-5
+    Description: Modelo na API da Anthropic (só com AiProvider=anthropic)
+  AnthropicEffort:
+    Type: String
+    Default: ""
+    AllowedValues: ["", low, medium, high, xhigh, max]
+    Description: Quanto o modelo pensa (output_config.effort). Vazio usa o padrão do modelo
   BedrockModelId:
     Type: String
     Default: ""
@@ -88,6 +97,8 @@ Resources:
           SESSION_SECRET_PARAM: !Ref SessionSecretParam
           ALLOWED_ORIGINS: !Ref AllowedOrigins
           AI_PROVIDER: !Ref AiProvider
+          ANTHROPIC_MODEL: !Ref AnthropicModel
+          ANTHROPIC_EFFORT: !Ref AnthropicEffort
           BEDROCK_MODEL_ID: !Ref BedrockModelId
       Policies:
         - Statement:

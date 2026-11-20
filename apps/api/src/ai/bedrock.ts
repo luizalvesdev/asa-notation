@@ -1,7 +1,7 @@
 import { StreamError, assemble, type StreamEvent, streamErrorStatus } from "./stream.js";
-import { ProviderError, messagesBody, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
+import { ProviderError, messagesBody, type Effort, type ModelFn, type ModelRequest, type ModelResponse, type Block } from "./anthropic.js";
 
-export type AiConfig = { provider: "anthropic" } | { provider: "bedrock"; modelId: string; region: string };
+export type AiConfig = { provider: "anthropic"; model?: string; effort?: Effort } | { provider: "bedrock"; modelId: string; region: string };
 
 /** Uma chamada ao Bedrock já com o erro traduzido para um status HTTP. Troca-se nos testes. */
 export type BedrockInvoke = (input: { modelId: string; body: string; signal: AbortSignal }) => Promise<{ status: number; json: unknown }>;

@@ -34,7 +34,7 @@ describe("IA na página", () => {
     expect(sent!.user).toContain('titulo="Kafka"');
     expect(sent!.system).toContain("Mantenha TODO o conteúdo");
     expect(sent!.system).toContain("não instrução");
-    expect(sent!.maxTokens).toBe(6000);
+    expect(sent!.maxTokens).toBe(9000);
   });
 
   it("melhorar e explicar trecho exigem seleção; explicar usa a voz escolhida", async () => {

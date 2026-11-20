@@ -22,7 +22,7 @@ describe("corpo da chamada ao Bedrock", () => {
   it("sem ferramentas, não manda o campo tools; max_tokens tem padrão", () => {
     const body = JSON.parse(bedrockBody({ system: "s", messages: [], tools: [] }));
     expect(body.tools).toBeUndefined();
-    expect(body.max_tokens).toBe(4000);
+    expect(body.max_tokens).toBe(6000);
   });
 });
 
@@ -68,6 +68,8 @@ describe("aiConfigFromEnv", () => {
   it("padrão é Anthropic", () => {
     expect(aiConfigFromEnv({})).toEqual({ provider: "anthropic" });
     expect(aiConfigFromEnv({ AI_PROVIDER: "anthropic", BEDROCK_MODEL_ID: "x" })).toEqual({ provider: "anthropic" });
+    expect(aiConfigFromEnv({ ANTHROPIC_MODEL: " claude-haiku-5-5 ", ANTHROPIC_EFFORT: "low" })).toEqual({ provider: "anthropic", model: "claude-haiku-5-5", effort: "low" });
+    expect(() => aiConfigFromEnv({ ANTHROPIC_EFFORT: "turbo" })).toThrow("ANTHROPIC_EFFORT");
   });
   it("Bedrock exige o modelo e a região (BEDROCK_REGION ou AWS_REGION)", () => {
     expect(aiConfigFromEnv({ AI_PROVIDER: "bedrock", BEDROCK_MODEL_ID: " m ", AWS_REGION: "us-east-1" })).toEqual({ provider: "bedrock", modelId: "m", region: "us-east-1" });
