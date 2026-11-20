@@ -243,7 +243,7 @@ function run(cmd, args, opts = {}) {
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
     child.on("error", reject);
-    child.on("close", (code) => (timer && clearTimeout(timer), code === 0 || opts.allowFail ? resolve({ code, out: out.trim(), err: err.trim() }) : reject(new Error(`${cmd} ${args.join(" ")}: ${err.trim() || out.trim()}`))));
+    child.on("close", (code) => (timer && clearTimeout(timer), code === 0 || opts.allowFail ? resolve({ code, out: out.trim(), err: err.trim() }) : reject(new Error(`${cmd} ${args[0] ?? ""} falhou (código ${code}): ${(err.trim() || out.trim() || "sem saída").replace(/\s+/g, " ").slice(0, 300)}`))));
   });
 }
 
