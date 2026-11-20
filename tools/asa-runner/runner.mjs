@@ -421,7 +421,12 @@ function runClaude(job, workspaces, prompt, resumeSession) {
         } catch {
           continue;
         }
-        if (msg.session_id) sessionId = msg.session_id;
+        if (msg.session_id && msg.session_id !== sessionId) {
+          sessionId = msg.session_id;
+          // Guarda a sessão já no começo: se o runner cair no meio, dá para retomar a conversa.
+          state.jobs[job.id] = { ...state.jobs[job.id], sessionId };
+          saveState();
+        }
         if (msg.type === "assistant") {
           const content = msg.message?.content ?? [];
           actions += content.filter((b) => b.type === "tool_use").length;
@@ -580,6 +585,20 @@ async function syncCards() {
   }
 }
 
+/** Jobs que ficaram pela metade (runner reiniciado ou máquina desligada) voltam para você, com a sessão guardada. */
+async function recoverInterrupted() {
+  for (const id of Object.keys(state.jobs)) {
+    try {
+      const { job } = await asa("GET", `/agent/jobs/${id}`);
+      if (job.status !== "running") continue;
+      log(job.ref, "retomando: o agente reiniciou no meio do trabalho");
+      await report(id, "review", { text: "O agente reiniciou no meio do trabalho. Responda para ele continuar de onde parou.", summary: "Parado no meio" });
+    } catch (err) {
+      log("não consegui verificar o job", id, firstLine(err));
+    }
+  }
+}
+
 async function main() {
   log(`asa-runner ${cfg.dryRun ? "(modo teste) " : ""}· ${cfg.asaUrl} · repos ${repos.map((r) => `${r.name} (${r.base})`).join(", ")} · Jira ${mcp ? "pelo MCP" : "pela API"}`);
   const stop = () => {
@@ -588,6 +607,7 @@ async function main() {
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
+  await recoverInterrupted();
   for (;;) {
     if (Date.now() - lastSync > cfg.syncMs) {
       lastSync = Date.now();
