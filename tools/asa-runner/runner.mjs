@@ -51,7 +51,8 @@ const cfg = {
   claudeModel: env.CLAUDE_MODEL || "",
   allowedTools:
     env.CLAUDE_ALLOWED_TOOLS ||
-    "Read Edit Write Glob Grep TodoWrite Bash(git status:*) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Bash(npm test:*) Bash(npm run:*) Bash(npx:*) Bash(ls:*) Bash(cat:*)",
+    "Read Edit Write Glob Grep TodoWrite Bash(git status:*) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Bash(npm test:*) Bash(npm run:*) Bash(npx:*) Bash(bun test:*) Bash(bun run:*) Bash(bunx:*) Bash(ls:*) Bash(cat:*)",
+  branchTemplate: env.BRANCH_TEMPLATE || "asa/{key}",
   setupCmd: env.SETUP_CMD || "",
   useWorktree: env.WORKTREE !== "0",
   pollMs: Number(env.POLL_SECONDS || 10) * 1000,
@@ -161,7 +162,7 @@ const git = (args, cwd, opts) => run("git", args, { cwd, ...opts });
 
 async function prepareWorkspace(job) {
   const key = job.ref.toLowerCase();
-  const branch = `asa/${key}`;
+  const branch = cfg.branchTemplate.replaceAll("{key}", key).replaceAll("{KEY}", job.ref);
   await git(["fetch", "-q", "origin", cfg.baseBranch], cfg.repoDir);
   if (!cfg.useWorktree) {
     const dirty = (await git(["status", "--porcelain"], cfg.repoDir)).out;

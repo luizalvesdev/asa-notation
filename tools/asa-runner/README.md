@@ -33,7 +33,8 @@ JIRA_TOKEN=...
 # JQL=assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC
 # JIRA_START_STATUS=Em andamento
 # JIRA_DONE_STATUS=Aguardando teste do QA
-# SETUP_CMD=npm ci          # runs once in each new worktree
+# BRANCH_TEMPLATE=asa/{key} # {key} = ibr-123, {KEY} = IBR-123 (e.g. feat/{KEY}/asa-homolog)
+# SETUP_CMD=bun install     # runs once in each new worktree
 # WORKTREE=0                # work in REPO_DIR itself (it must be clean)
 # CLAUDE_MODEL=
 # CLAUDE_ALLOWED_TOOLS=Read Edit Write Glob Grep Bash(git commit:*) Bash(npm test:*) ...
@@ -69,7 +70,7 @@ State, Claude Code logs (`logs/*.jsonl`) and reports (`reports/*.md`) live in `~
 | asa status | What happens |
 | --- | --- |
 | Na fila | Waiting for the runner. |
-| Trabalhando | The card moves to `JIRA_START_STATUS`, a worktree `asa/<key>` is created from `origin/BASE_BRANCH`, and Claude Code works on it. |
+| Trabalhando | The card moves to `JIRA_START_STATUS`, a worktree on a branch named by `BRANCH_TEMPLATE` is created from `origin/BASE_BRANCH`, and Claude Code works on it. |
 | Para revisar | Commits are pushed and a draft PR is opened or updated. Review the diff in the GitHub app. |
 | Mudança pedida | Your text goes to the same Claude Code session (`--resume`). The PR gets the new report. |
 | Concluído | `gh pr ready`, the card moves to `JIRA_DONE_STATUS`, and the worktree is removed (the branch stays). |
