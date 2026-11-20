@@ -42,8 +42,11 @@ const cfg = {
   repoDir: need("REPO_DIR"),
   baseBranch: need("BASE_BRANCH"),
   jiraSite: need("JIRA_SITE").replace(/\/+$/, ""),
-  jiraEmail: need("JIRA_EMAIL"),
-  jiraToken: need("JIRA_TOKEN"),
+  // Sem token, o Jira é acessado pelo MCP da Atlassian do Claude Code (OAuth), configurado no REPO_DIR.
+  jiraToken: env.JIRA_TOKEN || "",
+  jiraEmail: env.JIRA_TOKEN ? need("JIRA_EMAIL") : env.JIRA_EMAIL || "",
+  jiraCloudId: env.JIRA_CLOUD_ID || "",
+  jiraMcpModel: env.JIRA_MCP_MODEL || "haiku",
   jql: env.JQL || "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
   startStatus: env.JIRA_START_STATUS || "Em andamento",
   doneStatus: env.JIRA_DONE_STATUS || "Aguardando teste do QA",
@@ -56,7 +59,8 @@ const cfg = {
   setupCmd: env.SETUP_CMD || "",
   useWorktree: env.WORKTREE !== "0",
   pollMs: Number(env.POLL_SECONDS || 10) * 1000,
-  syncMs: Number(env.SYNC_SECONDS || 120) * 1000,
+  // Pelo MCP cada sincronização é uma chamada ao Claude: vai com mais calma.
+  syncMs: Number(env.SYNC_SECONDS || (env.JIRA_TOKEN ? 120 : 600)) * 1000,
   dryRun: env.DRY_RUN === "1",
   stateDir: env.STATE_DIR || join(homedir(), ".local", "state", "asa-runner"),
 };
@@ -117,12 +121,70 @@ function adfText(node) {
   return node.type === "listItem" ? `- ${inner}\n` : block ? `${inner}\n` : inner;
 }
 
+// ---------- Jira pelo MCP da Atlassian ----------
+
+const mcp = !cfg.jiraToken;
+const MCP = "mcp__atlassian__";
+const cloudId = () => cfg.jiraCloudId || new URL(cfg.jiraSite).host;
+
+/** Pede ao Claude Code (no REPO_DIR, onde o MCP da Atlassian está configurado) uma tarefa curta de Jira e lê o JSON da resposta. */
+async function jiraViaClaude(task, tools) {
+  const prompt = [
+    `Use only the Atlassian MCP tools. cloudId: ${cloudId()}.`,
+    task,
+    "Reply with the JSON only: no Markdown fence, no text before or after it.",
+  ].join("\n");
+  const args = ["-p", prompt, "--output-format", "json", "--model", cfg.jiraMcpModel, "--allowedTools", ...tools.map((t) => MCP + t)];
+  const res = await run(cfg.claudeBin, args, { cwd: cfg.repoDir, timeoutMs: 180_000 });
+  const outer = JSON.parse(res.out);
+  if (outer.is_error) throw new Error(`Claude: ${String(outer.result).slice(0, 200)}`);
+  const text = String(outer.result ?? "");
+  const start = text.search(/[[{]/);
+  const end = Math.max(text.lastIndexOf("]"), text.lastIndexOf("}"));
+  if (start < 0 || end < start) throw new Error(`resposta sem JSON: ${text.slice(0, 200)}`);
+  return JSON.parse(text.slice(start, end + 1));
+}
+
+async function myCardsMcp() {
+  const list = await jiraViaClaude(
+    `Call searchJiraIssuesUsingJql with jql ${JSON.stringify(cfg.jql)}, fields ["summary","status"] and maxResults 50. Return a JSON array with one object per issue: {"key": issue key, "summary": summary, "status": status name}.`,
+    ["searchJiraIssuesUsingJql"],
+  );
+  if (!Array.isArray(list)) throw new Error("a busca não devolveu uma lista");
+  return list
+    .filter((i) => typeof i?.key === "string")
+    .map((i) => ({ ref: i.key, title: String(i.summary ?? "").slice(0, 300), status: String(i.status ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
+}
+
+async function moveCardMcp(ref, target) {
+  const tools = cfg.dryRun ? ["getJiraIssue"] : ["getJiraIssue", "transitionJiraIssue"];
+  const r = await jiraViaClaude(
+    [
+      `Issue ${ref}. Call getJiraIssue with expand "transitions" and fields ["status"].`,
+      `If its status already matches ${JSON.stringify(target)} (ignore case and accents), return {"result":"already"}.`,
+      `Otherwise find the transition whose name or target status matches ${JSON.stringify(target)} (ignore case and accents).`,
+      `If there is none, return {"result":"missing","options":[target status names]}.`,
+      cfg.dryRun ? `If there is one, do NOT transition the issue; return {"result":"dry"}.` : `If there is one, call transitionJiraIssue with its id and return {"result":"moved"}.`,
+      "Do not edit, comment on, or change anything else.",
+    ].join("\n"),
+    tools,
+  );
+  if (r.result === "already") return `card já estava em ${target}`;
+  if (r.result === "dry") return `[teste] moveria o card para ${target}`;
+  if (r.result === "moved") return `card movido para ${target}`;
+  if (r.result === "missing") return `não achei a transição para ${target} (opções: ${(r.options ?? []).join(", ")})`;
+  throw new Error(`resposta inesperada: ${JSON.stringify(r).slice(0, 200)}`);
+}
+
 async function myCards() {
+  if (mcp) return myCardsMcp();
   const data = await jira("POST", "/rest/api/3/search/jql", { jql: cfg.jql, fields: ["summary", "status"], maxResults: 50 });
   return (data.issues ?? []).map((i) => ({ ref: i.key, title: String(i.fields?.summary ?? "").slice(0, 300), status: String(i.fields?.status?.name ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
 }
 
 async function cardDetails(ref) {
+  // Pelo MCP, o próprio agente lê o card no começo do trabalho (veja startPrompt).
+  if (mcp) return { title: "", status: "", type: "", description: "", comments: [], viaMcp: true };
   const i = await jira("GET", `/rest/api/3/issue/${ref}?fields=summary,description,status,issuetype,comment`);
   const comments = (i.fields?.comment?.comments ?? []).slice(-5).map((c) => `${c.author?.displayName ?? "?"}: ${adfText(c.body).trim()}`);
   return { title: i.fields?.summary ?? "", status: i.fields?.status?.name ?? "", type: i.fields?.issuetype?.name ?? "", description: adfText(i.fields?.description).trim(), comments };
@@ -132,6 +194,7 @@ const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCa
 
 /** Move o card para o status `target`. Devolve uma frase curta para o histórico do job. */
 async function moveCard(ref, target) {
+  if (mcp) return moveCardMcp(ref, target);
   const issue = await jira("GET", `/rest/api/3/issue/${ref}?fields=status`);
   if (norm(issue.fields?.status?.name ?? "") === norm(target)) return `card já estava em ${target}`;
   const { transitions = [] } = await jira("GET", `/rest/api/3/issue/${ref}/transitions`);
@@ -147,12 +210,13 @@ async function moveCard(ref, target) {
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, { cwd: opts.cwd, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
+    const timer = opts.timeoutMs ? setTimeout(() => child.kill("SIGTERM"), opts.timeoutMs) : null;
     let out = "";
     let err = "";
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
     child.on("error", reject);
-    child.on("close", (code) => (code === 0 || opts.allowFail ? resolve({ code, out: out.trim(), err: err.trim() }) : reject(new Error(`${cmd} ${args.join(" ")}: ${err.trim() || out.trim()}`))));
+    child.on("close", (code) => (timer && clearTimeout(timer), code === 0 || opts.allowFail ? resolve({ code, out: out.trim(), err: err.trim() }) : reject(new Error(`${cmd} ${args.join(" ")}: ${err.trim() || out.trim()}`))));
   });
 }
 
@@ -199,8 +263,10 @@ let current = null; // { jobId, child }
 function startPrompt(job, card) {
   return [
     "Você é um agente de desenvolvimento rodando sozinho: ninguém vai responder perguntas durante esta execução.",
-    `Card ${job.ref} (${card.type || "card"}): ${card.title}`,
-    card.description ? `Descrição do card:\n${card.description}` : "O card não tem descrição.",
+    `Card ${job.ref} (${card.type || "card"}): ${card.title || job.title}`,
+    card.viaMcp
+      ? `Antes de tudo, leia o card com a ferramenta mcp__atlassian__getJiraIssue (cloudId ${cloudId()}, issue ${job.ref}) e os comentários com mcp__atlassian__listJiraIssueComments. Só leia: não edite, não comente e não mude o status do card.`
+      : card.description ? `Descrição do card:\n${card.description}` : "O card não tem descrição.",
     card.comments.length ? `Últimos comentários:\n${card.comments.join("\n")}` : "",
     job.instruction ? `Instruções do dono do card para esta execução:\n${job.instruction}` : "",
     "",
@@ -227,7 +293,9 @@ const feedbackPrompt = (job, text) =>
 
 /** Roda o Claude Code e conta o andamento ao asa (só o número de ações). Devolve o relatório final. */
 function runClaude(job, cwd, prompt, resumeSession) {
-  const args = ["-p", prompt, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits", "--allowedTools", ...cfg.allowedTools.split(/\s+(?![^(]*\))/).filter(Boolean)];
+  const tools = cfg.allowedTools.split(/\s+(?![^(]*\))/).filter(Boolean);
+  if (mcp) tools.push(`${MCP}getJiraIssue`, `${MCP}listJiraIssueComments`);
+  const args = ["-p", prompt, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits", "--allowedTools", ...tools];
   if (cfg.claudeModel) args.push("--model", cfg.claudeModel);
   if (resumeSession) args.push("--resume", resumeSession);
   const logFile = join(cfg.stateDir, "logs", `${job.ref}-${Date.now()}.jsonl`);
@@ -388,7 +456,7 @@ async function syncCards() {
 }
 
 async function main() {
-  log(`asa-runner ${cfg.dryRun ? "(modo teste) " : ""}· ${cfg.asaUrl} · repo ${cfg.repoDir} (${cfg.baseBranch})`);
+  log(`asa-runner ${cfg.dryRun ? "(modo teste) " : ""}· ${cfg.asaUrl} · repo ${cfg.repoDir} (${cfg.baseBranch}) · Jira ${mcp ? "pelo MCP" : "pela API"}`);
   const stop = () => {
     current?.child.kill("SIGTERM");
     process.exit(0);

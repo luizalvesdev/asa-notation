@@ -13,7 +13,9 @@ Code, card descriptions and Claude's report stay on this machine, in Jira and on
 
 - Node 22+, `git`, and `claude` on the PATH, with Claude Code logged in.
 - The `gh` CLI logged in to the account that can push to the repo.
-- A Jira API token. Create it at https://id.atlassian.com/manage-profile/security/api-tokens.
+- Jira access, in one of two ways:
+  - **Atlassian MCP (default).** Claude Code with the Atlassian MCP server configured and logged in (OAuth) for `REPO_DIR`. Check it with `claude mcp list` inside the repo. No token is stored.
+  - **Jira API token.** Create it at https://id.atlassian.com/manage-profile/security/api-tokens and set `JIRA_EMAIL` and `JIRA_TOKEN`.
 - An asa API token with **write** scope. Create it under Configurações › API.
 
 ## Configuration
@@ -26,8 +28,13 @@ ASA_TOKEN=asa_...
 REPO_DIR=/home/you/Desktop/projetos/ibr-v2
 BASE_BRANCH=homolog
 JIRA_SITE=https://your-site.atlassian.net
-JIRA_EMAIL=you@company.com
-JIRA_TOKEN=...
+
+# Jira through the Atlassian MCP (no token): optional cloud id, defaults to the site host
+# JIRA_CLOUD_ID=...
+# JIRA_MCP_MODEL=haiku      # model for the short Jira calls (sync, card moves)
+# Or Jira through the REST API
+# JIRA_EMAIL=you@company.com
+# JIRA_TOKEN=...
 
 # Optional
 # JQL=assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC
@@ -39,11 +46,13 @@ JIRA_TOKEN=...
 # CLAUDE_MODEL=
 # CLAUDE_ALLOWED_TOOLS=Read Edit Write Glob Grep Bash(git commit:*) Bash(npm test:*) ...
 # POLL_SECONDS=10
-# SYNC_SECONDS=120
+# SYNC_SECONDS=600         # 120 with a Jira token
 # DRY_RUN=1                 # no push, no PR, no card moves
 ```
 
 Claude Code runs with `--permission-mode acceptEdits` and only the tools in `CLAUDE_ALLOWED_TOOLS`. Any command outside the list is refused, and the agent notes it in the report. Add the commands your project needs, for example `Bash(pnpm test:*)`.
+
+With the Atlassian MCP, each card sync and each card move is a short `claude -p` call in `REPO_DIR` that may use only the Jira search, read and transition tools. It counts toward your Claude Code plan, so the sync runs every 10 minutes by default. During a job, the agent reads the card itself with the read-only Jira tools.
 
 ## Run
 
