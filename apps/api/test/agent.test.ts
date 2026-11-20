@@ -95,6 +95,13 @@ describe("agent", () => {
     expect((asked.body as { job: Job }).job).toMatchObject({ status: "running", cancelRequested: true });
     expect(await poll()).toMatchObject({ action: "cancel", job: { id: running.id, status: "canceled" } });
     expect((await runner("POST", `/agent/jobs/${running.id}/report`, { status: "review" })).status).toBe(409);
+
+    // Parado para revisar: cancela na hora, e o card pode ganhar um trabalho novo logo em seguida.
+    const review = await create({ ref: "IBR-12" });
+    await poll();
+    await runner("POST", `/agent/jobs/${review.id}/report`, { status: "review" });
+    expect(((await app.call("POST", `/agent/jobs/${review.id}/cancel`, { cookies })).body as { job: Job }).job.status).toBe("canceled");
+    await create({ ref: "IBR-12" });
   });
 
   it("keeps the repos the runner offers, the repos and base of a job, and one PR per repo", async () => {

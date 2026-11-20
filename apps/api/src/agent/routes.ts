@@ -149,8 +149,8 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
       access: "session",
       handle: async ({ match }) => {
         const id = match[1]!;
-        // Na fila ainda: some na hora. Em andamento: o agente para o que está fazendo na próxima consulta.
-        const queued = await store.transition(id, ["queued"], "canceled");
+        // Sem o agente trabalhando (na fila, para revisar, com erro): cancela na hora. Trabalhando: ele para na próxima consulta.
+        const queued = await store.transition(id, ["queued", "review", "failed"], "canceled", { feedback: null });
         if (queued) {
           await store.addEvent(id, "canceled");
           return detail(queued);

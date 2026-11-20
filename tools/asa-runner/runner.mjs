@@ -283,7 +283,7 @@ async function prepareRepo(job, repo) {
   if (existsSync(dir)) {
     const isWorktree = existsSync(join(dir, ".git")) && (await commonDir(dir).catch(() => "")) === (await commonDir(repo.dir));
     if (!isWorktree) throw new Error(`${dir} já existe e não é uma worktree de ${repo.name}`);
-    if ((await git(["status", "--porcelain"], dir)).out) throw new Error(`${dir} tem alterações sem commit; o agente não mexe nela assim`);
+    if ((await git(["status", "--porcelain"], dir)).out) throw new Error(`${dir} tem alterações sem commit que não são do agente. Faça commit ou descarte e mande de novo.`);
     const branch = (await git(["branch", "--show-current"], dir)).out;
     if (!branch) throw new Error(`${dir} não está numa branch`);
     return { name: repo.name, dir, branch, base, created: false };
@@ -507,9 +507,13 @@ async function afterClaude(job, workspaces, outcome) {
   if (body !== null) writeFileSync(reportFile, `${body}\n\n---\n_Feito pelo agente do asa a partir do ${job.ref}._\n`);
   const lines = [];
   const prs = [];
+  const dirtyOnly = [];
   for (const ws of workspaces) {
     const { ahead, summary } = await changes(ws);
-    if (ahead === 0) continue;
+    if (ahead === 0) {
+      if (summary.includes("sem commit")) dirtyOnly.push(ws.name);
+      continue;
+    }
     lines.push(workspaces.length > 1 ? `${ws.name}: ${summary}` : summary);
     const url = await openOrUpdatePr(job, ws, reportFile);
     if (url) prs.push({ repo: ws.name, url });
@@ -517,7 +521,7 @@ async function afterClaude(job, workspaces, outcome) {
   state.jobs[job.id] = { ...state.jobs[job.id], prs };
   saveState();
   if (lines.length === 0) {
-    await report(job.id, "review", { summary: "Sem mudanças no código", text: "" });
+    await report(job.id, "review", { summary: dirtyOnly.length ? `Alterações sem commit em ${dirtyOnly.join(", ")}` : "Sem mudanças no código", text: "" });
     return;
   }
   const text = cfg.dryRun ? "[teste] sem push nem PR." : prs.length ? `PR em rascunho atualizado com o relatório: ${prs.map((p) => p.repo).join(", ")}.` : "Sem PR.";
@@ -530,10 +534,23 @@ async function start(job) {
   job = { ...job, title: job.title || card.title || cardInfo.get(job.ref)?.title || "" };
   const moved = await moveCard(job.ref, cfg.startStatus).catch((e) => `não consegui mover o card: ${firstLine(e)}`);
   await report(job.id, "running", { text: moved });
-  const workspaces = await prepareWorkspaces(job);
-  state.jobs[job.id] = { ref: job.ref, title: job.title, workspaces };
+  // Trabalho anterior do agente neste card (cancelado ou com erro): continua nas mesmas worktrees e na mesma sessão,
+  // mesmo com alterações sem commit, porque elas são dele.
+  const previous = Object.entries(state.jobs).find(([id, j]) => id !== job.id && j.ref === job.ref && j.workspaces?.some((w) => existsSync(w.dir)));
+  const workspaces = [];
+  for (const repo of jobRepos(job)) {
+    const kept = previous?.[1].workspaces.find((w) => w.name === repo.name && existsSync(w.dir));
+    workspaces.push(kept ?? (await prepareRepo(job, repo)));
+  }
+  const session = previous && previous[1].workspaces[0]?.dir === workspaces[0].dir ? previous[1].sessionId : null;
+  if (previous) {
+    delete state.jobs[previous[0]];
+    log(job.ref, `continuando o trabalho anterior${session ? " na mesma sessão" : ""}`);
+  }
+  state.jobs[job.id] = { ref: job.ref, title: job.title, workspaces, ...(session ? { sessionId: session } : {}), prs: previous?.[1].prs ?? [] };
   saveState();
-  await afterClaude(job, workspaces, await runClaude(job, workspaces, startPrompt(job, card, workspaces), null));
+  const prompt = session ? feedbackPrompt(job, job.instruction || "Continue o trabalho deste card de onde parou.") : startPrompt(job, card, workspaces);
+  await afterClaude(job, workspaces, await runClaude(job, workspaces, prompt, session));
 }
 
 async function feedback(job, text) {
