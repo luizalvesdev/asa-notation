@@ -23,6 +23,8 @@ export interface AgentJob {
   prs: { repo: string; url: string }[];
   status: JobStatus;
   cancelRequested: boolean;
+  interruptRequested: boolean;
+  pendingMessage: boolean;
   prUrl: string | null;
   summary: string;
   createdAt: string;

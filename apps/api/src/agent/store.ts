@@ -38,6 +38,10 @@ export interface AgentJob {
   prs: AgentPr[];
   status: JobStatus;
   cancelRequested: boolean;
+  /** Você pediu para o agente parar (ou mandou mensagem com ele trabalhando). */
+  interruptRequested: boolean;
+  /** Mensagem sua que o agente ainda não leu. */
+  pendingMessage: boolean;
   prUrl: string | null;
   summary: string;
   createdAt: string;
@@ -72,6 +76,8 @@ function toJob(row: Row): AgentJob {
     prs: (row.prs as AgentPr[] | null) ?? [],
     status: row.status as JobStatus,
     cancelRequested: row.cancel_requested as boolean,
+    interruptRequested: (row.interrupt_requested as boolean | undefined) ?? false,
+    pendingMessage: row.feedback !== null && row.feedback !== undefined,
     prUrl: (row.pr_url as string | null) ?? null,
     summary: row.summary as string,
     createdAt: iso(row.created_at),
@@ -79,7 +85,7 @@ function toJob(row: Row): AgentJob {
   };
 }
 
-const COLS = "id, ref, title, url, instruction, repos, base, prs, status, cancel_requested, pr_url, summary, created_at, updated_at";
+const COLS = "id, ref, title, url, instruction, repos, base, prs, status, cancel_requested, interrupt_requested, feedback, pr_url, summary, created_at, updated_at";
 
 export class PgAgentStore {
   constructor(
@@ -162,16 +168,28 @@ export class PgAgentStore {
   }
 
   /** Muda o status só se o job ainda está num dos `from`. Devolve o job atualizado ou null. */
-  async transition(id: string, from: JobStatus[], to: JobStatus, set: { feedback?: string | null; prUrl?: string | null; prs?: AgentPr[]; summary?: string; cancelRequested?: boolean } = {}): Promise<AgentJob | null> {
+  async transition(id: string, from: JobStatus[], to: JobStatus, set: { feedback?: string | null; prUrl?: string | null; prs?: AgentPr[]; summary?: string; cancelRequested?: boolean; interruptRequested?: boolean } = {}): Promise<AgentJob | null> {
     const rows = await this.sql.query(
       `update agent_jobs set status = $3, updated_at = $4,
           feedback = case when $5::boolean then $6 else feedback end,
           pr_url = case when $7::boolean then $8 else pr_url end,
           summary = coalesce($9, summary),
           cancel_requested = coalesce($10, cancel_requested),
-          prs = coalesce($11::jsonb, prs)
+          prs = coalesce($11::jsonb, prs),
+          interrupt_requested = coalesce($12, interrupt_requested)
         where id = $1 and status = any($2::text[]) returning ${COLS}`,
-      [id, from, to, this.nowIso(), set.feedback !== undefined, set.feedback ?? null, set.prUrl !== undefined, set.prUrl ?? null, set.summary ?? null, set.cancelRequested ?? null, set.prs === undefined ? null : JSON.stringify(set.prs)],
+      [id, from, to, this.nowIso(), set.feedback !== undefined, set.feedback ?? null, set.prUrl !== undefined, set.prUrl ?? null, set.summary ?? null, set.cancelRequested ?? null, set.prs === undefined ? null : JSON.stringify(set.prs), set.interruptRequested ?? null],
+    );
+    return rows[0] ? toJob(rows[0]) : null;
+  }
+
+  /** Com o agente trabalhando: pede a parada e, se houver, guarda a mensagem (somando a outra ainda não lida). */
+  async requestInterrupt(id: string, message?: string): Promise<AgentJob | null> {
+    const rows = await this.sql.query(
+      `update agent_jobs set interrupt_requested = true, updated_at = $2,
+          feedback = case when $3::text is null then feedback when feedback is null then $3 else left(feedback || E'\n\n' || $3, 4000) end
+        where id = $1 and status = 'running' returning ${COLS}`,
+      [id, this.nowIso(), message ?? null],
     );
     return rows[0] ? toJob(rows[0]) : null;
   }
@@ -194,7 +212,7 @@ export class PgAgentStore {
         return { action: "cancel", job };
       }
     }
-    const pick = async (status: JobStatus) => (await this.sql.query(`select ${COLS}, feedback from agent_jobs where status = $1 order by updated_at, created_at limit 1`, [status]))[0];
+    const pick = async (status: JobStatus) => (await this.sql.query(`select ${COLS} from agent_jobs where status = $1 order by updated_at, created_at limit 1`, [status]))[0];
 
     const approved = await pick("approved");
     if (approved) {

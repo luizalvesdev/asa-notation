@@ -81,6 +81,7 @@ export const agentApi = {
   approve: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/approve`),
   feedback: (id: string, text: string) => request<JobDetail>("POST", `/agent/jobs/${id}/feedback`, { text }),
   cancel: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/cancel`),
+  interrupt: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/interrupt`),
 };
 
 export const tasksApi = {

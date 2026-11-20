@@ -126,10 +126,21 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
       handle: async ({ req, match }) => {
         const text = isRecord(req.body) ? str(req.body.text, 4000) : null;
         if (!text) return badRequest("invalid_text");
-        const job = await store.transition(match[1]!, ["review", "failed"], "changes", { feedback: text });
+        // Com o agente trabalhando, a mensagem pede a parada; ele lê assim que parar, na mesma sessão.
+        const job = (await store.transition(match[1]!, ["review", "failed"], "changes", { feedback: text })) ?? (await store.requestInterrupt(match[1]!, text));
         if (!job) return json(409, { error: "not_in_review" });
         await store.addEvent(job.id, "feedback", text);
         return detail(job);
+      },
+    },
+    {
+      // Parar sem encerrar: o agente interrompe o Claude Code e espera a sua resposta.
+      method: "POST",
+      pattern: new RegExp(`^/agent/jobs/${ID}/interrupt$`),
+      access: "session",
+      handle: async ({ match }) => {
+        const job = await store.requestInterrupt(match[1]!);
+        return job ? detail(job) : json(409, { error: "not_running" });
       },
     },
     {
@@ -230,10 +241,23 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
           }
         }
         await store.seen();
-        const job = await store.transition(match[1]!, ["running"], status, { ...(summary !== undefined ? { summary } : {}), ...(prUrl !== undefined ? { prUrl } : prs?.[0] ? { prUrl: prs[0].url } : {}), ...(prs !== undefined ? { prs } : {}) });
+        const before = await store.get(match[1]!);
+        const stopped = status !== "running";
+        const job = await store.transition(match[1]!, ["running"], status, {
+          ...(summary !== undefined ? { summary } : {}),
+          ...(prUrl !== undefined ? { prUrl } : prs?.[0] ? { prUrl: prs[0].url } : {}),
+          ...(prs !== undefined ? { prs } : {}),
+          ...(stopped ? { interruptRequested: false } : {}),
+        });
         if (!job) return json(409, { error: "not_running" });
         await store.addEvent(job.id, status === "running" ? "progress" : status, text);
-        await notify(job, summary ?? text);
+        // Parou com mensagem sua na fila: volta direto para o agente ler, sem aviso no celular.
+        if ((status === "review" || status === "failed") && job.pendingMessage) {
+          const queued = await store.transition(job.id, [status], "changes");
+          return detail(queued ?? job);
+        }
+        // Parada que você mesmo pediu também não precisa de aviso.
+        if (!before?.interruptRequested) await notify(job, summary ?? text);
         return detail(job);
       },
     },

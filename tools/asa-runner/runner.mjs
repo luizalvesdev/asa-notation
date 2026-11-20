@@ -324,7 +324,7 @@ function startPrompt(job, card, workspaces) {
       ? `Antes de tudo, leia o card com a ferramenta mcp__atlassian__getJiraIssue (cloudId ${cloudId()}, issue ${job.ref}) e os comentários com mcp__atlassian__listJiraIssueComments. Só leia: não edite, não comente e não mude o status do card.`
       : card.description ? `Descrição do card:\n${card.description}` : "O card não tem descrição.",
     card.comments.length ? `Últimos comentários:\n${card.comments.join("\n")}` : "",
-    job.instruction ? `Instruções do dono do card para esta execução:\n${job.instruction}` : "",
+    job.instruction ? `Mensagem do dono do card:\n${job.instruction}\n\nSe a mensagem for uma pergunta ou um pedido de análise, responda e pare: não mexa no código até ele pedir.` : "",
     "",
     workspaces.length > 1 ? "Repositórios deste trabalho (cada um numa worktree própria, já na branch certa):" : "Repositório deste trabalho (numa worktree própria, já na branch certa):",
     ...workspaces.map((w) => `- ${w.name}: ${w.dir} (branch ${w.branch}, a partir de origin/${w.base})`),
@@ -367,7 +367,7 @@ function runClaude(job, workspaces, prompt, resumeSession) {
 
   return new Promise((resolve, reject) => {
     const child = spawn(cfg.claudeBin, args, { cwd, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
-    current = { jobId: job.id, child, canceled: false };
+    current = { jobId: job.id, child, canceled: false, interrupted: false };
     let buffer = "";
     let actions = 0;
     let lastSent = 0;
@@ -385,16 +385,27 @@ function runClaude(job, workspaces, prompt, resumeSession) {
         lastSent = actions;
         report(job.id, "running", { text: `${actions} ações até agora` }).catch(() => undefined);
       }
-      // Cancelado pelo celular: para o Claude agora.
+    }, 30_000);
+    // Cancelar ou parar pelo celular: interrompe o Claude em poucos segundos.
+    const stop = (signal) => {
+      child.kill(signal);
+      setTimeout(() => child.exitCode === null && child.kill("SIGKILL"), 10_000).unref();
+    };
+    const watch = setInterval(() => {
+      if (!current || current.canceled || current.interrupted) return;
       asa("GET", `/agent/jobs/${job.id}`)
         .then((d) => {
+          if (!current) return;
           if (d.job.cancelRequested || d.job.status === "canceled") {
             current.canceled = true;
-            child.kill("SIGTERM");
+            stop("SIGTERM");
+          } else if (d.job.interruptRequested) {
+            current.interrupted = true;
+            stop("SIGINT");
           }
         })
         .catch(() => undefined);
-    }, 30_000);
+    }, 5_000);
 
     child.stdout.on("data", (chunk) => {
       buffer += chunk;
@@ -422,14 +433,18 @@ function runClaude(job, workspaces, prompt, resumeSession) {
     child.stderr.on("data", (d) => (stderr += d));
     child.on("error", (err) => {
       clearInterval(progress);
+      clearInterval(watch);
       reject(err);
     });
     child.on("close", async (code) => {
       clearInterval(progress);
+      clearInterval(watch);
       await replies;
       const canceled = current?.canceled ?? false;
+      const interrupted = current?.interrupted ?? false;
       current = null;
       if (canceled) return resolve({ canceled: true, sessionId });
+      if (interrupted) return resolve({ canceled: false, interrupted: true, sessionId });
       if (code !== 0 || !result || result.is_error) return reject(new Error(`o Claude Code terminou com erro (log: ${logFile})${stderr ? `: ${stderr.split("\n")[0].slice(0, 120)}` : ""}`));
       resolve({ canceled: false, sessionId, report: String(result.result ?? "").trim(), actions });
     });
@@ -456,6 +471,17 @@ async function afterClaude(job, workspaces, outcome) {
   if (outcome.canceled) return log(job.ref, "cancelado");
   state.jobs[job.id] = { ...state.jobs[job.id], sessionId: outcome.sessionId };
   saveState();
+  if (outcome.interrupted) {
+    // Parado por você: guarda a sessão e não mexe em PR; a próxima mensagem continua de onde parou.
+    log(job.ref, "parado pelo celular");
+    const lines = [];
+    for (const ws of workspaces) {
+      const { ahead, summary } = await changes(ws);
+      if (ahead > 0 || summary.includes("sem commit")) lines.push(workspaces.length > 1 ? `${ws.name}: ${summary}` : summary);
+    }
+    await report(job.id, "review", { text: "Você parou o agente.", summary: lines.join(" · ").slice(0, 1000) || "Parado antes de mudar o código." });
+    return;
+  }
   const reportFile = join(cfg.stateDir, "reports", `${job.ref}.md`);
   // A descrição do PR muda só quando vem relatório novo; uma resposta a uma pergunta não apaga o relatório anterior.
   const at = outcome.report.indexOf("## O que mudou");
@@ -473,7 +499,7 @@ async function afterClaude(job, workspaces, outcome) {
   state.jobs[job.id] = { ...state.jobs[job.id], prs };
   saveState();
   if (lines.length === 0) {
-    await report(job.id, "review", { summary: `Nenhum commit. O relatório ficou em ${reportFile}`, text: "O agente terminou sem alterar o código. Peça uma mudança para ele continuar." });
+    await report(job.id, "review", { summary: "Sem mudanças no código", text: "" });
     return;
   }
   const text = cfg.dryRun ? "[teste] sem push nem PR." : prs.length ? `PR em rascunho atualizado com o relatório: ${prs.map((p) => p.repo).join(", ")}.` : "Sem PR.";

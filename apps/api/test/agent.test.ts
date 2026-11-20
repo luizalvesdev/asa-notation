@@ -140,6 +140,27 @@ describe("agent", () => {
     expect((await app.call("GET", "/agent/cards/IBR-8")).status).toBe(401);
   });
 
+  it("stops the agent without ending the job, and delivers a message sent while it works", async () => {
+    const job = await create({ ref: "IBR-11", instruction: "oq falta aqui?" });
+    await poll();
+    // Parar sem mensagem: o job fica para revisar e você responde depois.
+    expect((await app.call("POST", `/agent/jobs/${job.id}/interrupt`, { cookies })).body).toMatchObject({ job: { interruptRequested: true, pendingMessage: false } });
+    const stopped = await runner("POST", `/agent/jobs/${job.id}/report`, { status: "review", text: "Você parou o agente." });
+    expect((stopped.body as { job: Job & { interruptRequested: boolean } }).job).toMatchObject({ status: "review", interruptRequested: false });
+    expect((await app.call("POST", `/agent/jobs/${job.id}/interrupt`, { cookies })).status).toBe(409);
+
+    await app.call("POST", `/agent/jobs/${job.id}/feedback`, { cookies, body: { text: "só me diga o que falta" } });
+    expect(await poll()).toMatchObject({ action: "feedback", feedback: "só me diga o que falta" });
+    // Mensagem com ele trabalhando: pede a parada e fica guardada até ele parar.
+    const sent = await app.call("POST", `/agent/jobs/${job.id}/feedback`, { cookies, body: { text: "não mexa no código" } });
+    expect((sent.body as { job: unknown }).job).toMatchObject({ status: "running", interruptRequested: true, pendingMessage: true });
+    await app.call("POST", `/agent/jobs/${job.id}/feedback`, { cookies, body: { text: "e responda curto" } });
+    expect(await poll()).toBeNull();
+    const after = await runner("POST", `/agent/jobs/${job.id}/report`, { status: "review", text: "Você parou o agente." });
+    expect((after.body as { job: Job }).job.status).toBe("changes");
+    expect(await poll()).toMatchObject({ action: "feedback", feedback: "não mexa no código\n\ne responda curto", job: { status: "running", pendingMessage: false } });
+  });
+
   it("only accepts reports for running jobs and needs a login", async () => {
     const job = await create({ ref: "IBR-5" });
     expect((await runner("POST", `/agent/jobs/${job.id}/report`, { status: "review" })).status).toBe(409);

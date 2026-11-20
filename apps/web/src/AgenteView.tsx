@@ -254,7 +254,9 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
   const repos = data?.repos ?? [];
   const chosen = picked ?? (repos[0] ? [repos[0].name] : []);
   const working = current !== null && BUSY.has(current.status);
-  const canReply = current !== null && (current.status === "review" || current.status === "failed");
+  // Com o agente trabalhando, a mensagem faz ele parar e ler (como interromper aqui no terminal).
+  const canReply = current !== null && (current.status === "review" || current.status === "failed" || (current.status === "running" && !current.cancelRequested));
+  const blocked = working && !canReply;
   const startsNew = current === null || current.status === "done" || current.status === "canceled";
   const actions = current?.status === "running" ? [...(data?.thread.at(-1)?.events ?? [])].reverse().find((e) => e.kind === "progress" && PROGRESS.test(e.text))?.text : undefined;
 
@@ -277,7 +279,7 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
 
   const send = () => {
     const message = text.trim();
-    if (busy || working) return;
+    if (busy || blocked) return;
     if (startsNew) {
       void run(agentApi.create(cardRef, message, chosen, base.trim() || null)).then((ok) => ok && setText(""));
     } else if (canReply && current && message) {
@@ -296,7 +298,7 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
         <span className="row" style={{ gap: 8, flexWrap: "wrap" }}>
           {jiraUrl ? <a className="mono" href={jiraUrl} target="_blank" rel="noreferrer" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{cardRef}</a> : <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{cardRef}</span>}
           {card?.status && <span className="badge out">{card.status}</span>}
-          {current && <span className={STATUS[current.status].badge}>{current.cancelRequested ? "Cancelando" : STATUS[current.status].label}</span>}
+          {current && <span className={STATUS[current.status].badge}>{current.cancelRequested ? "Cancelando" : current.interruptRequested ? "Parando" : STATUS[current.status].label}</span>}
         </span>
         <h1 style={{ ...H1, fontSize: "calc(26px * var(--fs, 1))", lineHeight: "calc(32px * var(--fs, 1))" }}>{title}</h1>
         {data && <RunnerStatus seenAt={data.runnerSeenAt} now={now} />}
@@ -309,6 +311,11 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
           {current.status === "review" && (
             <button className="btn btn-pri btn-sm" type="button" disabled={busy} onClick={() => void askConfirm({ title: `Aprovar ${cardRef}?`, body: "O agente tira os PRs de rascunho e move o card no Jira.", confirmLabel: "Aprovar" }).then((ok) => ok && run(agentApi.approve(current.id), `${cardRef} aprovado`))}>
               Aprovar
+            </button>
+          )}
+          {current.status === "running" && !current.cancelRequested && !current.interruptRequested && (
+            <button className="btn btn-sec btn-sm" type="button" disabled={busy} onClick={() => void run(agentApi.interrupt(current.id), "O agente vai parar e esperar você")}>
+              Parar
             </button>
           )}
           {!FINISHED.has(current.status) && !current.cancelRequested && (
@@ -330,7 +337,11 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
             <div className="bub-a" aria-label="O agente está trabalhando">
               <span className="av u" aria-hidden="true">C</span>
               <span style={small}>
-                {current?.status === "running" ? `Trabalhando${actions ? ` · ${actions}` : ""}` : current?.status === "approved" ? "Finalizando: PRs e card no Jira" : "Na fila do agente"}
+                {current?.status === "running"
+                  ? current.interruptRequested
+                    ? current.pendingMessage ? "Parando para ler sua mensagem" : "Parando"
+                    : `Trabalhando${actions ? ` · ${actions}` : ""}`
+                  : current?.status === "approved" ? "Finalizando: PRs e card no Jira" : current?.status === "changes" ? "Lendo sua mensagem" : "Na fila do agente"}
                 <span className="hcaret" style={{ marginLeft: 6 }} />
               </span>
             </div>
@@ -356,7 +367,7 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
               className="inp grow1"
               rows={2}
               value={text}
-              disabled={working}
+              disabled={blocked}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -364,11 +375,11 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
                   send();
                 }
               }}
-              placeholder={working ? "O agente está trabalhando. Você responde quando ele parar." : startsNew ? "O que o agente deve fazer neste card? (opcional)" : "Responda ou peça uma mudança"}
+              placeholder={blocked ? "Espere o agente pegar o trabalho." : working ? "Mande uma mensagem: o agente para e lê na mesma conversa" : startsNew ? "O que o agente deve fazer neste card? (opcional)" : "Responda ou peça uma mudança"}
               aria-label="Mensagem para o agente"
               style={{ height: "auto", padding: 10, resize: "none", minHeight: 44 }}
             />
-            <button className="btn btn-pri" type="submit" disabled={busy || working || (startsNew ? repos.length > 1 && chosen.length === 0 : !canReply || text.trim() === "")}>
+            <button className="btn btn-pri" type="submit" disabled={busy || blocked || (startsNew ? repos.length > 1 && chosen.length === 0 : !canReply || text.trim() === "")}>
               {startsNew ? "Mandar" : "Enviar"}
             </button>
           </div>
