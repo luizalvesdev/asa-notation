@@ -1,3 +1,5 @@
+import { agentRoutes } from "./agent/routes.js";
+import { PgAgentStore } from "./agent/store.js";
 import { captureRoutes } from "./captures/routes.js";
 import { clipRoutes } from "./clips/routes.js";
 import { writingRoutes } from "./writing/routes.js";
@@ -121,6 +123,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     ...exportRoutes(sql, now),
     ...clipRoutes({ sql, pages: pageStore, settings: settingsStore, ai: aiProvider }),
     ...writingRoutes(aiProvider),
+    ...agentRoutes(new PgAgentStore(sql, now), pushDeps(sql, config, now, pushFetch)),
   ];
 
   return async function handle(incoming: ApiRequest): Promise<ApiResponse> {

@@ -1,3 +1,5 @@
+import { DEMO } from "./demo-flag";
+
 export type RouteId =
   | "busca"
   | "hoje"
@@ -12,7 +14,8 @@ export type RouteId =
   | "configuracoes"
   | "revisao"
   | "estudo-stats"
-  | "importar";
+  | "importar"
+  | "agente";
 
 export interface NavItem {
   id: RouteId;
@@ -28,6 +31,8 @@ export const NAV_MAIN: NavItem[] = [
   { id: "inbox", label: "Inbox", icon: "inbox" },
   { id: "estudo", label: "Estudo", icon: "study" },
   { id: "metas", label: "Metas", icon: "target" },
+  // O agente de trabalho roda na máquina do autor: fora da demo.
+  ...(DEMO ? [] : [{ id: "agente" as const, label: "Trabalho", icon: "kanban" }]),
 ];
 
 export const NAV_HERMES: NavItem[] = [
@@ -51,6 +56,7 @@ export const GO_KEYS: Record<string, RouteId> = {
   e: "estudo",
   v: "revisao",
   m: "metas",
+  t: "agente",
   r: "rotina",
   p: "progresso",
   n: "notificacoes",

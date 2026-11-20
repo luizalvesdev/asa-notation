@@ -46,6 +46,7 @@ const ReviewView = lazy(() => import("./ReviewView").then((m) => ({ default: m.R
 const ProgressoView = lazy(() => import("./ProgressoView").then((m) => ({ default: m.ProgressoView })));
 const RotinaView = lazy(() => import("./RotinaView").then((m) => ({ default: m.RotinaView })));
 const MetasView = lazy(() => import("./MetasView").then((m) => ({ default: m.MetasView })));
+const AgenteView = lazy(() => import("./AgenteView").then((m) => ({ default: m.AgenteView })));
 const NotificationsView = lazy(() => import("./NotificationsView").then((m) => ({ default: m.NotificationsView })));
 const StudyView = lazy(() => import("./StudyView").then((m) => ({ default: m.StudyView })));
 const InboxView = lazy(() => import("./InboxView").then((m) => ({ default: m.InboxView })));
@@ -498,6 +499,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             <StatsView />
           ) : route.id === "metas" ? (
             <MetasView onToast={setToast} />
+          ) : route.id === "agente" ? (
+            <AgenteView onToast={setToast} />
           ) : route.id === "semana" ? (
             <SemanaView onToast={setToast} />
           ) : route.id === "lixeira" ? (

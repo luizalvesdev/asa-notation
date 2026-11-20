@@ -10,9 +10,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      port: demo ? 5174 : 5173,
+      port: Number(process.env.WEB_PORT) || (demo ? 5174 : 5173),
       strictPort: true,
-      ...(demo ? {} : { proxy: { "/api": "http://127.0.0.1:8787" } }),
+      ...(demo ? {} : { proxy: { "/api": process.env.API_PROXY ?? "http://127.0.0.1:8787" } }),
     },
     ...(demo
       ? {
