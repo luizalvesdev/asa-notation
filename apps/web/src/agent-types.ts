@@ -7,12 +7,20 @@ export interface AgentCard {
   url: string | null;
 }
 
+export interface AgentRepo {
+  name: string;
+  base: string;
+}
+
 export interface AgentJob {
   id: string;
   ref: string;
   title: string;
   url: string | null;
   instruction: string;
+  repos: string[];
+  base: string | null;
+  prs: { repo: string; url: string }[];
   status: JobStatus;
   cancelRequested: boolean;
   prUrl: string | null;
@@ -30,6 +38,7 @@ export interface AgentEvent {
 
 export interface AgentState {
   runnerSeenAt: string | null;
+  repos: AgentRepo[];
   cards: AgentCard[];
   jobs: AgentJob[];
 }

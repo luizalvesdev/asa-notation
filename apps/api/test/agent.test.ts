@@ -97,6 +97,24 @@ describe("agent", () => {
     expect((await runner("POST", `/agent/jobs/${running.id}/report`, { status: "review" })).status).toBe(409);
   });
 
+  it("keeps the repos the runner offers, the repos and base of a job, and one PR per repo", async () => {
+    const repos = [{ name: "ibr-v2", base: "homolog" }, { name: "nx", base: "homo" }];
+    expect((await runner("PUT", "/agent/cards", { cards: [], repos })).status).toBe(200);
+    expect(((await app.call("GET", "/agent", { cookies })).body as { repos: unknown }).repos).toEqual(repos);
+    expect((await runner("PUT", "/agent/cards", { cards: [], repos: [{ name: "x", base: "--upload-pack=evil" }] })).status).toBe(400);
+
+    expect((await app.call("POST", "/agent/jobs", { cookies, body: { ref: "IBR-7", repos: ["../etc"] } })).status).toBe(400);
+    expect((await app.call("POST", "/agent/jobs", { cookies, body: { ref: "IBR-7", base: "-x" } })).status).toBe(400);
+    expect((await app.call("POST", "/agent/jobs", { cookies, body: { ref: "IBR-7", base: "a..b" } })).status).toBe(400);
+    const job = await create({ ref: "IBR-7", repos: ["nx", "dotnet", "nx"], base: "feature/IBR-6193/dre-tela-propria" });
+    expect(job).toMatchObject({ repos: ["nx", "dotnet"], base: "feature/IBR-6193/dre-tela-propria", prs: [] });
+
+    expect(await poll()).toMatchObject({ action: "start", job: { repos: ["nx", "dotnet"] } });
+    const prs = [{ repo: "nx", url: "https://github.com/o/nx/pull/1" }, { repo: "dotnet", url: "https://github.com/o/dotnet/pull/2" }];
+    const res = await runner("POST", `/agent/jobs/${job.id}/report`, { status: "review", prs });
+    expect((res.body as { job: Job }).job).toMatchObject({ prs, prUrl: "https://github.com/o/nx/pull/1" });
+  });
+
   it("only accepts reports for running jobs and needs a login", async () => {
     const job = await create({ ref: "IBR-5" });
     expect((await runner("POST", `/agent/jobs/${job.id}/report`, { status: "review" })).status).toBe(409);

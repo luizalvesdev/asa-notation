@@ -1,6 +1,6 @@
 import { broadcast, type PushDeps } from "../push/job.js";
 import { UUID_SOURCE, badRequest, isRecord, json, notFound, type Route } from "../routing.js";
-import type { AgentCard, AgentJob, PgAgentStore } from "./store.js";
+import type { AgentCard, AgentJob, AgentPr, AgentRepo, PgAgentStore } from "./store.js";
 
 /**
  * Agente de trabalho. O celular cria jobs a partir dos cards do Jira e revisa; o script na máquina do usuário
@@ -11,6 +11,18 @@ import type { AgentCard, AgentJob, PgAgentStore } from "./store.js";
 const ID = `(${UUID_SOURCE})`;
 const REF = /^[A-Z][A-Z0-9]{0,15}-\d{1,8}$/;
 const MAX_CARDS = 100;
+const REPO = /^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$/;
+/** Nome de branch do git, sem os casos que o git recusa ou que viram opção de linha de comando. */
+const BRANCH = /^(?!-)(?!.*\.\.)(?!.*\/\/)[A-Za-z0-9._\/-]{1,200}(?<![./])$/;
+
+/** Lista de nomes de repo: undefined quando inválida. */
+function repoList(v: unknown): string[] | undefined {
+  if (v === undefined || v === null) return [];
+  if (!Array.isArray(v) || v.length > 5) return undefined;
+  const names = v.map((x) => (typeof x === "string" ? x.trim() : ""));
+  if (names.some((n) => !REPO.test(n))) return undefined;
+  return [...new Set(names)];
+}
 
 const str = (v: unknown, max: number): string | null => (typeof v === "string" && v.trim().length <= max ? v.trim() : null);
 const webUrl = (v: unknown): string | null | undefined => {
@@ -49,7 +61,7 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
       method: "GET",
       pattern: /^\/agent$/,
       access: "session",
-      handle: async () => json(200, { runnerSeenAt: await store.seenAt(), cards: await store.cards(), jobs: await store.jobs() }),
+      handle: async () => json(200, { runnerSeenAt: await store.seenAt(), repos: await store.repos(), cards: await store.cards(), jobs: await store.jobs() }),
     },
     {
       method: "GET",
@@ -75,9 +87,13 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
         if (title === null) return badRequest("invalid_title");
         const url = webUrl(body.url ?? card?.url);
         if (url === undefined) return badRequest("invalid_url");
+        const repos = repoList(body.repos);
+        if (repos === undefined) return badRequest("invalid_repos");
+        const base = typeof body.base === "string" && body.base.trim() ? body.base.trim() : null;
+        if (base !== null && !BRANCH.test(base)) return badRequest("invalid_base");
         const active = (await store.jobs(200)).find((j) => j.ref === ref && j.status !== "done" && j.status !== "failed" && j.status !== "canceled");
         if (active) return json(409, { error: "job_active", job: active });
-        return json(201, { job: await store.create({ ref, title, url, instruction }) });
+        return json(201, { job: await store.create({ ref, title, url, instruction, repos, base }) });
       },
     },
     {
@@ -139,8 +155,19 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
           if (!REF.test(ref) || title === null || status === null || url === undefined) return badRequest("invalid_cards");
           cards.push({ ref, title, status, url });
         }
+        let repos: AgentRepo[] | null = null;
+        if (isRecord(req.body) && req.body.repos !== undefined) {
+          const raw = req.body.repos;
+          if (!Array.isArray(raw) || raw.length > 10) return badRequest("invalid_repos");
+          repos = [];
+          for (const r of raw) {
+            if (!isRecord(r) || typeof r.name !== "string" || !REPO.test(r.name) || typeof r.base !== "string" || !BRANCH.test(r.base)) return badRequest("invalid_repos");
+            repos.push({ name: r.name, base: r.base });
+          }
+        }
         await store.replaceCards(cards);
-        await store.seen();
+        if (repos) await store.setRepos(repos);
+        else await store.seen();
         return json(200, { cards: cards.length });
       },
     },
@@ -165,8 +192,18 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
         const summary = body.summary === undefined ? undefined : str(body.summary, 1000);
         const prUrl = body.prUrl === undefined ? undefined : webUrl(body.prUrl);
         if (text === null || summary === null || prUrl === undefined && body.prUrl !== undefined) return badRequest("invalid_report");
+        let prs: AgentPr[] | undefined;
+        if (body.prs !== undefined) {
+          if (!Array.isArray(body.prs) || body.prs.length > 5) return badRequest("invalid_report");
+          prs = [];
+          for (const p of body.prs) {
+            const u = isRecord(p) ? webUrl(p.url) : undefined;
+            if (!isRecord(p) || typeof p.repo !== "string" || !REPO.test(p.repo) || !u) return badRequest("invalid_report");
+            prs.push({ repo: p.repo, url: u });
+          }
+        }
         await store.seen();
-        const job = await store.transition(match[1]!, ["running"], status, { ...(summary !== undefined ? { summary } : {}), ...(prUrl !== undefined ? { prUrl } : {}) });
+        const job = await store.transition(match[1]!, ["running"], status, { ...(summary !== undefined ? { summary } : {}), ...(prUrl !== undefined ? { prUrl } : prs?.[0] ? { prUrl: prs[0].url } : {}), ...(prs !== undefined ? { prs } : {}) });
         if (!job) return json(409, { error: "not_running" });
         await store.addEvent(job.id, status === "running" ? "progress" : status, text);
         await notify(job, summary ?? text);

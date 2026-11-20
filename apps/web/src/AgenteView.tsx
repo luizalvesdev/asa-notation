@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { agentApi, ApiError } from "./api";
-import type { AgentCard, AgentEvent, AgentJob, AgentState, JobStatus } from "./agent-types";
+import type { AgentCard, AgentEvent, AgentJob, AgentRepo, AgentState, JobStatus } from "./agent-types";
 import { askConfirm } from "./confirm";
 import { Reveal } from "./Reveal";
 import type { Toast } from "./toast";
@@ -56,16 +56,21 @@ function errorText(err: unknown): string {
   return "Não foi possível falar com o servidor.";
 }
 
-function NewJob({ card, onCreated, onToast }: { card: AgentCard; onCreated: () => void; onToast: (t: Toast) => void }) {
+function NewJob({ card, repos, onCreated, onToast }: { card: AgentCard; repos: AgentRepo[]; onCreated: () => void; onToast: (t: Toast) => void }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<string[]>(() => (repos[0] ? [repos[0].name] : []));
+  const [base, setBase] = useState("");
+  const toggle = (name: string) => setPicked((list) => (list.includes(name) ? list.filter((n) => n !== name) : [...list, name]));
+  const bases = repos.filter((r) => picked.includes(r.name)).map((r) => r.base);
+  const baseHint = [...new Set(bases)].join(", ");
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         setBusy(true);
         agentApi
-          .create(card.ref, text.trim())
+          .create(card.ref, text.trim(), picked, base.trim() || null)
           .then(() => {
             onToast({ text: `${card.ref} foi para a fila do agente` });
             onCreated();
@@ -75,15 +80,27 @@ function NewJob({ card, onCreated, onToast }: { card: AgentCard; onCreated: () =
       }}
       style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 10 }}
     >
+      {repos.length > 1 && (
+        <div className="row" role="group" aria-label="Repositórios" style={{ gap: 6, flexWrap: "wrap" }}>
+          {repos.map((r) => (
+            <button key={r.name} className={`btn btn-sec btn-sm${picked.includes(r.name) ? " on" : ""}`} type="button" aria-pressed={picked.includes(r.name)} onClick={() => toggle(r.name)}>
+              {r.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {repos.length > 0 && (
+        <input className="inp" value={base} onChange={(e) => setBase(e.target.value)} placeholder={baseHint ? `Branch de partida (padrão: ${baseHint})` : "Branch de partida"} aria-label="Branch de partida" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+      )}
       <textarea className="inp" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="Instruções para o agente (opcional). Ex.: comece pelo checkout, não mexa no layout." aria-label={`Instruções para ${card.ref}`} style={{ height: "auto", padding: 10, resize: "vertical" }} />
-      <button className="btn btn-pri btn-sm" type="submit" disabled={busy} style={{ alignSelf: "flex-start" }}>
+      <button className="btn btn-pri btn-sm" type="submit" disabled={busy || (repos.length > 1 && picked.length === 0)} style={{ alignSelf: "flex-start" }}>
         Mandar o agente
       </button>
     </form>
   );
 }
 
-function CardRow({ card, job, onCreated, onToast }: { card: AgentCard; job: AgentJob | undefined; onCreated: () => void; onToast: (t: Toast) => void }) {
+function CardRow({ card, job, repos, onCreated, onToast }: { card: AgentCard; job: AgentJob | undefined; repos: AgentRepo[]; onCreated: () => void; onToast: (t: Toast) => void }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="card" style={{ padding: "12px 14px", borderRadius: 10 }}>
@@ -107,7 +124,7 @@ function CardRow({ card, job, onCreated, onToast }: { card: AgentCard; job: Agen
         )}
       </div>
       <Reveal show={open && !job}>
-        <NewJob card={card} onToast={onToast} onCreated={() => { setOpen(false); onCreated(); }} />
+        <NewJob card={card} repos={repos} onToast={onToast} onCreated={() => { setOpen(false); onCreated(); }} />
       </Reveal>
     </div>
   );
@@ -154,11 +171,14 @@ function JobRow({ job, now, onChanged, onToast }: { job: AgentJob; now: number; 
           <span style={small}>{ago(job.updatedAt, now)}</span>
         </span>
         <span style={{ fontSize: "calc(14px * var(--fs, 1))", fontWeight: 500 }}>{job.title || job.ref}</span>
+        {(job.repos.length > 0 || job.base) && <span className="mono" style={small}>{[job.repos.join(" · "), job.base && `a partir de ${job.base}`].filter(Boolean).join(" ")}</span>}
         {job.summary && <span style={small}>{job.summary}</span>}
       </button>
 
       <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-        {job.prUrl && <a className="btn btn-sec btn-sm" href={job.prUrl} target="_blank" rel="noreferrer">Ver PR</a>}
+        {job.prs.length > 1
+          ? job.prs.map((p) => <a key={p.url} className="btn btn-sec btn-sm" href={p.url} target="_blank" rel="noreferrer">PR {p.repo}</a>)
+          : job.prUrl && <a className="btn btn-sec btn-sm" href={job.prUrl} target="_blank" rel="noreferrer">Ver PR</a>}
         {job.url && <a className="btn btn-fan btn-sm" href={job.url} target="_blank" rel="noreferrer">Jira</a>}
         {job.status === "review" && (
           <button
@@ -275,7 +295,7 @@ export function AgenteView({ onToast }: { onToast: (t: Toast) => void }) {
           <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <h2 style={H2}>Meus cards</h2>
             {state.cards.length === 0 && <span style={small}>Nenhum card ainda. Eles aparecem quando o agente sincroniza com o Jira.</span>}
-            {state.cards.map((c) => <CardRow key={c.ref} card={c} job={activeByRef.get(c.ref)} onCreated={load} onToast={onToast} />)}
+            {state.cards.map((c) => <CardRow key={c.ref} card={c} job={activeByRef.get(c.ref)} repos={state.repos ?? []} onCreated={load} onToast={onToast} />)}
           </section>
           {history.length > 0 && (
             <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>

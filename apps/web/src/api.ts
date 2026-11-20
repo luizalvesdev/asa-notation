@@ -75,7 +75,8 @@ type JobDetail = { job: AgentJob; events: AgentEvent[] };
 export const agentApi = {
   state: () => request<AgentState>("GET", "/agent"),
   job: (id: string) => request<JobDetail>("GET", `/agent/jobs/${id}`),
-  create: (ref: string, instruction: string) => request<{ job: AgentJob }>("POST", "/agent/jobs", { ref, instruction }).then((r) => r.job),
+  create: (ref: string, instruction: string, repos: string[] = [], base: string | null = null) =>
+    request<{ job: AgentJob }>("POST", "/agent/jobs", { ref, instruction, repos, ...(base ? { base } : {}) }).then((r) => r.job),
   approve: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/approve`),
   feedback: (id: string, text: string) => request<JobDetail>("POST", `/agent/jobs/${id}/feedback`, { text }),
   cancel: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/cancel`),

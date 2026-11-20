@@ -6,8 +6,8 @@ After=network-online.target
 ExecStart=/usr/bin/env node %h/Desktop/projetos/asa-notation/tools/asa-runner/runner.mjs
 Restart=on-failure
 RestartSec=30
-# claude, gh and node usually live in the user's PATH, not systemd's.
-Environment=PATH=%h/.local/bin:%h/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
+# claude, gh, node, bun and dotnet usually live in the user's PATH, not systemd's.
+Environment=PATH=%h/.local/bin:%h/.npm-global/bin:%h/.bun/bin:%h/.dotnet:%h/.dotnet/tools:/usr/local/bin:/usr/bin:/bin
 
 [Install]
 WantedBy=default.target

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 // Agente de trabalho do asa-notation. Roda na máquina do usuário e:
 //  - sincroniza os cards do Jira atribuídos a ele com a tela Trabalho do asa (só chave, título, status e link);
-//  - pega os jobs pedidos pelo celular, roda o Claude Code numa worktree do repositório e abre um PR em rascunho;
+//  - pega os jobs pedidos pelo celular, roda o Claude Code em worktrees dos repositórios escolhidos e abre um PR em rascunho por repo;
 //  - aplica os pedidos de mudança na mesma sessão do Claude Code;
 //  - na aprovação, tira o PR de rascunho e move o card no Jira.
 // O código, a descrição dos cards e o relatório do Claude ficam aqui, no Jira e no GitHub. O asa recebe só status e números.
 // Sem dependências: Node 22+, git, gh (logado) e claude no PATH. Configuração em ~/.config/asa-runner/env (veja README.md).
 
 import { spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 
 // ---------- configuração ----------
 
@@ -39,14 +39,14 @@ const need = (name) => {
 const cfg = {
   asaUrl: need("ASA_URL").replace(/\/+$/, ""),
   asaToken: need("ASA_TOKEN"),
-  repoDir: need("REPO_DIR"),
-  baseBranch: need("BASE_BRANCH"),
   jiraSite: need("JIRA_SITE").replace(/\/+$/, ""),
   // Sem token, o Jira é acessado pelo MCP da Atlassian do Claude Code (OAuth), configurado no REPO_DIR.
   jiraToken: env.JIRA_TOKEN || "",
   jiraEmail: env.JIRA_TOKEN ? need("JIRA_EMAIL") : env.JIRA_EMAIL || "",
   jiraCloudId: env.JIRA_CLOUD_ID || "",
   jiraMcpModel: env.JIRA_MCP_MODEL || "haiku",
+  // Passado a toda chamada do Claude Code: assim o MCP da Atlassian funciona em qualquer pasta (worktrees novas inclusive).
+  jiraMcpUrl: env.JIRA_MCP_URL || "https://mcp.atlassian.com/v2/mcp",
   jql: env.JQL || "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
   startStatus: env.JIRA_START_STATUS || "Em andamento",
   doneStatus: env.JIRA_DONE_STATUS || "Aguardando teste do QA",
@@ -54,16 +54,33 @@ const cfg = {
   claudeModel: env.CLAUDE_MODEL || "",
   allowedTools:
     env.CLAUDE_ALLOWED_TOOLS ||
-    "Read Edit Write Glob Grep TodoWrite Bash(git status:*) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Bash(npm test:*) Bash(npm run:*) Bash(npx:*) Bash(bun test:*) Bash(bun run:*) Bash(bunx:*) Bash(ls:*) Bash(cat:*)",
-  branchTemplate: env.BRANCH_TEMPLATE || "asa/{key}",
-  setupCmd: env.SETUP_CMD || "",
-  useWorktree: env.WORKTREE !== "0",
+    "Read Edit Write Glob Grep TodoWrite Bash(cd:*) Bash(git status:*) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Bash(npm test:*) Bash(npm run:*) Bash(npx:*) Bash(nx:*) Bash(bun test:*) Bash(bun run:*) Bash(bunx:*) Bash(dotnet build:*) Bash(dotnet test:*) Bash(dotnet format:*) Bash(osweb-dotnet-user:*) Bash(sh tools/guarded-test.sh:*) Bash(sh tools/sonar-local-guard.sh:*) Bash(ls:*) Bash(cat:*)",
   pollMs: Number(env.POLL_SECONDS || 10) * 1000,
   // Pelo MCP cada sincronização é uma chamada ao Claude: vai com mais calma.
   syncMs: Number(env.SYNC_SECONDS || (env.JIRA_TOKEN ? 120 : 600)) * 1000,
   dryRun: env.DRY_RUN === "1",
   stateDir: env.STATE_DIR || join(homedir(), ".local", "state", "asa-runner"),
 };
+
+/**
+ * Repositórios em que o agente pode trabalhar. Vêm de ~/.config/asa-runner/repos.json (ou REPOS_FILE):
+ * [{ "name": "nx", "dir": "/caminho/Nx-Workspace", "base": "homo", "branch": "{type}/{KEY}/{slug}", "setup": "npm ci" }]
+ * Sem o arquivo, vale um repo só, de REPO_DIR, BASE_BRANCH, BRANCH_TEMPLATE e SETUP_CMD.
+ */
+function loadRepos() {
+  const file = env.REPOS_FILE || join(dirname(ENV_FILE), "repos.json");
+  const list = existsSync(file)
+    ? JSON.parse(readFileSync(file, "utf8"))
+    : [{ name: basename(need("REPO_DIR")), dir: need("REPO_DIR"), base: need("BASE_BRANCH"), branch: env.BRANCH_TEMPLATE, setup: env.SETUP_CMD }];
+  if (!Array.isArray(list) || list.length === 0) throw new Error(`${file}: esperado uma lista de repositórios`);
+  return list.map((r) => {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$/.test(r.name ?? "") || !r.dir || !r.base) throw new Error(`${file}: cada repo precisa de name, dir e base (${JSON.stringify(r)})`);
+    if (!existsSync(join(r.dir, ".git"))) throw new Error(`${r.dir} não é um repositório git`);
+    return { name: r.name, dir: resolve(r.dir), base: r.base, branch: r.branch || "{type}/{KEY}/{slug}", setup: r.setup || "" };
+  });
+}
+const repos = loadRepos();
+const repoByName = new Map(repos.map((r) => [r.name, r]));
 
 mkdirSync(join(cfg.stateDir, "logs"), { recursive: true });
 mkdirSync(join(cfg.stateDir, "reports"), { recursive: true });
@@ -127,15 +144,20 @@ const mcp = !cfg.jiraToken;
 const MCP = "mcp__atlassian__";
 const cloudId = () => cfg.jiraCloudId || new URL(cfg.jiraSite).host;
 
-/** Pede ao Claude Code (no REPO_DIR, onde o MCP da Atlassian está configurado) uma tarefa curta de Jira e lê o JSON da resposta. */
+const mcpConfigArgs = () => (mcp ? ["--mcp-config", JSON.stringify({ mcpServers: { atlassian: { type: "http", url: cfg.jiraMcpUrl } } })] : []);
+
+/** Título e tipo (Bug, História...) de cada card na última sincronização: dão o nome da branch e o título do PR. */
+const cardInfo = new Map();
+
+/** Pede ao Claude Code uma tarefa curta de Jira pelo MCP da Atlassian e lê o JSON da resposta. */
 async function jiraViaClaude(task, tools) {
   const prompt = [
     `Use only the Atlassian MCP tools. cloudId: ${cloudId()}.`,
     task,
     "Reply with the JSON only: no Markdown fence, no text before or after it.",
   ].join("\n");
-  const args = ["-p", prompt, "--output-format", "json", "--model", cfg.jiraMcpModel, "--allowedTools", ...tools.map((t) => MCP + t)];
-  const res = await run(cfg.claudeBin, args, { cwd: cfg.repoDir, timeoutMs: 180_000 });
+  const args = ["-p", prompt, "--output-format", "json", "--model", cfg.jiraMcpModel, ...mcpConfigArgs(), "--allowedTools", ...tools.map((t) => MCP + t)];
+  const res = await run(cfg.claudeBin, args, { cwd: cfg.stateDir, timeoutMs: 180_000 });
   const outer = JSON.parse(res.out);
   if (outer.is_error) throw new Error(`Claude: ${String(outer.result).slice(0, 200)}`);
   const text = String(outer.result ?? "");
@@ -147,10 +169,11 @@ async function jiraViaClaude(task, tools) {
 
 async function myCardsMcp() {
   const list = await jiraViaClaude(
-    `Call searchJiraIssuesUsingJql with jql ${JSON.stringify(cfg.jql)}, fields ["summary","status"] and maxResults 50. Return a JSON array with one object per issue: {"key": issue key, "summary": summary, "status": status name}.`,
+    `Call searchJiraIssuesUsingJql with jql ${JSON.stringify(cfg.jql)}, fields ["summary","status","issuetype"] and maxResults 50. Return a JSON array with one object per issue: {"key": issue key, "summary": summary, "status": status name, "type": issue type name}.`,
     ["searchJiraIssuesUsingJql"],
   );
   if (!Array.isArray(list)) throw new Error("a busca não devolveu uma lista");
+  for (const i of list) if (typeof i?.key === "string") cardInfo.set(i.key, { title: String(i.summary ?? ""), type: String(i.type ?? "") });
   return list
     .filter((i) => typeof i?.key === "string")
     .map((i) => ({ ref: i.key, title: String(i.summary ?? "").slice(0, 300), status: String(i.status ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
@@ -178,7 +201,8 @@ async function moveCardMcp(ref, target) {
 
 async function myCards() {
   if (mcp) return myCardsMcp();
-  const data = await jira("POST", "/rest/api/3/search/jql", { jql: cfg.jql, fields: ["summary", "status"], maxResults: 50 });
+  const data = await jira("POST", "/rest/api/3/search/jql", { jql: cfg.jql, fields: ["summary", "status", "issuetype"], maxResults: 50 });
+  for (const i of data.issues ?? []) cardInfo.set(i.key, { title: String(i.fields?.summary ?? ""), type: String(i.fields?.issuetype?.name ?? "") });
   return (data.issues ?? []).map((i) => ({ ref: i.key, title: String(i.fields?.summary ?? "").slice(0, 300), status: String(i.fields?.status?.name ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
 }
 
@@ -222,36 +246,65 @@ function run(cmd, args, opts = {}) {
 
 const git = (args, cwd, opts) => run("git", args, { cwd, ...opts });
 
-// ---------- worktree ----------
+// ---------- worktrees ----------
 
-async function prepareWorkspace(job) {
-  const key = job.ref.toLowerCase();
-  const branch = cfg.branchTemplate.replaceAll("{key}", key).replaceAll("{KEY}", job.ref);
-  await git(["fetch", "-q", "origin", cfg.baseBranch], cfg.repoDir);
-  if (!cfg.useWorktree) {
-    const dirty = (await git(["status", "--porcelain"], cfg.repoDir)).out;
-    if (dirty) throw new Error("o repositório tem alterações sem commit; o agente não mexe nele assim");
-    const exists = (await git(["rev-parse", "--verify", "--quiet", branch], cfg.repoDir, { allowFail: true })).code === 0;
-    await git(exists ? ["checkout", "-q", branch] : ["checkout", "-q", "-b", branch, `origin/${cfg.baseBranch}`], cfg.repoDir);
-    return { dir: cfg.repoDir, branch };
-  }
-  const dir = join(dirname(cfg.repoDir), ".asa-worktrees", `${basename(cfg.repoDir)}-${key}`);
-  if (!existsSync(dir)) {
-    mkdirSync(dirname(dir), { recursive: true });
-    const exists = (await git(["rev-parse", "--verify", "--quiet", branch], cfg.repoDir, { allowFail: true })).code === 0;
-    await git(exists ? ["worktree", "add", "-q", dir, branch] : ["worktree", "add", "-q", "-b", branch, dir, `origin/${cfg.baseBranch}`], cfg.repoDir);
-    if (cfg.setupCmd) await run("sh", ["-c", cfg.setupCmd], { cwd: dir });
-  }
-  return { dir, branch };
+const slug = (text) =>
+  norm(text || "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .slice(0, 40)
+    .replace(/^-+|-+$/g, "") || "ajuste";
+
+function branchName(repo, job) {
+  const type = /bug|defeito|erro|falha/i.test(cardInfo.get(job.ref)?.type ?? "") ? "fix" : "feature";
+  return repo.branch.replaceAll("{key}", job.ref.toLowerCase()).replaceAll("{KEY}", job.ref).replaceAll("{slug}", slug(job.title)).replaceAll("{type}", type);
 }
 
-async function changes(dir) {
-  const ahead = Number((await git(["rev-list", "--count", `origin/${cfg.baseBranch}..HEAD`], dir)).out || 0);
-  const stat = (await git(["diff", "--shortstat", `origin/${cfg.baseBranch}...HEAD`], dir)).out;
+const commonDir = async (dir) => realpathSync(resolve(dir, (await git(["rev-parse", "--git-common-dir"], dir)).out));
+
+/** Repos do job: os escolhidos no celular ou, sem escolha, o primeiro configurado. */
+function jobRepos(job) {
+  const names = job.repos?.length ? job.repos : [repos[0].name];
+  const unknown = names.filter((n) => !repoByName.has(n));
+  if (unknown.length) throw new Error(`repo não configurado no agente: ${unknown.join(", ")}`);
+  return names.map((n) => repoByName.get(n));
+}
+
+/**
+ * Worktree do card ao lado do repo, no padrão <Repo>-<CARD> (ex.: Nx-Workspace-IBR-6564).
+ * Se já existe uma worktree desse repo para o card, o agente continua nela, na branch em que está, desde que esteja limpa.
+ */
+async function prepareRepo(job, repo) {
+  const base = job.base || repo.base;
+  await git(["fetch", "-q", "origin", base], repo.dir);
+  const dir = join(dirname(repo.dir), `${basename(repo.dir)}-${job.ref}`);
+  if (existsSync(dir)) {
+    const isWorktree = existsSync(join(dir, ".git")) && (await commonDir(dir).catch(() => "")) === (await commonDir(repo.dir));
+    if (!isWorktree) throw new Error(`${dir} já existe e não é uma worktree de ${repo.name}`);
+    if ((await git(["status", "--porcelain"], dir)).out) throw new Error(`${dir} tem alterações sem commit; o agente não mexe nela assim`);
+    const branch = (await git(["branch", "--show-current"], dir)).out;
+    if (!branch) throw new Error(`${dir} não está numa branch`);
+    return { name: repo.name, dir, branch, base, created: false };
+  }
+  const branch = branchName(repo, job);
+  const exists = (await git(["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`], repo.dir, { allowFail: true })).code === 0;
+  await git(exists ? ["worktree", "add", "-q", dir, branch] : ["worktree", "add", "-q", "-b", branch, dir, `origin/${base}`], repo.dir);
+  if (repo.setup) await run("sh", ["-c", repo.setup], { cwd: dir });
+  return { name: repo.name, dir, branch, base, created: true };
+}
+
+async function prepareWorkspaces(job) {
+  const list = [];
+  for (const repo of jobRepos(job)) list.push(await prepareRepo(job, repo));
+  return list;
+}
+
+async function changes(ws) {
+  const ahead = Number((await git(["rev-list", "--count", `origin/${ws.base}..HEAD`], ws.dir)).out || 0);
+  const stat = (await git(["diff", "--shortstat", `origin/${ws.base}...HEAD`], ws.dir)).out;
   const files = /(\d+) files? changed/.exec(stat)?.[1] ?? "0";
   const plus = /(\d+) insertions?/.exec(stat)?.[1] ?? "0";
   const minus = /(\d+) deletions?/.exec(stat)?.[1] ?? "0";
-  const dirty = (await git(["status", "--porcelain"], dir)).out !== "";
+  const dirty = (await git(["status", "--porcelain"], ws.dir)).out !== "";
   const summary = `${ahead} commit${ahead === 1 ? "" : "s"} · ${files} arquivo${files === "1" ? "" : "s"} · +${plus} −${minus}${dirty ? " · há alterações sem commit" : ""}`;
   return { ahead, summary };
 }
@@ -260,22 +313,26 @@ async function changes(dir) {
 
 let current = null; // { jobId, child }
 
-function startPrompt(job, card) {
+function startPrompt(job, card, workspaces) {
   return [
     "Você é um agente de desenvolvimento rodando sozinho: ninguém vai responder perguntas durante esta execução.",
-    `Card ${job.ref} (${card.type || "card"}): ${card.title || job.title}`,
+    `Card ${job.ref} (${card.type || cardInfo.get(job.ref)?.type || "card"}): ${card.title || job.title}`,
     card.viaMcp
       ? `Antes de tudo, leia o card com a ferramenta mcp__atlassian__getJiraIssue (cloudId ${cloudId()}, issue ${job.ref}) e os comentários com mcp__atlassian__listJiraIssueComments. Só leia: não edite, não comente e não mude o status do card.`
       : card.description ? `Descrição do card:\n${card.description}` : "O card não tem descrição.",
     card.comments.length ? `Últimos comentários:\n${card.comments.join("\n")}` : "",
     job.instruction ? `Instruções do dono do card para esta execução:\n${job.instruction}` : "",
     "",
+    workspaces.length > 1 ? "Repositórios deste trabalho (cada um numa worktree própria, já na branch certa):" : "Repositório deste trabalho (numa worktree própria, já na branch certa):",
+    ...workspaces.map((w) => `- ${w.name}: ${w.dir} (branch ${w.branch}, a partir de origin/${w.base})`),
+    "",
     "O que fazer:",
-    "1. Entenda o card e o código. Leia o CLAUDE.md do repositório, se existir, e siga as convenções do projeto.",
-    `2. Implemente na branch atual (já criada a partir de origin/${cfg.baseBranch}). Não troque de branch, não faça push e não abra PR: isso é feito depois.`,
-    "3. Rode os testes e o lint que cobrem o que você mudou.",
-    `4. Faça commits pequenos com mensagem começando por "${job.ref}: ".`,
-    "5. Se faltar informação para decidir, escolha o caminho mais seguro e anote a dúvida no relatório. Não invente regra de negócio.",
+    "1. Entenda o card e o código. Leia o CLAUDE.md e o AGENTS.md de cada repositório que for mexer e siga as convenções deles (testes, build, padrão de commit).",
+    "2. Implemente nas branches atuais. Não troque de branch, não faça push e não abra PR: isso é feito depois.",
+    workspaces.length > 1 ? "3. Mexa só nos repositórios que o card precisa. Nem todos precisam mudar." : "",
+    "4. Rode os testes, o lint e o build que cobrem o que você mudou.",
+    `5. Faça commits pequenos no padrão de cada repositório, citando ${job.ref}. Se um repositório pede uma validação antes do commit e ela não puder rodar, não faça o commit e explique no relatório.`,
+    "6. Se faltar informação para decidir, escolha o caminho mais seguro e anote a dúvida no relatório. Não invente regra de negócio.",
     "",
     "No final, responda apenas com o relatório em Markdown que vai na descrição do PR, com as seções: ## O que mudou, ## Como testar, ## Dúvidas e pendências.",
   ]
@@ -288,17 +345,20 @@ const feedbackPrompt = (job, text) =>
     `Pedido de mudança na revisão do ${job.ref}:`,
     text,
     "",
-    `Ajuste, rode os testes, faça commit (mensagem começando por "${job.ref}: ") e responda apenas com o relatório atualizado, no mesmo formato de antes.`,
+    `Ajuste, rode os testes, faça commit (no padrão de cada repositório, citando ${job.ref}) e responda apenas com o relatório atualizado, no mesmo formato de antes.`,
   ].join("\n");
 
 /** Roda o Claude Code e conta o andamento ao asa (só o número de ações). Devolve o relatório final. */
-function runClaude(job, cwd, prompt, resumeSession) {
+function runClaude(job, workspaces, prompt, resumeSession) {
   const tools = cfg.allowedTools.split(/\s+(?![^(]*\))/).filter(Boolean);
   if (mcp) tools.push(`${MCP}getJiraIssue`, `${MCP}listJiraIssueComments`);
-  const args = ["-p", prompt, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits", "--allowedTools", ...tools];
+  const args = ["-p", prompt, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits", ...mcpConfigArgs()];
+  for (const w of workspaces.slice(1)) args.push("--add-dir", w.dir);
+  args.push("--allowedTools", ...tools);
   if (cfg.claudeModel) args.push("--model", cfg.claudeModel);
   if (resumeSession) args.push("--resume", resumeSession);
   const logFile = join(cfg.stateDir, "logs", `${job.ref}-${Date.now()}.jsonl`);
+  const cwd = workspaces[0].dir;
 
   return new Promise((resolve, reject) => {
     const child = spawn(cfg.claudeBin, args, { cwd, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
@@ -371,59 +431,80 @@ async function openOrUpdatePr(job, ws, reportFile) {
     await run("gh", ["pr", "edit", existing.out, "--body-file", reportFile], { cwd: ws.dir });
     return existing.out;
   }
-  const created = await run("gh", ["pr", "create", "--draft", "--base", cfg.baseBranch, "--head", ws.branch, "--title", `${job.ref}: ${job.title}`.slice(0, 250), "--body-file", reportFile], { cwd: ws.dir });
+  const created = await run("gh", ["pr", "create", "--draft", "--base", ws.base, "--head", ws.branch, "--title", (job.title ? `${job.ref}: ${job.title}` : job.ref).slice(0, 250), "--body-file", reportFile], { cwd: ws.dir });
   return created.out.split("\n").find((l) => l.startsWith("https://")) ?? null;
 }
 
 // ---------- ações ----------
 
-async function afterClaude(job, ws, outcome) {
+async function afterClaude(job, workspaces, outcome) {
   if (outcome.canceled) return log(job.ref, "cancelado");
   state.jobs[job.id] = { ...state.jobs[job.id], sessionId: outcome.sessionId };
   saveState();
   const reportFile = join(cfg.stateDir, "reports", `${job.ref}.md`);
   writeFileSync(reportFile, `${outcome.report}\n\n---\n_Feito pelo agente do asa a partir do ${job.ref}._\n`);
-  const { ahead, summary } = await changes(ws.dir);
-  if (ahead === 0) {
+  const lines = [];
+  const prs = [];
+  for (const ws of workspaces) {
+    const { ahead, summary } = await changes(ws);
+    if (ahead === 0) continue;
+    lines.push(workspaces.length > 1 ? `${ws.name}: ${summary}` : summary);
+    const url = await openOrUpdatePr(job, ws, reportFile);
+    if (url) prs.push({ repo: ws.name, url });
+  }
+  state.jobs[job.id] = { ...state.jobs[job.id], prs };
+  saveState();
+  if (lines.length === 0) {
     await report(job.id, "review", { summary: `Nenhum commit. O relatório ficou em ${reportFile}`, text: "O agente terminou sem alterar o código. Peça uma mudança para ele continuar." });
     return;
   }
-  const prUrl = await openOrUpdatePr(job, ws, reportFile);
-  await report(job.id, "review", { summary, ...(prUrl ? { prUrl } : {}), text: prUrl ? "PR em rascunho atualizado com o relatório." : "[teste] sem push nem PR." });
+  const text = cfg.dryRun ? "[teste] sem push nem PR." : prs.length ? `PR em rascunho atualizado com o relatório: ${prs.map((p) => p.repo).join(", ")}.` : "Sem PR.";
+  await report(job.id, "review", { summary: lines.join(" · ").slice(0, 1000), text, ...(prs.length ? { prs } : {}) });
 }
 
 async function start(job) {
   log(job.ref, "começando");
   const card = await cardDetails(job.ref);
-  job = { ...job, title: job.title || card.title };
+  job = { ...job, title: job.title || card.title || cardInfo.get(job.ref)?.title || "" };
   const moved = await moveCard(job.ref, cfg.startStatus).catch((e) => `não consegui mover o card: ${firstLine(e)}`);
   await report(job.id, "running", { text: moved });
-  const ws = await prepareWorkspace(job);
-  state.jobs[job.id] = { ref: job.ref, title: job.title, dir: ws.dir, branch: ws.branch };
+  const workspaces = await prepareWorkspaces(job);
+  state.jobs[job.id] = { ref: job.ref, title: job.title, workspaces };
   saveState();
-  await afterClaude(job, ws, await runClaude(job, ws.dir, startPrompt(job, card), null));
+  await afterClaude(job, workspaces, await runClaude(job, workspaces, startPrompt(job, card, workspaces), null));
 }
 
 async function feedback(job, text) {
   log(job.ref, "pedido de mudança");
   const saved = state.jobs[job.id];
   job = { ...job, title: job.title || saved?.title || "" };
-  const ws = saved?.dir && existsSync(saved.dir) ? { dir: saved.dir, branch: saved.branch } : await prepareWorkspace(job);
-  // Sem a sessão (outra máquina, estado apagado), começa uma nova com o card e o pedido.
-  const prompt = saved?.sessionId ? feedbackPrompt(job, text) : `${startPrompt(job, await cardDetails(job.ref))}\n\n${feedbackPrompt(job, text)}`;
-  await afterClaude(job, ws, await runClaude(job, ws.dir, prompt, saved?.sessionId ?? null));
+  const kept = saved?.workspaces?.every((w) => existsSync(w.dir)) ? saved.workspaces : null;
+  const workspaces = kept ?? (await prepareWorkspaces(job));
+  if (!kept) {
+    state.jobs[job.id] = { ...saved, ref: job.ref, title: job.title, workspaces, sessionId: undefined };
+    saveState();
+  }
+  // Sem a sessão (outra máquina, estado apagado, worktrees refeitas), começa uma nova com o card e o pedido.
+  const session = kept ? saved?.sessionId : null;
+  const prompt = session ? feedbackPrompt(job, text) : `${startPrompt(job, await cardDetails(job.ref), workspaces)}\n\n${feedbackPrompt(job, text)}`;
+  await afterClaude(job, workspaces, await runClaude(job, workspaces, prompt, session ?? null));
 }
 
 async function approve(job) {
   log(job.ref, "aprovado");
+  const saved = state.jobs[job.id];
   const notes = [];
-  if (job.prUrl && !cfg.dryRun) {
-    await run("gh", ["pr", "ready", job.prUrl], { cwd: cfg.repoDir });
-    notes.push("PR pronto para revisão");
+  const prs = saved?.prs?.length ? saved.prs : job.prUrl ? [{ repo: "", url: job.prUrl }] : [];
+  if (!cfg.dryRun) {
+    for (const pr of prs) await run("gh", ["pr", "ready", pr.url], { cwd: saved?.workspaces?.[0]?.dir ?? repos[0].dir });
+    if (prs.length) notes.push(prs.length > 1 ? `${prs.length} PRs prontos para revisão` : "PR pronto para revisão");
   }
   notes.push(await moveCard(job.ref, cfg.doneStatus).catch((e) => `não consegui mover o card: ${firstLine(e)}`));
-  const saved = state.jobs[job.id];
-  if (cfg.useWorktree && saved?.dir && existsSync(saved.dir)) await git(["worktree", "remove", saved.dir], cfg.repoDir, { allowFail: true });
+  // Só remove as worktrees que o próprio agente criou; as que já existiam ficam como estavam.
+  for (const w of saved?.workspaces ?? []) {
+    const repo = repoByName.get(w.name);
+    if (w.created && repo && existsSync(w.dir)) await git(["worktree", "remove", w.dir], repo.dir, { allowFail: true });
+  }
   delete state.jobs[job.id];
   saveState();
   await report(job.id, "done", { text: notes.join(" · "), summary: notes.join(" · ") });
@@ -448,7 +529,7 @@ let lastSync = 0;
 async function syncCards() {
   try {
     const cards = await myCards();
-    await asa("PUT", "/agent/cards", { cards });
+    await asa("PUT", "/agent/cards", { cards, repos: repos.map((r) => ({ name: r.name, base: r.base })) });
     log(`cards sincronizados: ${cards.length}`);
   } catch (err) {
     log("falha ao sincronizar cards:", firstLine(err));
@@ -456,7 +537,7 @@ async function syncCards() {
 }
 
 async function main() {
-  log(`asa-runner ${cfg.dryRun ? "(modo teste) " : ""}· ${cfg.asaUrl} · repo ${cfg.repoDir} (${cfg.baseBranch}) · Jira ${mcp ? "pelo MCP" : "pela API"}`);
+  log(`asa-runner ${cfg.dryRun ? "(modo teste) " : ""}· ${cfg.asaUrl} · repos ${repos.map((r) => `${r.name} (${r.base})`).join(", ")} · Jira ${mcp ? "pelo MCP" : "pela API"}`);
   const stop = () => {
     current?.child.kill("SIGTERM");
     process.exit(0);

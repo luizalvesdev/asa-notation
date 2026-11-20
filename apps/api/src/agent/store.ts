@@ -14,12 +14,28 @@ export interface AgentCard {
   url: string | null;
 }
 
+/** Repositório que o agente sabe usar, com a branch de onde parte por padrão. */
+export interface AgentRepo {
+  name: string;
+  base: string;
+}
+
+export interface AgentPr {
+  repo: string;
+  url: string;
+}
+
 export interface AgentJob {
   id: string;
   ref: string;
   title: string;
   url: string | null;
   instruction: string;
+  /** Repos escolhidos no celular; vazio usa o primeiro repo do agente. */
+  repos: string[];
+  /** Branch de partida escolhida no celular; null usa a de cada repo. */
+  base: string | null;
+  prs: AgentPr[];
   status: JobStatus;
   cancelRequested: boolean;
   prUrl: string | null;
@@ -51,6 +67,9 @@ function toJob(row: Row): AgentJob {
     title: row.title as string,
     url: (row.url as string | null) ?? null,
     instruction: row.instruction as string,
+    repos: (row.repos as string[] | null) ?? [],
+    base: (row.base as string | null) ?? null,
+    prs: (row.prs as AgentPr[] | null) ?? [],
     status: row.status as JobStatus,
     cancelRequested: row.cancel_requested as boolean,
     prUrl: (row.pr_url as string | null) ?? null,
@@ -60,7 +79,7 @@ function toJob(row: Row): AgentJob {
   };
 }
 
-const COLS = "id, ref, title, url, instruction, status, cancel_requested, pr_url, summary, created_at, updated_at";
+const COLS = "id, ref, title, url, instruction, repos, base, prs, status, cancel_requested, pr_url, summary, created_at, updated_at";
 
 export class PgAgentStore {
   constructor(
@@ -74,6 +93,15 @@ export class PgAgentStore {
 
   async seen(): Promise<void> {
     await this.sql.query("insert into agent_runner (id, seen_at) values (1, $1) on conflict (id) do update set seen_at = excluded.seen_at", [this.nowIso()]);
+  }
+
+  async setRepos(repos: AgentRepo[]): Promise<void> {
+    await this.sql.query("insert into agent_runner (id, seen_at, repos) values (1, $1, $2::jsonb) on conflict (id) do update set seen_at = excluded.seen_at, repos = excluded.repos", [this.nowIso(), JSON.stringify(repos)]);
+  }
+
+  async repos(): Promise<AgentRepo[]> {
+    const rows = await this.sql.query("select repos from agent_runner where id = 1");
+    return (rows[0]?.repos as AgentRepo[] | undefined) ?? [];
   }
 
   async seenAt(): Promise<string | null> {
@@ -116,11 +144,11 @@ export class PgAgentStore {
     await this.sql.query("insert into agent_events (job_id, kind, text, created_at) values ($1, $2, $3, $4)", [jobId, kind, text, this.nowIso()]);
   }
 
-  async create(input: { ref: string; title: string; url: string | null; instruction: string }): Promise<AgentJob> {
+  async create(input: { ref: string; title: string; url: string | null; instruction: string; repos?: string[]; base?: string | null }): Promise<AgentJob> {
     const now = this.nowIso();
     const rows = await this.sql.query(
-      `insert into agent_jobs (ref, title, url, instruction, created_at, updated_at) values ($1, $2, $3, $4, $5, $5) returning ${COLS}`,
-      [input.ref, input.title, input.url, input.instruction, now],
+      `insert into agent_jobs (ref, title, url, instruction, repos, base, created_at, updated_at) values ($1, $2, $3, $4, $5::text[], $6, $7, $7) returning ${COLS}`,
+      [input.ref, input.title, input.url, input.instruction, input.repos ?? [], input.base ?? null, now],
     );
     const job = toJob(rows[0]!);
     await this.addEvent(job.id, "created", input.instruction);
@@ -128,15 +156,16 @@ export class PgAgentStore {
   }
 
   /** Muda o status só se o job ainda está num dos `from`. Devolve o job atualizado ou null. */
-  async transition(id: string, from: JobStatus[], to: JobStatus, set: { feedback?: string | null; prUrl?: string | null; summary?: string; cancelRequested?: boolean } = {}): Promise<AgentJob | null> {
+  async transition(id: string, from: JobStatus[], to: JobStatus, set: { feedback?: string | null; prUrl?: string | null; prs?: AgentPr[]; summary?: string; cancelRequested?: boolean } = {}): Promise<AgentJob | null> {
     const rows = await this.sql.query(
       `update agent_jobs set status = $3, updated_at = $4,
           feedback = case when $5::boolean then $6 else feedback end,
           pr_url = case when $7::boolean then $8 else pr_url end,
           summary = coalesce($9, summary),
-          cancel_requested = coalesce($10, cancel_requested)
+          cancel_requested = coalesce($10, cancel_requested),
+          prs = coalesce($11::jsonb, prs)
         where id = $1 and status = any($2::text[]) returning ${COLS}`,
-      [id, from, to, this.nowIso(), set.feedback !== undefined, set.feedback ?? null, set.prUrl !== undefined, set.prUrl ?? null, set.summary ?? null, set.cancelRequested ?? null],
+      [id, from, to, this.nowIso(), set.feedback !== undefined, set.feedback ?? null, set.prUrl !== undefined, set.prUrl ?? null, set.summary ?? null, set.cancelRequested ?? null, set.prs === undefined ? null : JSON.stringify(set.prs)],
     );
     return rows[0] ? toJob(rows[0]) : null;
   }
