@@ -54,7 +54,7 @@ const cfg = {
   claudeModel: env.CLAUDE_MODEL || "",
   allowedTools:
     env.CLAUDE_ALLOWED_TOOLS ||
-    "Read Edit Write Glob Grep TodoWrite Bash(cd:*) Bash(git status:*) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Bash(npm test:*) Bash(npm run:*) Bash(npx:*) Bash(nx:*) Bash(bun test:*) Bash(bun run:*) Bash(bunx:*) Bash(dotnet build:*) Bash(dotnet test:*) Bash(dotnet format:*) Bash(osweb-dotnet-user:*) Bash(sh tools/guarded-test.sh:*) Bash(sh tools/sonar-local-guard.sh:*) Bash(ls:*) Bash(cat:*)",
+    "Read Edit Write Glob Grep TodoWrite Bash(cd:*) Bash(git status:*) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Bash(npm test:*) Bash(npm run:*) Bash(npx:*) Bash(nx:*) Bash(bun test:*) Bash(bun run:*) Bash(bun install:*) Bash(bunx:*) Bash(npm ci:*) Bash(npm install:*) Bash(dotnet build:*) Bash(dotnet test:*) Bash(dotnet format:*) Bash(osweb-dotnet-user:*) Bash(sh tools/guarded-test.sh:*) Bash(sh tools/sonar-local-guard.sh:*) Bash(ls:*) Bash(cat:*) Bash(head:*) Bash(tail:*) Bash(wc:*) Bash(grep:*) Bash(rtk read:*)",
   pollMs: Number(env.POLL_SECONDS || 10) * 1000,
   // Pelo MCP cada sincronização é uma chamada ao Claude: vai com mais calma.
   syncMs: Number(env.SYNC_SECONDS || (env.JIRA_TOKEN ? 120 : 600)) * 1000,
@@ -354,8 +354,21 @@ const feedbackPrompt = (job, text) =>
   ].join("\n");
 
 /** Roda o Claude Code e conta o andamento ao asa (só o número de ações). Devolve o relatório final. */
-function runClaude(job, workspaces, prompt, resumeSession) {
+/**
+ * Ferramentas liberadas para o Claude Code. Hooks como o do RTK reescrevem `git add` para `rtk git add`,
+ * então cada regra de Bash também vale com o prefixo `rtk`.
+ */
+function allowedTools() {
   const tools = cfg.allowedTools.split(/\s+(?![^(]*\))/).filter(Boolean);
+  const withRtk = tools.flatMap((t) => {
+    const m = /^Bash\((?!rtk )(.+)\)$/.exec(t);
+    return m ? [t, `Bash(rtk ${m[1]})`] : [t];
+  });
+  return [...new Set(withRtk)];
+}
+
+function runClaude(job, workspaces, prompt, resumeSession) {
+  const tools = allowedTools();
   if (mcp) tools.push(`${MCP}getJiraIssue`, `${MCP}listJiraIssueComments`);
   const args = ["-p", prompt, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits", ...mcpConfigArgs()];
   for (const w of workspaces.slice(1)) args.push("--add-dir", w.dir);
