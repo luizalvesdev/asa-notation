@@ -128,7 +128,7 @@ function Board({ state }: { state: AgentState }) {
   return (
     <div className="kanban" role="list" aria-label="Cards por status" style={{ display: "flex", gap: 12, overflowX: "auto", scrollSnapType: "x mandatory", paddingBottom: 8, margin: "0 -20px", paddingLeft: 20, paddingRight: 20 }}>
       {ordered.map((col) => (
-        <section key={col.name} role="listitem" aria-label={col.name} style={{ flex: "1 0 272px", maxWidth: 360, scrollSnapAlign: "start", display: "flex", flexDirection: "column", gap: 8, background: "var(--bg-2)", borderRadius: 12, padding: 10 }}>
+        <section key={col.name} role="listitem" aria-label={col.name} style={{ flex: "1 1 0", minWidth: 272, scrollSnapAlign: "start", display: "flex", flexDirection: "column", gap: 8, background: "var(--bg-2)", borderRadius: 12, padding: 10 }}>
           <h2 className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", fontWeight: 600, color: "var(--text-2)", padding: "2px 4px" }}>
             {col.name}
             <span style={{ fontWeight: 400 }}>{col.cards.length}</span>
@@ -397,7 +397,7 @@ function BoardView() {
   usePolling(load, BOARD_POLL_MS);
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "36px 20px 120px", display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ width: "100%", padding: "36px 20px 120px", display: "flex", flexDirection: "column", gap: 20 }}>
       <div className="col" style={{ gap: 6 }}>
         <h1 style={H1}>Trabalho</h1>
         {state && <RunnerStatus seenAt={state.runnerSeenAt} now={now} />}
