@@ -1,6 +1,8 @@
+import { DEMO } from "./demo-flag";
+
 /** Registra o service worker só no build de produção (em desenvolvimento ele atrapalha o hot reload). */
 export function registerServiceWorker(): void {
-  if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
+  if (!import.meta.env.PROD || DEMO || !("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   });

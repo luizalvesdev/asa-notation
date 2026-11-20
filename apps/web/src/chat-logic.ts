@@ -1,3 +1,4 @@
+import { DEMO, DEMO_AI_OFF } from "./demo-flag";
 import { ApiError } from "./api";
 import type { Draft } from "./chat-types";
 
@@ -59,7 +60,7 @@ export type ChatErrorKind = "no_key" | "invalid_key" | "rate_limited" | "offline
 export function classifyChatError(err: unknown): { kind: ChatErrorKind; message: string } {
   if (err instanceof ApiError) {
     const code = typeof err.body === "object" && err.body !== null ? (err.body as { error?: unknown }).error : undefined;
-    if (err.status === 412 || code === "no_key") return { kind: "no_key", message: "Configure uma chave de IA para conversar com os assistentes." };
+    if (err.status === 412 || code === "no_key") return { kind: "no_key", message: DEMO ? DEMO_AI_OFF : "Configure uma chave de IA para conversar com os assistentes." };
     if (code === "invalid_key") return { kind: "invalid_key", message: "O provedor recusou a chave. Confira em Configurações > Assistentes." };
     if (err.status === 429) return { kind: "rate_limited", message: "Muitas mensagens em pouco tempo. Aguarde um instante e tente de novo." };
     if (err.status === 504) return { kind: "other", message: "O provedor demorou para responder. Tente de novo." };

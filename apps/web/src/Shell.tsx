@@ -1,3 +1,4 @@
+import { DEMO, resetDemo } from "./demo-flag";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, capturesApi, pagesApi, studyApi } from "./api";
 import { BottomNav } from "./BottomNav";
@@ -433,6 +434,16 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             )}
           </nav>
           <div className="tb-r">
+            {DEMO && (
+              <button
+                className="btn btn-sec btn-sm"
+                type="button"
+                title="Tudo roda no seu navegador. Recomeçar apaga o que você mudou e volta ao conteúdo inicial."
+                onClick={() => void askConfirm({ title: "Recomeçar a demo?", body: "O que você criou ou mudou aqui some e o conteúdo inicial volta.", confirmLabel: "Recomeçar" }).then((ok) => ok && resetDemo())}
+              >
+                Demo · recomeçar
+              </button>
+            )}
             <button className="btn btn-fan btn-sm" type="button" onClick={() => setCaptureOpen(true)}>
               <Icon name="plus" />
               Capturar
@@ -446,9 +457,11 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Alternar tema" onClick={onToggleTheme}>
               <ThemeIcon />
             </button>
-            <button className="btn btn-fan btn-sm" type="button" onClick={onLogout}>
-              Sair
-            </button>
+            {!DEMO && (
+              <button className="btn btn-fan btn-sm" type="button" onClick={onLogout}>
+                Sair
+              </button>
+            )}
           </div>
         </header>
         <main className="scroll">

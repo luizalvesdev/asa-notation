@@ -1,3 +1,4 @@
+import { DEMO } from "./demo-flag";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiApi, chatApi } from "./api";
 import { classifyChatError, describeDraft, describeResult, draftTarget, historySummary, toolLabel, type ChatErrorKind } from "./chat-logic";
@@ -297,9 +298,9 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
         <div className="chat-body" ref={body} aria-live="polite">
           {configured === false && messages.length === 0 && (
             <div className="card enter" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>Conecte uma chave de IA</b>
-              <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", lineHeight: "calc(19px * var(--fs, 1))" }}>Hermes e Renato usam o Claude com a sua chave. Ela fica cifrada no servidor e você pode removê-la quando quiser.</span>
-              <a className="btn btn-pri btn-sm" href={routeHash("configuracoes")} style={{ alignSelf: "flex-start" }} onClick={onClose}>Abrir configurações</a>
+              <b style={{ fontWeight: 600, fontSize: "calc(14px * var(--fs, 1))" }}>{DEMO ? "Assistentes desligados na demo" : "Conecte uma chave de IA"}</b>
+              <span style={{ fontSize: "calc(13px * var(--fs, 1))", color: "var(--text-2)", lineHeight: "calc(19px * var(--fs, 1))" }}>{DEMO ? "No app de verdade, Hermes organiza tarefas e rotina e Renato cuida das notas e do estudo, com o Claude. Aqui eles usariam a conta do autor, então ficam de fora." : "Hermes e Renato usam o Claude com a sua chave. Ela fica cifrada no servidor e você pode removê-la quando quiser."}</span>
+              {!DEMO && <a className="btn btn-pri btn-sm" href={routeHash("configuracoes")} style={{ alignSelf: "flex-start" }} onClick={onClose}>Abrir configurações</a>}
             </div>
           )}
           {configured !== false && messages.length === 0 && (
@@ -340,7 +341,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           )}
           <Reveal show={!!error}>{error && (<div className="draft-ok enter" role="alert" style={{ background: "var(--warning-soft)", borderColor: "transparent", color: "var(--warning)", flexWrap: "wrap" }}>
               <span>{error.message}</span>
-              {(error.kind === "no_key" || error.kind === "invalid_key") && <a className="btn btn-fan btn-sm" href={routeHash("configuracoes")} onClick={onClose} style={{ color: "inherit" }}>Configurações</a>}
+              {!DEMO && (error.kind === "no_key" || error.kind === "invalid_key") && <a className="btn btn-fan btn-sm" href={routeHash("configuracoes")} onClick={onClose} style={{ color: "inherit" }}>Configurações</a>}
             </div>)}</Reveal>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { DEMO, DEMO_AI_OFF } from "./demo-flag";
 import { useEffect, useMemo, useState } from "react";
 import { goalsApi, studyApi } from "./api";
 import { CardEditor } from "./CardEditor";
@@ -206,7 +207,7 @@ function Extractor({ nodes, decks, onCreated, onToast }: { nodes: TreeNode[]; de
       onToast({
         text:
           code === "page_too_short" ? "A página tem pouco texto para virar cards."
-          : code === "ai_not_configured" ? "Configure os assistentes em Configurações para gerar cards."
+          : code === "ai_not_configured" ? (DEMO ? DEMO_AI_OFF : "Configure os assistentes em Configurações para gerar cards.")
           : code === "ai_busy" ? "A IA está ocupada. Tente de novo em instantes."
           : "Não foi possível gerar os cards.",
       });

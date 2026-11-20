@@ -60,7 +60,7 @@ export interface AppDeps {
 }
 
 const defaultPushFetch: PushFetch = async (url, init) => {
-  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(10_000) });
+  const res = await fetch(url, { method: init.method, headers: init.headers, body: new Blob([init.body as Uint8Array<ArrayBuffer>]), signal: AbortSignal.timeout(10_000) });
   return { status: res.status };
 };
 

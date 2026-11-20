@@ -1,3 +1,4 @@
+import { DEMO, DEMO_AI_OFF } from "./demo-flag";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ApiError, accountApi, aiApi, pushApi, settingsApi, tokensApi, type PushDevice } from "./api";
 import { currentSubscription, disablePush, enablePush, pushSupport } from "./push-client";
@@ -23,8 +24,10 @@ interface SettingsViewProps {
   onToast: (toast: Toast) => void;
 }
 
-const TABS = ["Geral", "Rotina", "Assistentes", "API", "Dados", "Aplicativo", "Conta"] as const;
-type Tab = (typeof TABS)[number];
+const ALL_TABS = ["Geral", "Rotina", "Assistentes", "API", "Dados", "Aplicativo", "Conta"] as const;
+type Tab = (typeof ALL_TABS)[number];
+// Na demo não há conta, tokens de API nem MCP.
+const TABS = DEMO ? ALL_TABS.filter((t) => t !== "API" && t !== "Conta") : ALL_TABS;
 
 const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" } as const;
 
@@ -586,8 +589,8 @@ export function SettingsView({ preference, onPreference, onLogout, onToast }: Se
       {needsSettings && failed && <div className="card" role="alert" style={{ padding: 16, fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as configurações.</div>}
       {tab === "Geral" && settings && <General key="g" settings={s} save={save} preference={preference} onPreference={onPreference} />}
       {tab === "Rotina" && settings && <Routine key="r" settings={s} save={save} />}
-      {tab === "Rotina" && <PushCard onToast={onToast} />}
-      {tab === "Assistentes" && <Assistants onToast={onToast} settings={settings} save={save} />}
+      {tab === "Rotina" && !DEMO && <PushCard onToast={onToast} />}
+      {tab === "Assistentes" && (DEMO ? <div className="card" style={{ padding: 16, fontSize: "calc(14px * var(--fs, 1))", color: "var(--text-2)" }}>{DEMO_AI_OFF}</div> : <Assistants onToast={onToast} settings={settings} save={save} />)}
       {tab === "API" && <Tokens onToast={onToast} />}
       {tab === "Dados" && <Data onToast={onToast} />}
       {tab === "Aplicativo" && <App />}

@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:demo": "vite --mode demo",
+    "build:demo": "tsc --noEmit && tsc -p tsconfig.demo.json --noEmit && vite build --mode demo && mv dist-demo/demo.html dist-demo/index.html"
   },
   "dependencies": {
     "@tiptap/extension-code-block-lowlight": "^3.34.0",
@@ -32,9 +34,13 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
+    "@noble/ciphers": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.2.1",
+    "buffer": "^6.0.3",
     "vite": "^8.3.5"
   }
 }

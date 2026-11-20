@@ -1,3 +1,4 @@
+import { DEMO, DEMO_AI_OFF } from "./demo-flag";
 import type { Editor, JSONContent } from "@tiptap/react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -65,7 +66,7 @@ function afterBlock(editor: Editor, pos: number): number {
 function errorText(err: unknown): string {
   if (!(err instanceof ApiError)) return "A IA não respondeu. Tente de novo.";
   const code = (err.body as { error?: string } | null)?.error;
-  if (code === "ai_not_configured") return "Configure os assistentes em Configurações para usar a IA.";
+  if (code === "ai_not_configured") return DEMO ? DEMO_AI_OFF : "Configure os assistentes em Configurações para usar a IA.";
   if (code === "ai_busy") return "A IA está ocupada. Tente de novo em instantes.";
   if (code === "page_too_short") return "A página tem pouco texto para melhorar.";
   return "A IA não respondeu. Tente de novo.";
