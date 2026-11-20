@@ -73,6 +73,18 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
       },
     },
     {
+      method: "GET",
+      pattern: /^\/agent\/cards\/([A-Za-z][A-Za-z0-9]{0,15}-\d{1,8})$/,
+      access: "session",
+      handle: async ({ match }) => {
+        const ref = match[1]!.toUpperCase();
+        const jobs = await store.jobsFor(ref);
+        const thread = [];
+        for (const job of jobs) thread.push({ job, events: await store.events(job.id) });
+        return json(200, { card: await store.card(ref), repos: await store.repos(), runnerSeenAt: await store.seenAt(), thread });
+      },
+    },
+    {
       method: "POST",
       pattern: /^\/agent\/jobs$/,
       access: "session",
@@ -178,6 +190,21 @@ export function agentRoutes(store: PgAgentStore, push: PushDeps): Route[] {
       handle: async () => {
         await store.seen();
         return json(200, { next: await store.next() });
+      },
+    },
+    {
+      // O que o Claude Code escreve enquanto trabalha: vira mensagem no chat do card.
+      method: "POST",
+      pattern: new RegExp(`^/agent/jobs/${ID}/reply$`),
+      access: "session",
+      handle: async ({ req, match }) => {
+        const text = isRecord(req.body) ? str(req.body.text, 20000) : null;
+        if (!text) return badRequest("invalid_text");
+        const job = await store.get(match[1]!);
+        if (!job) return notFound();
+        if (job.status !== "running") return json(409, { error: "not_running" });
+        await store.addEvent(job.id, "reply", text);
+        return json(200, { ok: true });
       },
     },
     {

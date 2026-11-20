@@ -31,7 +31,7 @@ export interface AgentJob {
 
 export interface AgentEvent {
   id: number;
-  kind: "created" | "started" | "progress" | "review" | "feedback" | "approved" | "done" | "failed" | "canceled";
+  kind: "created" | "started" | "progress" | "review" | "feedback" | "reply" | "approved" | "done" | "failed" | "canceled";
   text: string;
   createdAt: string;
 }
@@ -41,4 +41,12 @@ export interface AgentState {
   repos: AgentRepo[];
   cards: AgentCard[];
   jobs: AgentJob[];
+}
+
+/** Conversa de um card: os jobs dele, do mais antigo ao mais novo, cada um com seus eventos. */
+export interface CardThread {
+  card: AgentCard | null;
+  repos: AgentRepo[];
+  runnerSeenAt: string | null;
+  thread: { job: AgentJob; events: AgentEvent[] }[];
 }

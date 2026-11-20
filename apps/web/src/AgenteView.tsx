@@ -1,42 +1,49 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { agentApi, ApiError } from "./api";
-import type { AgentCard, AgentEvent, AgentJob, AgentRepo, AgentState, JobStatus } from "./agent-types";
+import type { AgentCard, AgentEvent, AgentJob, AgentRepo, AgentState, CardThread, JobStatus } from "./agent-types";
 import { askConfirm } from "./confirm";
+import { cardHash, routeHash } from "./nav";
 import { Reveal } from "./Reveal";
 import type { Toast } from "./toast";
 
 /**
- * Trabalho: os cards do Jira e os jobs do agente que roda na máquina do usuário (tools/asa-runner).
- * Aqui só ficam chave, título, status e links. O código e a descrição dos cards nunca passam pelo asa.
+ * Trabalho: os cards do Jira num quadro, e em cada card um chat com o Claude Code que roda na máquina do usuário
+ * (tools/asa-runner). A primeira mensagem põe o agente para trabalhar; as seguintes continuam a mesma sessão.
  */
 
-const POLL_MS = 8000;
+const BOARD_POLL_MS = 8000;
+const CARD_POLL_MS = 4000;
 const ONLINE_MS = 2 * 60_000;
 
 const STATUS: Record<JobStatus, { label: string; badge: string }> = {
   queued: { label: "Na fila", badge: "badge out" },
   running: { label: "Trabalhando", badge: "badge ac" },
   review: { label: "Para revisar", badge: "badge warn" },
-  changes: { label: "Mudança pedida", badge: "badge out" },
+  changes: { label: "Na fila", badge: "badge out" },
   approved: { label: "Aprovado", badge: "badge ok" },
   done: { label: "Concluído", badge: "badge ok" },
   failed: { label: "Erro", badge: "badge bad" },
   canceled: { label: "Cancelado", badge: "badge" },
 };
 
-const EVENT: Record<AgentEvent["kind"], string> = {
-  created: "Pedido criado",
+/** Linhas de sistema no chat (o que não é mensagem sua nem do Claude). */
+const SYSTEM: Partial<Record<AgentEvent["kind"], string>> = {
   started: "O agente começou",
-  progress: "Andamento",
   review: "Pronto para revisar",
-  feedback: "Você pediu mudança",
   approved: "Você aprovou",
   done: "Finalizado",
-  failed: "Erro",
+  failed: "Parou com erro",
   canceled: "Cancelado",
 };
 
 const FINISHED: ReadonlySet<JobStatus> = new Set(["done", "failed", "canceled"]);
+/** O agente está com o job: não dá para mandar mensagem até ele parar. */
+const BUSY: ReadonlySet<JobStatus> = new Set(["queued", "running", "changes", "approved"]);
+/** Colunas do quadro, na ordem do fluxo do time. Status desconhecidos entram depois. */
+const COLUMN_ORDER = ["pendente", "em andamento", "aguardando teste"];
+const PROGRESS = /^\d+ ações até agora$/;
+
+const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 function ago(isoDate: string, now: number): string {
   const s = Math.max(0, Math.round((now - Date.parse(isoDate)) / 1000));
@@ -49,197 +56,334 @@ function ago(isoDate: string, now: number): string {
 }
 
 const small = { fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" } as const;
-const H2 = { fontSize: "calc(13px * var(--fs, 1))", fontWeight: 600, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: ".04em" } as const;
+const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" } as const;
 
 function errorText(err: unknown): string {
-  if (err instanceof ApiError && err.status === 409) return "Esse job mudou de situação. A tela foi atualizada.";
+  if (err instanceof ApiError && err.status === 409) return "O card mudou de situação. A tela foi atualizada.";
   return "Não foi possível falar com o servidor.";
 }
 
-function NewJob({ card, repos, onCreated, onToast }: { card: AgentCard; repos: AgentRepo[]; onCreated: () => void; onToast: (t: Toast) => void }) {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [picked, setPicked] = useState<string[]>(() => (repos[0] ? [repos[0].name] : []));
-  const [base, setBase] = useState("");
-  const toggle = (name: string) => setPicked((list) => (list.includes(name) ? list.filter((n) => n !== name) : [...list, name]));
-  const bases = repos.filter((r) => picked.includes(r.name)).map((r) => r.base);
-  const baseHint = [...new Set(bases)].join(", ");
+/** Usa `load` agora, a cada `ms` com a tela visível e ao voltar para a aba. */
+function usePolling(load: () => void, ms: number) {
+  useEffect(() => {
+    load();
+    const timer = window.setInterval(() => document.visibilityState === "visible" && load(), ms);
+    const onVisible = () => document.visibilityState === "visible" && load();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [load, ms]);
+}
+
+function RunnerStatus({ seenAt, now }: { seenAt: string | null; now: number }) {
+  const online = seenAt ? now - Date.parse(seenAt) < ONLINE_MS : false;
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        setBusy(true);
-        agentApi
-          .create(card.ref, text.trim(), picked, base.trim() || null)
-          .then(() => {
-            onToast({ text: `${card.ref} foi para a fila do agente` });
-            onCreated();
-          })
-          .catch((err) => onToast({ text: err instanceof ApiError && err.status === 409 ? `${card.ref} já tem um job em andamento.` : errorText(err) }))
-          .finally(() => setBusy(false));
-      }}
-      style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 10 }}
-    >
-      {repos.length > 1 && (
-        <div className="row" role="group" aria-label="Repositórios" style={{ gap: 6, flexWrap: "wrap" }}>
-          {repos.map((r) => (
-            <button key={r.name} className={`btn btn-sec btn-sm${picked.includes(r.name) ? " on" : ""}`} type="button" aria-pressed={picked.includes(r.name)} onClick={() => toggle(r.name)}>
-              {r.name}
-            </button>
-          ))}
-        </div>
-      )}
-      {repos.length > 0 && (
-        <input className="inp" value={base} onChange={(e) => setBase(e.target.value)} placeholder={baseHint ? `Branch de partida (padrão: ${baseHint})` : "Branch de partida"} aria-label="Branch de partida" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
-      )}
-      <textarea className="inp" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="Instruções para o agente (opcional). Ex.: comece pelo checkout, não mexa no layout." aria-label={`Instruções para ${card.ref}`} style={{ height: "auto", padding: 10, resize: "vertical" }} />
-      <button className="btn btn-pri btn-sm" type="submit" disabled={busy || (repos.length > 1 && picked.length === 0)} style={{ alignSelf: "flex-start" }}>
-        Mandar o agente
-      </button>
-    </form>
+    <span className="row" style={{ gap: 8, ...small }}>
+      <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 4, background: online ? "var(--success)" : "var(--text-3, var(--text-2))" }} />
+      {online ? "Agente online" : seenAt ? `Agente offline · último sinal ${ago(seenAt, now)}` : "O agente ainda não se conectou"}
+    </span>
   );
 }
 
-function CardRow({ card, job, repos, onCreated, onToast }: { card: AgentCard; job: AgentJob | undefined; repos: AgentRepo[]; onCreated: () => void; onToast: (t: Toast) => void }) {
-  const [open, setOpen] = useState(false);
+function PrLinks({ job }: { job: AgentJob }) {
+  if (job.prs.length > 1) return <>{job.prs.map((p) => <a key={p.url} className="btn btn-sec btn-sm" href={p.url} target="_blank" rel="noreferrer">PR {p.repo}</a>)}</>;
+  return job.prUrl ? <a className="btn btn-sec btn-sm" href={job.prUrl} target="_blank" rel="noreferrer">Ver PR</a> : null;
+}
+
+// ---------- quadro ----------
+
+function CardTile({ card, job }: { card: AgentCard; job: AgentJob | undefined }) {
   return (
-    <div className="card" style={{ padding: "12px 14px", borderRadius: 10 }}>
-      <div className="row" style={{ gap: 10, alignItems: "flex-start" }}>
-        <div className="grow1" style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
-          <span className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            {card.url ? (
-              <a className="mono" href={card.url} target="_blank" rel="noreferrer" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{card.ref}</a>
-            ) : (
-              <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{card.ref}</span>
-            )}
-            {card.status && <span className="badge out">{card.status}</span>}
-            {job && <span className={STATUS[job.status].badge}>{STATUS[job.status].label}</span>}
-          </span>
-          <span style={{ fontSize: "calc(14px * var(--fs, 1))", fontWeight: 500 }}>{card.title || card.ref}</span>
-        </div>
-        {!job && (
-          <button className={`btn btn-sec btn-sm${open ? " on" : ""}`} type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-            {open ? "Fechar" : "Agente"}
-          </button>
-        )}
-      </div>
-      <Reveal show={open && !job}>
-        <NewJob card={card} repos={repos} onToast={onToast} onCreated={() => { setOpen(false); onCreated(); }} />
-      </Reveal>
+    <a className="kb-tile plain" href={cardHash(card.ref)} style={{ padding: "10px 12px", borderRadius: 10, display: "flex", flexDirection: "column", gap: 6, color: "inherit", textDecoration: "none" }}>
+      <span className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+        <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>{card.ref}</span>
+        {job && <span className={STATUS[job.status].badge}>{job.cancelRequested ? "Cancelando" : STATUS[job.status].label}</span>}
+      </span>
+      <span style={{ fontSize: "calc(14px * var(--fs, 1))", fontWeight: 500, lineHeight: "calc(19px * var(--fs, 1))" }}>{card.title || card.ref}</span>
+      {job?.summary && job.status === "review" && <span style={small}>{job.summary}</span>}
+    </a>
+  );
+}
+
+function Board({ state }: { state: AgentState }) {
+  // O job mais recente de cada card que ainda não acabou (ou acabou com erro, para você ver).
+  const jobByRef = new Map<string, AgentJob>();
+  for (const j of state.jobs) if (!jobByRef.has(j.ref) && (!FINISHED.has(j.status) || j.status === "failed")) jobByRef.set(j.ref, j);
+
+  const columns = new Map<string, { name: string; cards: AgentCard[] }>();
+  for (const c of state.cards) {
+    const key = norm(c.status || "sem status");
+    if (!columns.has(key)) columns.set(key, { name: c.status || "Sem status", cards: [] });
+    columns.get(key)!.cards.push(c);
+  }
+  const rank = (key: string) => {
+    const i = COLUMN_ORDER.indexOf(key);
+    return i < 0 ? COLUMN_ORDER.length : i;
+  };
+  const ordered = [...columns.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([, col]) => col);
+
+  if (state.cards.length === 0) return <span style={small}>Nenhum card ainda. Eles aparecem quando o agente sincroniza com o Jira.</span>;
+  return (
+    <div className="kanban" role="list" aria-label="Cards por status" style={{ display: "flex", gap: 12, overflowX: "auto", scrollSnapType: "x mandatory", paddingBottom: 8, margin: "0 -20px", paddingLeft: 20, paddingRight: 20 }}>
+      {ordered.map((col) => (
+        <section key={col.name} role="listitem" aria-label={col.name} style={{ flex: "1 0 272px", maxWidth: 360, scrollSnapAlign: "start", display: "flex", flexDirection: "column", gap: 8, background: "var(--bg-2)", borderRadius: 12, padding: 10 }}>
+          <h2 className="row" style={{ gap: 8, fontSize: "calc(13px * var(--fs, 1))", fontWeight: 600, color: "var(--text-2)", padding: "2px 4px" }}>
+            {col.name}
+            <span style={{ fontWeight: 400 }}>{col.cards.length}</span>
+          </h2>
+          {col.cards.map((c) => <CardTile key={c.ref} card={c} job={jobByRef.get(c.ref)} />)}
+        </section>
+      ))}
     </div>
   );
 }
 
-function JobRow({ job, now, onChanged, onToast }: { job: AgentJob; now: number; onChanged: () => void; onToast: (t: Toast) => void }) {
-  const [open, setOpen] = useState(false);
-  const [events, setEvents] = useState<AgentEvent[] | null>(null);
-  const [asking, setAsking] = useState(false);
+// ---------- chat do card ----------
+
+/** Uma linha do texto do Claude: títulos "##" em negrito e `código` em fonte mono. */
+function Line({ line }: { line: string }) {
+  const heading = /^#{1,4}\s+(.*)$/.exec(line);
+  const content = heading ? heading[1]! : line;
+  const bits = content.split(/`([^`]+)`/);
+  const inner = bits.map((b, i) => (i % 2 === 1 ? <code key={i} className="mono reply-code">{b}</code> : b));
+  return heading ? <strong style={{ display: "block", marginTop: 4 }}>{inner}</strong> : <>{inner}{"\n"}</>;
+}
+
+/** Texto do Claude com os blocos de código separados (sem renderizar Markdown inteiro). */
+function ReplyText({ text }: { text: string }) {
+  const parts = text.split(/```[^\n]*\n?/);
+  return (
+    <div className="col" style={{ gap: 8, minWidth: 0, flex: 1 }}>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <pre key={i} className="mono" style={{ margin: 0, padding: "8px 10px", background: "var(--bg-2)", borderRadius: 8, overflowX: "auto", fontSize: "calc(12px * var(--fs, 1))", lineHeight: 1.5 }}>{part.replace(/\n$/, "")}</pre>
+        ) : (
+          part.trim() && (
+            <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+              {part.trim().split("\n").map((line, j) => <Line key={j} line={line} />)}
+            </div>
+          )
+        ),
+      )}
+    </div>
+  );
+}
+
+function SystemLine({ children }: { children: ReactNode }) {
+  return <div style={{ ...small, textAlign: "center", padding: "2px 0" }}>{children}</div>;
+}
+
+function JobMessages({ job, events, now }: { job: AgentJob; events: AgentEvent[]; now: number }) {
+  return (
+    <>
+      <SystemLine>
+        {[job.repos.join(" · "), job.base && `a partir de ${job.base}`].filter(Boolean).join(" ") || "Novo trabalho"} · {ago(job.createdAt, now)}
+      </SystemLine>
+      {events.map((e) => {
+        if (e.kind === "created" || e.kind === "feedback") return e.text ? <div key={e.id} className="bub-u" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{e.text}</div> : <SystemLine key={e.id}>Você mandou o agente sem instruções</SystemLine>;
+        if (e.kind === "reply")
+          return (
+            <div key={e.id} className="bub-a">
+              <span className="av u" aria-hidden="true">C</span>
+              <ReplyText text={e.text} />
+            </div>
+          );
+        if (e.kind === "progress") return PROGRESS.test(e.text) ? null : <SystemLine key={e.id}>{e.text}</SystemLine>;
+        const label = SYSTEM[e.kind];
+        return label ? <SystemLine key={e.id}>{e.text ? `${label} · ${e.text}` : label}</SystemLine> : null;
+      })}
+    </>
+  );
+}
+
+function RepoPicker({ repos, picked, setPicked, base, setBase }: { repos: AgentRepo[]; picked: string[]; setPicked: (f: (l: string[]) => string[]) => void; base: string; setBase: (v: string) => void }) {
+  if (repos.length === 0) return null;
+  const hint = [...new Set(repos.filter((r) => picked.includes(r.name)).map((r) => r.base))].join(", ");
+  return (
+    <div className="col" style={{ gap: 8 }}>
+      {repos.length > 1 && (
+        <div className="row" role="group" aria-label="Repositórios" style={{ gap: 6, flexWrap: "wrap" }}>
+          {repos.map((r) => {
+            const on = picked.includes(r.name);
+            return (
+              <button key={r.name} className="btn btn-sec btn-sm repo-chip" type="button" aria-pressed={on} onClick={() => setPicked((l) => (on ? l.filter((n) => n !== r.name) : [...l, r.name]))}>
+                {r.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <input className="inp" value={base} onChange={(e) => setBase(e.target.value)} placeholder={hint ? `Branch de partida (padrão: ${hint})` : "Branch de partida"} aria-label="Branch de partida" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+    </div>
+  );
+}
+
+function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) => void }) {
+  const [data, setData] = useState<CardThread | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<string[] | null>(null);
+  const [base, setBase] = useState("");
+  const endRef = useRef<HTMLDivElement>(null);
+  const lastCount = useRef(0);
 
+  const load = useCallback(() => {
+    agentApi
+      .thread(cardRef)
+      .then((d) => {
+        setData(d);
+        setFailed(false);
+        setNow(Date.now());
+      })
+      .catch(() => setFailed(true));
+  }, [cardRef]);
+  const current = data?.thread.at(-1)?.job ?? null;
+  usePolling(load, current && !FINISHED.has(current.status) ? CARD_POLL_MS : BOARD_POLL_MS);
+
+  // Desce para a última mensagem quando chega coisa nova.
+  const count = data?.thread.reduce((n, t) => n + t.events.length, 0) ?? 0;
   useEffect(() => {
-    if (!open) return;
-    let live = true;
-    agentApi.job(job.id).then((d) => live && setEvents(d.events)).catch(() => undefined);
-    return () => {
-      live = false;
-    };
-  }, [open, job.id, job.updatedAt]);
+    if (count > lastCount.current) endRef.current?.scrollIntoView({ block: "end", behavior: lastCount.current === 0 ? "auto" : "smooth" });
+    lastCount.current = count;
+  }, [count]);
 
-  const run = (p: Promise<unknown>, done: string) => {
+  const repos = data?.repos ?? [];
+  const chosen = picked ?? (repos[0] ? [repos[0].name] : []);
+  const working = current !== null && BUSY.has(current.status);
+  const canReply = current !== null && (current.status === "review" || current.status === "failed");
+  const startsNew = current === null || current.status === "done" || current.status === "canceled";
+  const actions = current?.status === "running" ? [...(data?.thread.at(-1)?.events ?? [])].reverse().find((e) => e.kind === "progress" && PROGRESS.test(e.text))?.text : undefined;
+
+  const run = (p: Promise<unknown>, done?: string) => {
     setBusy(true);
-    p.then(() => {
-      onToast({ text: done });
-      setAsking(false);
-      setText("");
-    })
-      .catch((err) => onToast({ text: errorText(err) }))
+    return p
+      .then(() => {
+        if (done) onToast({ text: done });
+        return true;
+      })
+      .catch((err) => {
+        onToast({ text: errorText(err) });
+        return false;
+      })
       .finally(() => {
         setBusy(false);
-        onChanged();
+        load();
       });
   };
 
-  const canAsk = job.status === "review" || job.status === "failed";
-  const s = STATUS[job.status];
+  const send = () => {
+    const message = text.trim();
+    if (busy || working) return;
+    if (startsNew) {
+      void run(agentApi.create(cardRef, message, chosen, base.trim() || null)).then((ok) => ok && setText(""));
+    } else if (canReply && current && message) {
+      void run(agentApi.feedback(current.id, message)).then((ok) => ok && setText(""));
+    }
+  };
+
+  const card = data?.card;
+  const title = card?.title || current?.title || cardRef;
+  const jiraUrl = card?.url ?? current?.url ?? null;
+
   return (
-    <div className="card" style={{ padding: "12px 14px", borderRadius: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-      <button className="plain" type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: "left", cursor: "pointer" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "24px 20px 0", display: "flex", flexDirection: "column", gap: 14, minHeight: "100%" }}>
+      <a href={routeHash("agente")} style={{ ...small, textDecoration: "none" }}>← Trabalho</a>
+      <header className="col" style={{ gap: 6 }}>
         <span className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-          <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{job.ref}</span>
-          <span className={s.badge}>{job.cancelRequested ? "Cancelando" : s.label}</span>
-          <span style={small}>{ago(job.updatedAt, now)}</span>
+          {jiraUrl ? <a className="mono" href={jiraUrl} target="_blank" rel="noreferrer" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{cardRef}</a> : <span className="mono" style={{ fontSize: "calc(12px * var(--fs, 1))" }}>{cardRef}</span>}
+          {card?.status && <span className="badge out">{card.status}</span>}
+          {current && <span className={STATUS[current.status].badge}>{current.cancelRequested ? "Cancelando" : STATUS[current.status].label}</span>}
         </span>
-        <span style={{ fontSize: "calc(14px * var(--fs, 1))", fontWeight: 500 }}>{job.title || job.ref}</span>
-        {(job.repos.length > 0 || job.base) && <span className="mono" style={small}>{[job.repos.join(" · "), job.base && `a partir de ${job.base}`].filter(Boolean).join(" ")}</span>}
-        {job.summary && <span style={small}>{job.summary}</span>}
-      </button>
+        <h1 style={{ ...H1, fontSize: "calc(26px * var(--fs, 1))", lineHeight: "calc(32px * var(--fs, 1))" }}>{title}</h1>
+        {data && <RunnerStatus seenAt={data.runnerSeenAt} now={now} />}
+      </header>
 
-      <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-        {job.prs.length > 1
-          ? job.prs.map((p) => <a key={p.url} className="btn btn-sec btn-sm" href={p.url} target="_blank" rel="noreferrer">PR {p.repo}</a>)
-          : job.prUrl && <a className="btn btn-sec btn-sm" href={job.prUrl} target="_blank" rel="noreferrer">Ver PR</a>}
-        {job.url && <a className="btn btn-fan btn-sm" href={job.url} target="_blank" rel="noreferrer">Jira</a>}
-        {job.status === "review" && (
-          <button
-            className="btn btn-pri btn-sm"
-            type="button"
-            disabled={busy}
-            onClick={() => void askConfirm({ title: `Aprovar ${job.ref}?`, body: "O agente tira o PR de rascunho e move o card no Jira.", confirmLabel: "Aprovar" }).then((ok) => ok && run(agentApi.approve(job.id), `${job.ref} aprovado`))}
-          >
-            Aprovar
-          </button>
-        )}
-        {canAsk && (
-          <button className={`btn btn-sec btn-sm${asking ? " on" : ""}`} type="button" aria-expanded={asking} onClick={() => setAsking((v) => !v)}>
-            Pedir mudança
-          </button>
-        )}
-        {!FINISHED.has(job.status) && !job.cancelRequested && (
-          <button
-            className="btn btn-fan btn-sm"
-            type="button"
-            disabled={busy}
-            onClick={() => void askConfirm({ title: `Cancelar ${job.ref}?`, body: "O agente para o que estiver fazendo. A branch fica na sua máquina.", confirmLabel: "Cancelar job" }).then((ok) => ok && run(agentApi.cancel(job.id), "Cancelamento pedido"))}
-          >
-            Cancelar
-          </button>
-        )}
-      </div>
+      {current && (
+        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+          {current.summary && <span style={{ ...small, flexBasis: "100%" }}>{current.summary}</span>}
+          <PrLinks job={current} />
+          {current.status === "review" && (
+            <button className="btn btn-pri btn-sm" type="button" disabled={busy} onClick={() => void askConfirm({ title: `Aprovar ${cardRef}?`, body: "O agente tira os PRs de rascunho e move o card no Jira.", confirmLabel: "Aprovar" }).then((ok) => ok && run(agentApi.approve(current.id), `${cardRef} aprovado`))}>
+              Aprovar
+            </button>
+          )}
+          {!FINISHED.has(current.status) && !current.cancelRequested && (
+            <button className="btn btn-fan btn-sm" type="button" disabled={busy} onClick={() => void askConfirm({ title: `Cancelar o trabalho em ${cardRef}?`, body: "O agente para o que estiver fazendo. As branches ficam na sua máquina.", confirmLabel: "Cancelar trabalho" }).then((ok) => ok && run(agentApi.cancel(current.id), "Cancelamento pedido"))}>
+              Cancelar
+            </button>
+          )}
+        </div>
+      )}
 
-      <Reveal show={asking && canAsk}>
+      {!data && !failed && <span className="sk" style={{ height: 160, borderRadius: 10 }} aria-busy="true" aria-label="Carregando" />}
+      {failed && !data && <div className="card" role="alert" style={{ padding: 16 }}>Não foi possível carregar o card.</div>}
+
+      {data && (
+        <div className="col" role="log" aria-live="polite" aria-label={`Conversa com o agente sobre ${cardRef}`} style={{ gap: 12, flex: 1 }}>
+          {data.thread.length === 0 && <SystemLine>Escreva o que o agente deve fazer neste card. Ele lê o card no Jira antes de começar.</SystemLine>}
+          {data.thread.map((t) => <JobMessages key={t.job.id} job={t.job} events={t.events} now={now} />)}
+          {working && (
+            <div className="bub-a" aria-label="O agente está trabalhando">
+              <span className="av u" aria-hidden="true">C</span>
+              <span style={small}>
+                {current?.status === "running" ? `Trabalhando${actions ? ` · ${actions}` : ""}` : current?.status === "approved" ? "Finalizando: PRs e card no Jira" : "Na fila do agente"}
+                <span className="hcaret" style={{ marginLeft: 6 }} />
+              </span>
+            </div>
+          )}
+          <div ref={endRef} />
+        </div>
+      )}
+
+      {data && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (text.trim()) run(agentApi.feedback(job.id, text.trim()), "Pedido enviado ao agente");
+            send();
           }}
-          style={{ display: "flex", flexDirection: "column", gap: 8 }}
+          className="col agent-composer"
+          style={{ gap: 8, position: "sticky", bottom: 0, background: "var(--bg)", padding: "10px 0 calc(16px + env(safe-area-inset-bottom))", borderTop: "1px solid var(--border)" }}
         >
-          <textarea className="inp" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="O que mudar" aria-label="O que mudar" style={{ height: "auto", padding: 10, resize: "vertical" }} />
-          <button className="btn btn-pri btn-sm" type="submit" disabled={busy || text.trim() === ""} style={{ alignSelf: "flex-start" }}>Enviar</button>
+          <Reveal show={startsNew}>
+            <RepoPicker repos={repos} picked={chosen} setPicked={(f) => setPicked(f(chosen))} base={base} setBase={setBase} />
+          </Reveal>
+          <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
+            <textarea
+              className="inp grow1"
+              rows={2}
+              value={text}
+              disabled={working}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={working ? "O agente está trabalhando. Você responde quando ele parar." : startsNew ? "O que o agente deve fazer neste card? (opcional)" : "Responda ou peça uma mudança"}
+              aria-label="Mensagem para o agente"
+              style={{ height: "auto", padding: 10, resize: "none", minHeight: 44 }}
+            />
+            <button className="btn btn-pri" type="submit" disabled={busy || working || (startsNew ? repos.length > 1 && chosen.length === 0 : !canReply || text.trim() === "")}>
+              {startsNew ? "Mandar" : "Enviar"}
+            </button>
+          </div>
         </form>
-      </Reveal>
-
-      <Reveal show={open}>
-        <ol style={{ listStyle: "none", margin: 0, padding: "6px 0 0", display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid var(--border)" }}>
-          {events === null && <li style={small}>Carregando…</li>}
-          {events?.map((e) => (
-            <li key={e.id} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={small}>{EVENT[e.kind]} · {ago(e.createdAt, now)}</span>
-              {e.text && <span style={{ fontSize: "calc(13px * var(--fs, 1))", whiteSpace: "pre-wrap" }}>{e.text}</span>}
-            </li>
-          ))}
-        </ol>
-      </Reveal>
+      )}
     </div>
   );
 }
 
-export function AgenteView({ onToast }: { onToast: (t: Toast) => void }) {
+// ---------- tela ----------
+
+function BoardView() {
   const [state, setState] = useState<AgentState | null>(null);
   const [failed, setFailed] = useState(false);
   const [now, setNow] = useState(Date.now());
-
   const load = useCallback(() => {
     agentApi
       .state()
@@ -250,61 +394,21 @@ export function AgenteView({ onToast }: { onToast: (t: Toast) => void }) {
       })
       .catch(() => setFailed(true));
   }, []);
-
-  useEffect(() => {
-    load();
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") load();
-    }, POLL_MS);
-    const onVisible = () => document.visibilityState === "visible" && load();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [load]);
-
-  const online = state?.runnerSeenAt ? now - Date.parse(state.runnerSeenAt) < ONLINE_MS : false;
-  const active = state?.jobs.filter((j) => !FINISHED.has(j.status)) ?? [];
-  const history = state?.jobs.filter((j) => FINISHED.has(j.status)).slice(0, 15) ?? [];
-  const activeByRef = new Map(active.map((j) => [j.ref, j]));
+  usePolling(load, BOARD_POLL_MS);
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "36px 20px 120px", display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Trabalho</h1>
-        {state && (
-          <span className="row" style={{ gap: 8, ...small }}>
-            <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 4, background: online ? "var(--success)" : "var(--text-3, var(--text-2))" }} />
-            {online ? "Agente online" : state.runnerSeenAt ? `Agente offline · último sinal ${ago(state.runnerSeenAt, now)}` : "O agente ainda não se conectou"}
-          </span>
-        )}
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "36px 20px 120px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="col" style={{ gap: 6 }}>
+        <h1 style={H1}>Trabalho</h1>
+        {state && <RunnerStatus seenAt={state.runnerSeenAt} now={now} />}
       </div>
-
-      {!state && !failed && <span className="sk" style={{ height: 120, borderRadius: 10 }} aria-busy="true" aria-label="Carregando" />}
+      {!state && !failed && <span className="sk" style={{ height: 160, borderRadius: 10 }} aria-busy="true" aria-label="Carregando" />}
       {failed && !state && <div className="card" role="alert" style={{ padding: 16 }}>Não foi possível carregar.</div>}
-
-      {state && (
-        <>
-          {active.length > 0 && (
-            <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <h2 style={H2}>Em andamento</h2>
-              {active.map((j) => <JobRow key={j.id} job={j} now={now} onChanged={load} onToast={onToast} />)}
-            </section>
-          )}
-          <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <h2 style={H2}>Meus cards</h2>
-            {state.cards.length === 0 && <span style={small}>Nenhum card ainda. Eles aparecem quando o agente sincroniza com o Jira.</span>}
-            {state.cards.map((c) => <CardRow key={c.ref} card={c} job={activeByRef.get(c.ref)} repos={state.repos ?? []} onCreated={load} onToast={onToast} />)}
-          </section>
-          {history.length > 0 && (
-            <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <h2 style={H2}>Histórico</h2>
-              {history.map((j) => <JobRow key={j.id} job={j} now={now} onChanged={load} onToast={onToast} />)}
-            </section>
-          )}
-        </>
-      )}
+      {state && <Board state={state} />}
     </div>
   );
+}
+
+export function AgenteView({ cardRef, onToast }: { cardRef?: string; onToast: (t: Toast) => void }) {
+  return cardRef ? <CardChat cardRef={cardRef} onToast={onToast} /> : <BoardView />;
 }

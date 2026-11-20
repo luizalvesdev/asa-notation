@@ -146,6 +146,9 @@ const cloudId = () => cfg.jiraCloudId || new URL(cfg.jiraSite).host;
 
 const mcpConfigArgs = () => (mcp ? ["--mcp-config", JSON.stringify({ mcpServers: { atlassian: { type: "http", url: cfg.jiraMcpUrl } } })] : []);
 
+/** Épicos agrupam cards; o agente trabalha nos cards, então eles ficam fora da tela. */
+const isEpic = (type) => /^(epic|[ée]pico)$/i.test(String(type ?? "").trim());
+
 /** Título e tipo (Bug, História...) de cada card na última sincronização: dão o nome da branch e o título do PR. */
 const cardInfo = new Map();
 
@@ -175,7 +178,7 @@ async function myCardsMcp() {
   if (!Array.isArray(list)) throw new Error("a busca não devolveu uma lista");
   for (const i of list) if (typeof i?.key === "string") cardInfo.set(i.key, { title: String(i.summary ?? ""), type: String(i.type ?? "") });
   return list
-    .filter((i) => typeof i?.key === "string")
+    .filter((i) => typeof i?.key === "string" && !isEpic(i.type))
     .map((i) => ({ ref: i.key, title: String(i.summary ?? "").slice(0, 300), status: String(i.status ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
 }
 
@@ -203,7 +206,7 @@ async function myCards() {
   if (mcp) return myCardsMcp();
   const data = await jira("POST", "/rest/api/3/search/jql", { jql: cfg.jql, fields: ["summary", "status", "issuetype"], maxResults: 50 });
   for (const i of data.issues ?? []) cardInfo.set(i.key, { title: String(i.fields?.summary ?? ""), type: String(i.fields?.issuetype?.name ?? "") });
-  return (data.issues ?? []).map((i) => ({ ref: i.key, title: String(i.fields?.summary ?? "").slice(0, 300), status: String(i.fields?.status?.name ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
+  return (data.issues ?? []).filter((i) => !isEpic(i.fields?.issuetype?.name)).map((i) => ({ ref: i.key, title: String(i.fields?.summary ?? "").slice(0, 300), status: String(i.fields?.status?.name ?? "").slice(0, 80), url: `${cfg.jiraSite}/browse/${i.key}` }));
 }
 
 async function cardDetails(ref) {
@@ -334,7 +337,8 @@ function startPrompt(job, card, workspaces) {
     `5. Faça commits pequenos no padrão de cada repositório, citando ${job.ref}. Se um repositório pede uma validação antes do commit e ela não puder rodar, não faça o commit e explique no relatório.`,
     "6. Se faltar informação para decidir, escolha o caminho mais seguro e anote a dúvida no relatório. Não invente regra de negócio.",
     "",
-    "No final, responda apenas com o relatório em Markdown que vai na descrição do PR, com as seções: ## O que mudou, ## Como testar, ## Dúvidas e pendências.",
+    "O dono acompanha pelo celular o que você escreve. Entre as etapas, escreva frases curtas dizendo o que está fazendo e o que descobriu.",
+    "No final, responda com o relatório em Markdown que vai na descrição do PR, com as seções: ## O que mudou, ## Como testar, ## Dúvidas e pendências.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -342,10 +346,11 @@ function startPrompt(job, card, workspaces) {
 
 const feedbackPrompt = (job, text) =>
   [
-    `Pedido de mudança na revisão do ${job.ref}:`,
+    `Mensagem do dono do ${job.ref}, enviada pelo celular:`,
     text,
     "",
-    `Ajuste, rode os testes, faça commit (no padrão de cada repositório, citando ${job.ref}) e responda apenas com o relatório atualizado, no mesmo formato de antes.`,
+    "Responda em português, direto. Se for só uma pergunta, responda sem mexer no código.",
+    `Se ele pedir mudança: ajuste, rode os testes, faça commit (no padrão de cada repositório, citando ${job.ref}) e termine com o relatório atualizado, começando por "## O que mudou", no mesmo formato de antes.`,
   ].join("\n");
 
 /** Roda o Claude Code e conta o andamento ao asa (só o número de ações). Devolve o relatório final. */
@@ -369,6 +374,11 @@ function runClaude(job, workspaces, prompt, resumeSession) {
     let sessionId = resumeSession ?? null;
     let result = null;
     let stderr = "";
+    // O texto do Claude vai para o chat do card, na ordem em que saiu.
+    let replies = Promise.resolve();
+    const sendReply = (text) => {
+      replies = replies.then(() => asa("POST", `/agent/jobs/${job.id}/reply`, { text: text.slice(0, 20000) })).catch((err) => log(job.ref, "falha ao mandar resposta:", firstLine(err)));
+    };
 
     const progress = setInterval(() => {
       if (actions !== lastSent) {
@@ -401,7 +411,11 @@ function runClaude(job, workspaces, prompt, resumeSession) {
           continue;
         }
         if (msg.session_id) sessionId = msg.session_id;
-        if (msg.type === "assistant") actions += (msg.message?.content ?? []).filter((b) => b.type === "tool_use").length;
+        if (msg.type === "assistant") {
+          const content = msg.message?.content ?? [];
+          actions += content.filter((b) => b.type === "tool_use").length;
+          for (const b of content) if (b.type === "text" && b.text?.trim()) sendReply(b.text.trim());
+        }
         if (msg.type === "result") result = msg;
       }
     });
@@ -410,8 +424,9 @@ function runClaude(job, workspaces, prompt, resumeSession) {
       clearInterval(progress);
       reject(err);
     });
-    child.on("close", (code) => {
+    child.on("close", async (code) => {
       clearInterval(progress);
+      await replies;
       const canceled = current?.canceled ?? false;
       current = null;
       if (canceled) return resolve({ canceled: true, sessionId });
@@ -442,7 +457,10 @@ async function afterClaude(job, workspaces, outcome) {
   state.jobs[job.id] = { ...state.jobs[job.id], sessionId: outcome.sessionId };
   saveState();
   const reportFile = join(cfg.stateDir, "reports", `${job.ref}.md`);
-  writeFileSync(reportFile, `${outcome.report}\n\n---\n_Feito pelo agente do asa a partir do ${job.ref}._\n`);
+  // A descrição do PR muda só quando vem relatório novo; uma resposta a uma pergunta não apaga o relatório anterior.
+  const at = outcome.report.indexOf("## O que mudou");
+  const body = at >= 0 ? outcome.report.slice(at) : existsSync(reportFile) ? null : outcome.report;
+  if (body !== null) writeFileSync(reportFile, `${body}\n\n---\n_Feito pelo agente do asa a partir do ${job.ref}._\n`);
   const lines = [];
   const prs = [];
   for (const ws of workspaces) {

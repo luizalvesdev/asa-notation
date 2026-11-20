@@ -115,6 +115,31 @@ describe("agent", () => {
     expect((res.body as { job: Job }).job).toMatchObject({ prs, prUrl: "https://github.com/o/nx/pull/1" });
   });
 
+  it("keeps the chat of a card: your messages, the agent replies, across jobs", async () => {
+    await runner("PUT", "/agent/cards", { cards: [{ ref: "IBR-8", title: "Cupom", status: "Pendente" }] });
+    const first = await create({ ref: "IBR-8", instruction: "comece pelo checkout" });
+    await poll();
+    const long = "x".repeat(15000);
+    expect((await runner("POST", `/agent/jobs/${first.id}/reply`, { text: "Li o card." })).status).toBe(200);
+    expect((await runner("POST", `/agent/jobs/${first.id}/reply`, { text: long })).status).toBe(200);
+    await runner("POST", `/agent/jobs/${first.id}/report`, { status: "review" });
+    expect((await runner("POST", `/agent/jobs/${first.id}/reply`, { text: "tarde" })).status).toBe(409);
+    await app.call("POST", `/agent/jobs/${first.id}/feedback`, { cookies, body: { text: "e o teste?" } });
+    await poll();
+    await runner("POST", `/agent/jobs/${first.id}/reply`, { text: "Teste feito." });
+    await runner("POST", `/agent/jobs/${first.id}/report`, { status: "done" });
+    app.clock.ms += 60_000;
+    const second = await create({ ref: "IBR-8", instruction: "agora o layout" });
+
+    const res = await app.call("GET", "/agent/cards/ibr-8", { cookies });
+    const body = res.body as { card: { title: string }; thread: { job: Job; events: { kind: string; text: string }[] }[] };
+    expect(body.card.title).toBe("Cupom");
+    expect(body.thread.map((t) => t.job.id)).toEqual([first.id, second.id]);
+    const chat = body.thread[0]!.events.filter((e) => ["created", "reply", "feedback"].includes(e.kind)).map((e) => [e.kind, e.text.slice(0, 12)]);
+    expect(chat).toEqual([["created", "comece pelo "], ["reply", "Li o card."], ["reply", "xxxxxxxxxxxx"], ["feedback", "e o teste?"], ["reply", "Teste feito."]]);
+    expect((await app.call("GET", "/agent/cards/IBR-8")).status).toBe(401);
+  });
+
   it("only accepts reports for running jobs and needs a login", async () => {
     const job = await create({ ref: "IBR-5" });
     expect((await runner("POST", `/agent/jobs/${job.id}/report`, { status: "review" })).status).toBe(409);

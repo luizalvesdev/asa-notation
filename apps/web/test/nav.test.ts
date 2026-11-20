@@ -12,6 +12,8 @@ describe("nav", () => {
     expect(navParent("importar")).toBe("configuracoes");
     expect(parseRoute("#/rotina/sabado")).toEqual({ kind: "tela", id: "rotina", sub: "sabado" });
     expect(parseRoute("#/rotina/quinta")).toEqual({ kind: "tela", id: "rotina", sub: "quinta" });
+    expect(parseRoute("#/agente/ibr-6577")).toEqual({ kind: "tela", id: "agente", sub: "IBR-6577" });
+    expect(parseRoute("#/agente/nada")).toEqual({ kind: "tela", id: "agente" });
     expect(parseRoute("#/rotina/x")).toEqual({ kind: "tela", id: "rotina" });
     expect(parseRoute("#/estudo/outra")).toEqual({ kind: "tela", id: "estudo" });
     expect(parseRoute("#semana")).toEqual({ kind: "tela", id: "semana" });

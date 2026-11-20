@@ -2,7 +2,7 @@ import type { Row, SqlClient } from "../sql.js";
 
 export const JOB_STATUSES = ["queued", "running", "review", "changes", "approved", "done", "failed", "canceled"] as const;
 export type JobStatus = (typeof JOB_STATUSES)[number];
-export type EventKind = "created" | "started" | "progress" | "review" | "feedback" | "approved" | "done" | "failed" | "canceled";
+export type EventKind = "created" | "started" | "progress" | "review" | "feedback" | "reply" | "approved" | "done" | "failed" | "canceled";
 
 /** Situações em que o job ainda pode mudar. */
 export const ACTIVE: ReadonlySet<JobStatus> = new Set(["queued", "running", "review", "changes", "approved"]);
@@ -127,6 +127,12 @@ export class PgAgentStore {
 
   async jobs(limit = 50): Promise<AgentJob[]> {
     const rows = await this.sql.query(`select ${COLS} from agent_jobs order by created_at desc, id limit $1`, [limit]);
+    return rows.map(toJob);
+  }
+
+  /** Jobs de um card, do mais antigo ao mais novo: o histórico da conversa no card. */
+  async jobsFor(ref: string, limit = 20): Promise<AgentJob[]> {
+    const rows = await this.sql.query(`select ${COLS} from (select ${COLS} from agent_jobs where ref = $1 order by created_at desc limit $2) t order by created_at, id`, [ref, limit]);
     return rows.map(toJob);
   }
 

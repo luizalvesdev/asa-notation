@@ -8,7 +8,7 @@ import type { ApiToken, Settings } from "./settings-types";
 import type { Notification, ProgressData, RoutineWeek, WeeklyReview } from "./routine-types";
 import type { Agent, ChatMessage, Conversation } from "./chat-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
-import type { AgentEvent, AgentJob, AgentState } from "./agent-types";
+import type { AgentEvent, AgentJob, AgentState, CardThread } from "./agent-types";
 
 export class ApiError extends Error {
   constructor(
@@ -75,6 +75,7 @@ type JobDetail = { job: AgentJob; events: AgentEvent[] };
 export const agentApi = {
   state: () => request<AgentState>("GET", "/agent"),
   job: (id: string) => request<JobDetail>("GET", `/agent/jobs/${id}`),
+  thread: (ref: string) => request<CardThread>("GET", `/agent/cards/${encodeURIComponent(ref)}`),
   create: (ref: string, instruction: string, repos: string[] = [], base: string | null = null) =>
     request<{ job: AgentJob }>("POST", "/agent/jobs", { ref, instruction, repos, ...(base ? { base } : {}) }).then((r) => r.job),
   approve: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/approve`),

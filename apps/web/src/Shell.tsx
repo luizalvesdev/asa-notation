@@ -500,7 +500,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           ) : route.id === "metas" ? (
             <MetasView onToast={setToast} />
           ) : route.id === "agente" ? (
-            <AgenteView onToast={setToast} />
+            <AgenteView key={route.sub ?? "board"} cardRef={route.sub} onToast={setToast} />
           ) : route.id === "semana" ? (
             <SemanaView onToast={setToast} />
           ) : route.id === "lixeira" ? (

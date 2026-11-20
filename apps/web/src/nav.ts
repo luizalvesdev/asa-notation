@@ -96,6 +96,7 @@ const HIDDEN: (NavItem & { parent: RouteId; slug: string })[] = [
 
 const ALL: NavItem[] = [...NAV_MAIN, ...NAV_HERMES, ...NAV_FOOTER, ...HIDDEN];
 const PUBLIC_SLUG = /^[A-Za-z0-9_-]{8,32}$/;
+const CARD_REF = /^[A-Za-z][A-Za-z0-9]{0,15}-\d{1,8}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parseRoute(hash: string): Route {
@@ -106,6 +107,7 @@ export function parseRoute(hash: string): Route {
   if (hidden) return { kind: "tela", id: hidden.id };
   if (head === "rotina" && (second === "quinta" || second === "sabado")) return { kind: "tela", id: "rotina", sub: second };
   if (head === "p" && second && UUID.test(second)) return { kind: "pagina", pageId: second.toLowerCase() };
+  if (head === "agente" && second && CARD_REF.test(second)) return { kind: "tela", id: "agente", sub: second.toUpperCase() };
   const item = ALL.find((entry) => entry.id === head);
   return { kind: "tela", id: item ? item.id : DEFAULT_ROUTE };
 }
@@ -122,6 +124,10 @@ export function routeHash(id: RouteId): string {
 /** A tela da barra lateral que fica marcada quando `id` está aberta. */
 export function navParent(id: RouteId): RouteId {
   return HIDDEN.find((entry) => entry.id === id)?.parent ?? id;
+}
+
+export function cardHash(ref: string): string {
+  return `#/agente/${ref}`;
 }
 
 export function pageHash(pageId: string): string {
