@@ -252,7 +252,9 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
   }, [count]);
 
   const repos = data?.repos ?? [];
-  const chosen = picked ?? (repos[0] ? [repos[0].name] : []);
+  // Depois de cancelar, o próximo trabalho continua o anterior: começa com os mesmos repos e a mesma base.
+  const resumable = current?.status === "canceled" ? current : null;
+  const chosen = picked ?? (resumable?.repos.length ? resumable.repos : repos[0] ? [repos[0].name] : []);
   const working = current !== null && BUSY.has(current.status);
   // Com o agente trabalhando, a mensagem faz ele parar e ler (como interromper aqui no terminal).
   const canReply = current !== null && (current.status === "review" || current.status === "failed" || (current.status === "running" && !current.cancelRequested));
@@ -281,7 +283,7 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
     const message = text.trim();
     if (busy || blocked) return;
     if (startsNew) {
-      void run(agentApi.create(cardRef, message, chosen, base.trim() || null)).then((ok) => ok && setText(""));
+      void run(agentApi.create(cardRef, message, chosen, base.trim() || resumable?.base || null)).then((ok) => ok && setText(""));
     } else if (canReply && current && message) {
       void run(agentApi.feedback(current.id, message)).then((ok) => ok && setText(""));
     }
@@ -375,12 +377,12 @@ function CardChat({ cardRef, onToast }: { cardRef: string; onToast: (t: Toast) =
                   send();
                 }
               }}
-              placeholder={blocked ? "Espere o agente pegar o trabalho." : working ? "Mande uma mensagem: o agente para e lê na mesma conversa" : startsNew ? "O que o agente deve fazer neste card? (opcional)" : "Responda ou peça uma mudança"}
+              placeholder={blocked ? "Espere o agente pegar o trabalho." : working ? "Mande uma mensagem: o agente para e lê na mesma conversa" : resumable ? "Continue de onde parou: o agente volta à mesma conversa e às mesmas alterações" : startsNew ? "O que o agente deve fazer neste card? (opcional)" : "Responda ou peça uma mudança"}
               aria-label="Mensagem para o agente"
               style={{ height: "auto", padding: 10, resize: "none", minHeight: 44 }}
             />
             <button className="btn btn-pri" type="submit" disabled={busy || blocked || (startsNew ? repos.length > 1 && chosen.length === 0 : !canReply || text.trim() === "")}>
-              {startsNew ? "Mandar" : "Enviar"}
+              {resumable ? "Continuar" : startsNew ? "Mandar" : "Enviar"}
             </button>
           </div>
         </form>
