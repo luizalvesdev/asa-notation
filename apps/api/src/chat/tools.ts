@@ -68,6 +68,11 @@ const SPECS: Record<string, ToolSpec> = {
     input_schema: obj({}),
   },
   list_decks: { name: "list_decks", description: "Lista os baralhos de estudo (id e nome).", input_schema: obj({}) },
+  list_cards: {
+    name: "list_cards",
+    description: "Lista os cards de estudo (id, pergunta, resposta, baralho), até 100. Com deckId, só os desse baralho. Use para achar o id antes de editar ou apagar um card.",
+    input_schema: obj({ deckId: str("Id do baralho, opcional") }),
+  },
   list_inbox: { name: "list_inbox", description: "Lista as capturas que ainda estão na Inbox.", input_schema: obj({}) },
   propose_capture: {
     name: "propose_capture",
@@ -157,6 +162,12 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
     async list_decks() {
       return JSON.stringify((await ctx.study.overview(new Date(`${ctx.today}T00:00:00Z`))).decks.map((d: { id: string; title: string }) => ({ id: d.id, title: d.title })));
     },
+    async list_cards(input) {
+      const deckId = input.deckId === undefined || input.deckId === null || input.deckId === "" ? undefined : input.deckId;
+      if (deckId !== undefined && !isUuid(deckId)) throw new Error("Id de baralho inválido.");
+      const cards = await ctx.study.listCards(deckId);
+      return JSON.stringify(cards.slice(0, 100).map((c) => ({ id: c.id, deckId: c.deckId, kind: c.kind, front: clip(c.front, 300), back: clip(c.back, 300) })));
+    },
     async list_inbox() {
       return JSON.stringify((await ctx.captures.list()).slice(0, 20).map((c) => ({ id: c.id, text: clip(c.text, 200), kind: c.kind, tags: c.tags })));
     },
@@ -198,9 +209,9 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
     };
   }
 
-  const READ = ["list_tasks", "list_goals", "list_pages", "search_notes", "read_note", "list_inbox", "list_decks"];
+  const READ = ["list_tasks", "list_goals", "list_pages", "search_notes", "read_note", "list_inbox", "list_decks", "list_cards"];
   const WRITE = ["propose_tasks", "propose_capture", "propose_page", "propose_diagram", ...ACTION_NAMES];
-  const names = agent === "tutor" ? ["list_weak_cards", "list_pages", "search_notes", "read_note"] : [...READ, ...WRITE];
+  const names = agent === "tutor" ? ["list_weak_cards", ...READ, ...WRITE] : [...READ, ...WRITE];
   const specOf = (n: string) => SPECS[n] ?? ACTIONS[n]!.spec;
   return { specs: names.map(specOf), handlers: Object.fromEntries(names.map((n) => [n, handlers[n]!])) };
 }
@@ -238,9 +249,9 @@ export function systemPrompt(agent: Agent, today: string, timezone: string, auto
       "Você é o Tutor, um professor socrático. Ajuda o usuário a aprender fazendo perguntas, não dando respostas prontas.",
       "Comece com list_weak_cards (pontos fracos) ou, se o usuário disser um tema, com search_notes e read_note para se basear nas notas dele.",
       "Faça UMA pergunta por vez, espere a resposta, dê uma pista se ele errar e só explique de vez depois de duas tentativas. Elogie o que estiver certo. No fim, resuma em 3 linhas o que ele já domina e o que revisar.",
-      "Você só lê e conversa: não altera nada no app.",
-      ...common.slice(0, 2),
-      common[3]!,
+      "Você também tem poder sobre o app, a pedido do usuário: pode criar e editar baralhos e cards de estudo, metas, tarefas e rotina, e páginas. O método socrático vale para ensinar; quando o usuário pedir uma ação (ex.: criar cards do que ele errou), faça direto, sem sabatina.",
+      ...organize,
+      ...common,
     ].join("\n");
   }
   return [

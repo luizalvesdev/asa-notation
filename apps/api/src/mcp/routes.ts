@@ -30,8 +30,8 @@ const SERVER_INFO = { name: "asa-notation", title: "asa-notation", version: "1.0
 
 // No app essas escritas viram rascunho ("propose_"); aqui acontecem direto.
 const RENAME: Record<string, string> = { propose_tasks: "create_tasks", propose_capture: "create_capture", propose_page: "create_page", propose_diagram: "create_diagram" };
-const READ_ONLY = new Set(["list_tasks", "list_goals", "list_pages", "search_notes", "read_note", "list_inbox", "list_decks"]);
-const DESTRUCTIVE = new Set(["delete_task", "delete_goal", "delete_page", "rewrite_page", "replace_section"]);
+const READ_ONLY = new Set(["list_tasks", "list_goals", "list_pages", "search_notes", "read_note", "list_inbox", "list_decks", "list_cards"]);
+const DESTRUCTIVE = new Set(["delete_task", "delete_goal", "delete_page", "delete_deck", "delete_card", "rewrite_page", "replace_section"]);
 
 const INSTRUCTIONS = [
   "asa-notation é o caderno pessoal do usuário: páginas de notas (trabalho, estudo, aprendizados), tarefas, metas, Inbox de capturas e baralhos de estudo.",

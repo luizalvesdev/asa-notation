@@ -452,13 +452,13 @@ describe("conversa com os assistentes", () => {
     expect((await app.call("GET", "/chat/conversations", { cookies, query: { agent: "x" } })).status).toBe(400);
   });
 
-  it("Tutor lê os pontos fracos e não tem ferramentas de escrita", async () => {
+  it("Tutor lê os pontos fracos e conversa de forma socrática", async () => {
     await app.call("POST", "/study/cards", { cookies, body: { kind: "basic", front: "O que é quorum?", back: "A maioria" } });
     const queue = ((await app.call("GET", "/study/queue", { cookies, query: { dayStart: "2026-11-18T03:00:00.000Z" } })).body as { cards: { id: string }[] }).cards;
     await app.call("POST", `/study/cards/${queue[0]!.id}/review`, { cookies, body: { rating: 1 } });
     replies.push(ok(tool("list_weak_cards", {})), ok(text("Vamos começar: o que você sabe sobre quorum?")));
     const res = await send({ agent: "tutor", text: "Me ajuda a estudar" });
-    expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(["list_weak_cards", "list_pages", "search_notes", "read_note"]);
+    expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(expect.arrayContaining(["list_weak_cards", "list_pages", "search_notes", "read_note"]));
     expect(provider.calls[0]!.body.system).toContain("socrático");
     expect(JSON.stringify(provider.calls[1]!.body.messages.at(-1))).toContain("O que é quorum?");
     expect(messages(res).at(-1)!.text).toContain("quorum");
@@ -611,6 +611,26 @@ describe("assistentes com poder sobre o app", () => {
     expect(settings.settings.checkinsEnabled.study).toBe(false);
   });
 
+  it("estudo: Tutor edita baralho e card; apagar card pede aprovação", async () => {
+    await setAuto(true);
+    replies.push(ok(tool("create_deck", { title: "Redes" }, "a")), ok(text("ok")));
+    await send("tutor", "Cria baralho Redes");
+    const deck = (await app.call("GET", "/study/overview", { cookies, query: { dayStart: "2026-11-18T03:00:00.000Z" } })).body as { decks: { id: string; title: string }[] };
+    const deckId = deck.decks.find((d) => d.title === "Redes")!.id;
+    replies.push(ok(tool("create_cards", { deckId, cards: [{ front: "TCP?", back: "x" }] }, "a")), ok(text("ok")));
+    await send("tutor", "Cria card");
+    replies.push(ok(tool("list_cards", { deckId }, "a")), ok(text("ok")));
+    await send("tutor", "Lista cards");
+    const cardId = ((await app.call("GET", "/study/cards", { cookies, query: { deckId } })).body as { cards: { id: string }[] }).cards[0]!.id;
+    expect(lastToolResult()).toContain(cardId);
+    replies.push(ok(tool("update_card", { id: cardId, back: "Protocolo confiável" }, "a"), tool("update_deck", { id: deckId, title: "Redes 2" }, "b"), tool("delete_card", { id: cardId }, "c")), ok(text("ok")));
+    const msg = await send("tutor", "Corrige, renomeia e apaga");
+    expect(msg.drafts.map((d) => d.status)).toEqual(["approved", "approved", "pending"]);
+    replies.push(ok(tool("list_cards", { deckId }, "a")), ok(text("ok")));
+    await send("tutor", "Lista de novo");
+    expect(lastToolResult()).toContain("Protocolo confiável");
+  });
+
   it("apagar SEMPRE pede aprovação, mesmo no modo automático; aprovado vai para a lixeira", async () => {
     await setAuto(true);
     const id = await makePage("Velha", [para("x")]);
@@ -697,10 +717,10 @@ describe("assistentes com poder sobre o app", () => {
     expect(system).toContain("NÃO escolha uma");
   });
 
-  it("tutor continua só lendo", async () => {
+  it("tutor também tem poder sobre o app (estudo, metas, rotina)", async () => {
     replies.push(ok(text("ok")));
     await send("tutor", "oi");
-    expect(provider.calls[0]!.body.tools!.map((t) => t.name).some((n) => /^(propose_|append_|delete_|update_|create_)/.test(n))).toBe(false);
+    expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(expect.arrayContaining(["create_cards", "update_card", "delete_card", "update_deck", "create_goal", "propose_tasks", "update_checkins"]));
   });
 
   it("cards e baralhos pelo assistente", async () => {

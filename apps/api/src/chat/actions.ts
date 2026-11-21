@@ -351,6 +351,81 @@ export const ACTIONS: Record<string, ActionDef> = {
     },
   },
 
+  update_deck: {
+    spec: { name: "update_deck", description: "Renomeia um baralho de estudo ou liga/desliga a meta dele.", input_schema: obj({ id: str("Id do baralho (de list_decks)"), title: str("Novo nome"), goalId: str("Id da meta, ou vazio para soltar") }, ["id"]) },
+    async prepare(input, ctx) {
+      if (!(await ctx.study.deckExists(uuid(input.id, "baralho")))) throw new Error("Baralho não encontrado.");
+      const parts: string[] = [];
+      if (input.title !== undefined) parts.push(`nome “${clip(text(input.title, 120, "Título"))}”`);
+      if (input.goalId !== undefined) parts.push(input.goalId ? "ligar a uma meta" : "soltar da meta");
+      if (parts.length === 0) throw new Error("Nada para alterar.");
+      return { summary: `Baralho: ${parts.join(", ")}`, danger: false };
+    },
+    async run(input, ctx) {
+      const patch: { title?: string; goalId?: string | null } = {};
+      if (input.title !== undefined) patch.title = text(input.title, 120, "Título");
+      if (input.goalId !== undefined) patch.goalId = input.goalId ? uuid(input.goalId, "meta") : null;
+      const res = await ctx.study.updateDeck(uuid(input.id, "baralho"), patch);
+      if (res.kind !== "ok") throw new Error(res.kind === "goal_not_found" ? "Meta não encontrada." : "Baralho não encontrado.");
+      return { message: `Baralho “${res.deck.title}” atualizado.` };
+    },
+  },
+
+  delete_deck: {
+    spec: { name: "delete_deck", description: "Apaga um baralho. Os cards dele continuam, sem baralho. Sempre pede aprovação do usuário.", input_schema: obj({ id: str("Id do baralho") }, ["id"]) },
+    async prepare(input, ctx) {
+      if (!(await ctx.study.deckExists(uuid(input.id, "baralho")))) throw new Error("Baralho não encontrado.");
+      return { summary: "Apagar o baralho (os cards continuam, sem baralho)", danger: true };
+    },
+    async run(input, ctx) {
+      if (!(await ctx.study.deleteDeck(uuid(input.id, "baralho")))) throw new Error("Baralho não encontrado.");
+      return { message: "Baralho apagado." };
+    },
+  },
+
+  update_card: {
+    spec: { name: "update_card", description: "Corrige um card de estudo: pergunta, resposta ou baralho. O histórico de revisão continua. Use o id que list_cards devolveu.", input_schema: obj({ id: str("Id do card"), front: str("Nova pergunta"), back: str("Nova resposta"), deckId: str("Id do baralho, ou vazio para tirar do baralho") }, ["id"]) },
+    async prepare(input, ctx) {
+      const card = await ctx.study.getCard(uuid(input.id, "card"));
+      if (!card) throw new Error("Card não encontrado.");
+      const parts: string[] = [];
+      if (input.front !== undefined) parts.push("pergunta");
+      if (input.back !== undefined) parts.push("resposta");
+      if (input.deckId !== undefined) {
+        if (input.deckId && !(await ctx.study.deckExists(uuid(input.deckId, "baralho")))) throw new Error("Baralho não encontrado.");
+        parts.push("baralho");
+      }
+      if (parts.length === 0) throw new Error("Nada para alterar.");
+      return { summary: `Card “${clip(card.front)}”: mudar ${parts.join(", ")}`, danger: false };
+    },
+    async run(input, ctx) {
+      const card = await ctx.study.getCard(uuid(input.id, "card"));
+      if (!card) throw new Error("Card não encontrado.");
+      const deckId = input.deckId === undefined ? card.deckId : input.deckId ? uuid(input.deckId, "baralho") : null;
+      if (deckId && !(await ctx.study.deckExists(deckId))) throw new Error("Baralho não encontrado.");
+      const updated = await ctx.study.updateCard(card.id, {
+        front: input.front === undefined ? card.front : text(input.front, 2000, "Pergunta"),
+        back: input.back === undefined ? card.back : text(input.back, 2000, "Resposta"),
+        deckId,
+      });
+      if (!updated) throw new Error("Card não encontrado.");
+      return { message: "Card atualizado." };
+    },
+  },
+
+  delete_card: {
+    spec: { name: "delete_card", description: "Apaga um card de estudo. Sempre pede aprovação do usuário.", input_schema: obj({ id: str("Id do card (de list_cards)") }, ["id"]) },
+    async prepare(input, ctx) {
+      const card = await ctx.study.getCard(uuid(input.id, "card"));
+      if (!card) throw new Error("Card não encontrado.");
+      return { summary: `Apagar o card “${clip(card.front)}”`, danger: true };
+    },
+    async run(input, ctx) {
+      if (!(await ctx.study.deleteCard(uuid(input.id, "card")))) throw new Error("Card não encontrado.");
+      return { message: "Card apagado." };
+    },
+  },
+
   archive_capture: {
     spec: { name: "archive_capture", description: "Arquiva uma captura da Inbox (some da Inbox, dá para restaurar).", input_schema: obj({ id: str("Id da captura (de list_inbox)") }, ["id"]) },
     async prepare(input, ctx) {

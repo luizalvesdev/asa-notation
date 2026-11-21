@@ -367,7 +367,7 @@ export function ChatPanel({ active = true, request, onClose, onToast, onDataChan
           />
           <button className="btn btn-pri btn-sm" type="submit" disabled={sending || text.trim() === "" || configured === false}>Enviar</button>
         </div>
-        <span style={{ fontSize: "calc(11px * var(--fs, 1))", color: "var(--text-3)", marginTop: 6, display: "block" }}>{agent === "tutor" ? `${name} só conversa e lê suas notas: não altera nada.` : autoApply ? `${name} cria e edita na hora; apagar sempre pede a sua aprovação.` : `${name} propõe e você aprova: nada é alterado sem o seu OK.`} Enter envia, Shift+Enter quebra a linha.</span>
+        <span style={{ fontSize: "calc(11px * var(--fs, 1))", color: "var(--text-3)", marginTop: 6, display: "block" }}>{autoApply ? `${name} cria e edita na hora; apagar sempre pede a sua aprovação.` : `${name} propõe e você aprova: nada é alterado sem o seu OK.`} Enter envia, Shift+Enter quebra a linha.</span>
       </form>
     </aside>
   );
