@@ -6,10 +6,10 @@ import type { StoreContext } from "./tools.js";
 /** Executa um rascunho (aprovado pelo usuário ou, no modo automático, na hora). Lança com a mensagem do erro se não der. */
 export async function executeDraft(kind: DraftKind, payload: Record<string, unknown>, stores: StoreContext): Promise<Record<string, unknown>> {
   if (kind === "tasks") {
-    const tasks = payload.tasks as { title: string; date: string | null; time: string | null }[];
+    const tasks = payload.tasks as { title: string; date: string | null; time: string | null; recurrence?: "daily" | "weekdays" | "weekly" | null }[];
     const ids: string[] = [];
     for (const t of tasks) {
-      const created = await stores.tasks.create({ title: t.title, parentId: null, date: t.date, time: t.time, recurrence: null, goalId: null });
+      const created = await stores.tasks.create({ title: t.title, parentId: null, date: t.date, time: t.time, recurrence: t.recurrence ?? null, goalId: null });
       if (created.kind === "ok") ids.push(created.task.id);
     }
     return { created: ids.length, ids, message: `${ids.length} ${ids.length === 1 ? "tarefa criada" : "tarefas criadas"}.` };

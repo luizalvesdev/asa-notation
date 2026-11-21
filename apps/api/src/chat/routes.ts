@@ -55,6 +55,7 @@ export function chatRoutes(deps: Deps): Route[] {
     pages: deps.pages,
     captures: deps.captures,
     study: deps.study,
+    settings: deps.settings,
     today: localParts(nowMs, (await settings.get()).timezone).date,
   });
 

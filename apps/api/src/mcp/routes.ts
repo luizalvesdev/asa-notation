@@ -54,6 +54,7 @@ export function mcpRoutes(deps: Deps): Route[] {
       pages: deps.pages,
       captures: deps.captures,
       study: deps.study,
+      settings: deps.settings,
       today: localParts(nowMs, (await deps.settings.get()).timezone).date,
     };
     const { specs, handlers } = toolsFor("renato", {

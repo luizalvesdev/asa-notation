@@ -596,6 +596,21 @@ describe("assistentes com poder sobre o app", () => {
     expect(((await app.call("GET", "/goals", { cookies })).body as { goals: { title: string }[] }).goals.map((g) => g.title)).toContain("Certificação");
   });
 
+  it("rotina: cria tarefa recorrente e liga/desliga/muda horário dos check-ins", async () => {
+    await setAuto(true);
+    replies.push(
+      ok(tool("propose_tasks", { tasks: [{ title: "Leitura", date: "2026-11-20", time: "21:00", recurrence: "daily" }] }, "a"), tool("update_checkins", { checkinsEnabled: { study: false }, checkins: { plan: "07:30" } }, "b")),
+      ok(text("Pronto.")),
+    );
+    const msg = await send("hermes", "Leitura todo dia e check-ins");
+    expect(msg.drafts.map((d) => d.status)).toEqual(["approved", "approved"]);
+    const tasks = (await app.call("GET", "/tasks", { cookies, query: { from: "2026-11-21", to: "2026-11-22", today: "2026-11-20" } })).body as { days: { title: string }[] };
+    expect(tasks.days.map((t) => t.title)).toEqual(["Leitura", "Leitura"]);
+    const settings = (await app.call("GET", "/settings", { cookies })).body as { settings: { checkins: { plan: string }; checkinsEnabled: { study: boolean } } };
+    expect(settings.settings.checkins.plan).toBe("07:30");
+    expect(settings.settings.checkinsEnabled.study).toBe(false);
+  });
+
   it("apagar SEMPRE pede aprovação, mesmo no modo automático; aprovado vai para a lixeira", async () => {
     await setAuto(true);
     const id = await makePage("Velha", [para("x")]);

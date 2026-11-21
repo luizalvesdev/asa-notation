@@ -2,10 +2,11 @@ import type { ToolSpec } from "../ai/anthropic.js";
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
 import type { PgPageStore } from "../pages/store.js";
+import type { PgSettingsStore } from "../settings/store.js";
 import type { PgStudyStore } from "../study/store.js";
 import { extractText } from "../pages/text.js";
 import { isUuid } from "../routing.js";
-import { addDays, isDate, isTime } from "../tasks/recurrence.js";
+import { addDays, isDate, isTime, type Recurrence } from "../tasks/recurrence.js";
 import type { PgTaskStore } from "../tasks/store.js";
 import type { ToolHandler } from "./agent.js";
 import type { Agent, DraftKind } from "./store.js";
@@ -20,6 +21,7 @@ export interface StoreContext {
   pages: PgPageStore;
   captures: PgCaptureStore;
   study: PgStudyStore;
+  settings: PgSettingsStore;
   today: string;
 }
 
@@ -48,9 +50,9 @@ const SPECS: Record<string, ToolSpec> = {
   },
   propose_tasks: {
     name: "propose_tasks",
-    description: "Cria tarefas novas (de 1 a 10). Use sempre que o usuário pedir para criar ou planejar tarefas.",
+    description: "Cria tarefas novas (de 1 a 10). Use sempre que o usuário pedir para criar ou planejar tarefas. Para a ROTINA (algo que se repete, como leitura todo dia), use `recurrence`: a tarefa aparece em cada dia e o usuário marca o check de cada dia.",
     input_schema: obj(
-      { tasks: { type: "array", maxItems: 10, items: obj({ title: str("Título curto"), date: str("AAAA-MM-DD, opcional"), time: str("HH:MM, opcional (exige date)") }, ["title"]) } },
+      { tasks: { type: "array", maxItems: 10, items: obj({ title: str("Título curto"), date: str("AAAA-MM-DD, opcional"), time: str("HH:MM, opcional (exige date)"), recurrence: { type: "string", enum: ["daily", "weekdays", "weekly"], description: "Repetição, opcional (exige date): daily = todo dia, weekdays = segunda a sexta, weekly = toda semana no dia da date" } }, ["title"]) } },
       ["tasks"],
     ),
   },
@@ -84,6 +86,7 @@ const SPECS: Record<string, ToolSpec> = {
   },
 };
 
+const RECURRENCES: readonly string[] = ["daily", "weekdays", "weekly"];
 const clip = (value: string, max: number) => (value.length > max ? `${value.slice(0, max)}…` : value);
 
 export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; handlers: Record<string, ToolHandler> } {
@@ -114,7 +117,9 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
         const time = item.time === undefined || item.time === null || item.time === "" ? null : item.time;
         if (date !== null && !isDate(date)) throw new Error(`Data inválida: ${String(date)}.`);
         if (time !== null && (!isTime(time) || date === null)) throw new Error("Hora inválida, ou sem data.");
-        return { title, date: date as string | null, time: time as string | null };
+        const recurrence = item.recurrence === undefined || item.recurrence === null || item.recurrence === "" ? null : item.recurrence;
+        if (recurrence !== null && (!RECURRENCES.includes(recurrence as Recurrence) || date === null)) throw new Error("Repetição inválida (use daily, weekdays ou weekly, e informe a data de início).");
+        return { title, date: date as string | null, time: time as string | null, recurrence: recurrence as Recurrence | null };
       });
       const out = await ctx.submit("tasks", { tasks });
       return out.done ? `Feito: ${out.message}` : `Rascunho com ${tasks.length} ${tasks.length === 1 ? "tarefa" : "tarefas"} criado. Aguardando a aprovação do usuário; diga isso a ele.`;
@@ -223,6 +228,7 @@ export function systemPrompt(agent: Agent, today: string, timezone: string, auto
     return [
       "Você é o Hermes, assistente de rotina, tarefas e metas do usuário, com poder sobre todo o app.",
       "Use list_tasks e list_goals para saber o que existe antes de planejar; tarefas com datas e horários realistas e poucas por dia. Para mudar ou apagar uma tarefa existente, use update_task e delete_task com o id.",
+      "ROTINA e CHECK: a rotina do usuário é feita de tarefas que se repetem. Para pôr algo na rotina (leitura, exercício...), crie a tarefa com `recurrence` (daily, weekdays ou weekly), data de início e horário; para tirar da rotina, apague a tarefa ou mude a `recurrence` com update_task. O check de cada dia é marcar a tarefa como feita (update_task com done: true, vale para hoje). Os CHECK-INS são os avisos do app (plano do dia, métricas da quinta, revisão do sábado, lembrete de estudo): use update_checkins para ligar, desligar ou mudar o horário deles. Não diga que não consegue mexer na rotina ou nos check-ins: você consegue.",
       ...organize,
       ...common,
     ].join("\n");

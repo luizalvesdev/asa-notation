@@ -1,6 +1,7 @@
 import type { ToolSpec } from "../ai/anthropic.js";
 import { isUuid } from "../routing.js";
-import { isDate, isTime } from "../tasks/recurrence.js";
+import { mergeSettings } from "../settings/routes.js";
+import { isDate, isTime, type Recurrence } from "../tasks/recurrence.js";
 import { appendBlocks, asDoc, replaceSection } from "./doc-edit.js";
 import { markdownToDoc } from "./markdown.js";
 import type { StoreContext as ToolContext } from "./tools.js";
@@ -53,6 +54,13 @@ function optTime(v: unknown): string | null | undefined {
   return v;
 }
 
+function optRecurrence(v: unknown): Recurrence | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === null || v === "") return null;
+  if (v !== "daily" && v !== "weekdays" && v !== "weekly") throw new Error(`Repetição inválida: ${String(v)}.`);
+  return v;
+}
+
 async function page(ctx: ToolContext, id: unknown) {
   const found = await ctx.pages.get(uuid(id, "página"));
   if (!found) throw new Error("Página não encontrada.");
@@ -65,9 +73,43 @@ function markdown(v: unknown) {
   return v;
 }
 
+const CHECKIN_NAMES = { plan: "plano do dia", thursday: "métricas da quinta", saturday: "revisão do sábado", study: "lembrete de estudo" } as const;
+
+function checkinsPatch(input: Record<string, unknown>): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  for (const key of ["checkins", "checkinsEnabled"] as const) if (input[key] !== undefined) body[key] = input[key];
+  return body;
+}
+
 export const ACTIONS: Record<string, ActionDef> = {
+  update_checkins: {
+    spec: {
+      name: "update_checkins",
+      description: "Liga, desliga ou muda o horário dos check-ins (avisos do app): plan = plano do dia, thursday = métricas da quinta, saturday = revisão do sábado, study = lembrete de estudo. Envie só o que muda.",
+      input_schema: obj({
+        checkinsEnabled: { type: "object", description: "Ligar/desligar, ex.: {\"study\": false}", properties: { plan: { type: "boolean" }, thursday: { type: "boolean" }, saturday: { type: "boolean" }, study: { type: "boolean" } } },
+        checkins: { type: "object", description: "Horários HH:MM, ex.: {\"plan\": \"07:30\"}", properties: { plan: str("HH:MM"), thursday: str("HH:MM"), saturday: str("HH:MM"), study: str("HH:MM") } },
+      }),
+    },
+    async prepare(input, ctx) {
+      const body = checkinsPatch(input);
+      const next = mergeSettings(await ctx.settings.get(), body);
+      if (typeof next === "string") throw new Error("Valores inválidos (use horários HH:MM e true/false).");
+      const parts: string[] = [];
+      for (const [k, v] of Object.entries((body.checkinsEnabled ?? {}) as Record<string, unknown>)) if (k in CHECKIN_NAMES) parts.push(`${CHECKIN_NAMES[k as keyof typeof CHECKIN_NAMES]}: ${v ? "ligar" : "desligar"}`);
+      for (const [k, v] of Object.entries((body.checkins ?? {}) as Record<string, unknown>)) if (k in CHECKIN_NAMES) parts.push(`${CHECKIN_NAMES[k as keyof typeof CHECKIN_NAMES]}: horário ${String(v)}`);
+      if (parts.length === 0) throw new Error("Nada para alterar.");
+      return { summary: `Check-ins: ${parts.join(", ")}`, danger: false };
+    },
+    async run(input, ctx) {
+      const next = mergeSettings(await ctx.settings.get(), checkinsPatch(input));
+      if (typeof next === "string") throw new Error("Valores inválidos.");
+      await ctx.settings.put(next);
+      return { message: "Check-ins atualizados." };
+    },
+  },
   update_task: {
-    spec: { name: "update_task", description: "Altera uma tarefa existente: título, data, hora ou se está feita. Use o id que list_tasks devolveu.", input_schema: obj({ id: str("Id da tarefa"), title: str("Novo título"), date: str("AAAA-MM-DD ou vazio para tirar a data"), time: str("HH:MM ou vazio"), done: { type: "boolean", description: "Marcar como feita ou desfeita" } }, ["id"]) },
+    spec: { name: "update_task", description: "Altera uma tarefa existente: título, data, hora ou se está feita. Use o id que list_tasks devolveu.", input_schema: obj({ id: str("Id da tarefa"), title: str("Novo título"), date: str("AAAA-MM-DD ou vazio para tirar a data"), time: str("HH:MM ou vazio"), recurrence: { type: "string", enum: ["daily", "weekdays", "weekly", ""], description: "Repetição (rotina): daily, weekdays, weekly; vazio para deixar de repetir. Exige data." }, done: { type: "boolean", description: "Marcar como feita ou desfeita (em tarefa de rotina, vale para hoje)" } }, ["id"]) },
     async prepare(input, ctx) {
       const task = await ctx.tasks.get(uuid(input.id, "tarefa"));
       if (!task) throw new Error("Tarefa não encontrada.");
@@ -77,18 +119,22 @@ export const ACTIONS: Record<string, ActionDef> = {
       const time = optTime(input.time);
       if (date !== undefined) parts.push(date ? `data ${date}` : "sem data");
       if (time !== undefined) parts.push(time ? `hora ${time}` : "sem hora");
+      const rec = optRecurrence(input.recurrence);
+      if (rec !== undefined) parts.push(rec ? `repetir (${rec})` : "deixar de repetir");
       if (typeof input.done === "boolean") parts.push(input.done ? "marcar como feita" : "marcar como não feita");
       if (parts.length === 0) throw new Error("Nada para alterar.");
       return { summary: `Tarefa “${clip(task.title)}”: ${parts.join(", ")}`, danger: false };
     },
     async run(input, ctx) {
       const id = uuid(input.id, "tarefa");
-      const patch: { title?: string; date?: string | null; time?: string | null } = {};
+      const patch: { title?: string; date?: string | null; time?: string | null; recurrence?: Recurrence | null } = {};
       if (input.title !== undefined) patch.title = text(input.title, 200, "Título");
       const date = optDate(input.date);
       const time = optTime(input.time);
       if (date !== undefined) patch.date = date;
       if (time !== undefined) patch.time = time;
+      const rec = optRecurrence(input.recurrence);
+      if (rec !== undefined) patch.recurrence = rec;
       if (Object.keys(patch).length > 0) {
         const res = await ctx.tasks.update(id, patch);
         if (res.kind !== "ok") throw new Error(res.kind === "not_found" ? "Tarefa não encontrada." : "Alteração inválida (hora sem data?).");
