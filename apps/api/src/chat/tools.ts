@@ -101,18 +101,7 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
       const to = input.to;
       if (!isDate(from) || !isDate(to) || to < from || to > addDays(from, 31)) throw new Error("Intervalo inválido: use datas AAAA-MM-DD, de no máximo 31 dias.");
       const list = await ctx.tasks.list(from, to, ctx.today);
-      // Em tarefa recorrente, `date` é o dia da ocorrência; o início da rotina (de onde ela passa a valer) vem de `get`.
-      const starts = new Map<string, string | null>();
-      for (const t of list.days) if (t.recurrence && !starts.has(t.id)) starts.set(t.id, (await ctx.tasks.get(t.id))?.date ?? null);
-      const line = (t: { id: string; title: string; date: string | null; time: string | null; done: boolean; recurrence: string | null }) => ({
-        id: t.id,
-        title: t.title,
-        date: t.date,
-        time: t.time,
-        done: t.done,
-        recurring: !!t.recurrence,
-        ...(t.recurrence ? { repeat: t.recurrence, startsOn: starts.get(t.id) ?? null } : {}),
-      });
+      const line = (t: { id: string; title: string; date: string | null; time: string | null; done: boolean; recurrence: string | null }) => ({ id: t.id, title: t.title, date: t.date, time: t.time, done: t.done, recurring: !!t.recurrence });
       return JSON.stringify({ days: list.days.slice(0, 60).map(line), late: list.late.slice(0, 30).map(line), undated: list.undated.slice(0, 30).map(line) });
     },
     async list_goals() {
@@ -250,7 +239,7 @@ export function systemPrompt(agent: Agent, today: string, timezone: string, auto
     return [
       "Você é o Hermes, assistente de rotina, tarefas e metas do usuário, com poder sobre todo o app.",
       "Use list_tasks e list_goals para saber o que existe antes de planejar; tarefas com datas e horários realistas e poucas por dia. Para mudar ou apagar uma tarefa existente, use update_task e delete_task com o id.",
-      "ROTINA e CHECK: a rotina do usuário é feita de tarefas que se repetem. Para pôr algo na rotina (leitura, exercício...), crie a tarefa com `recurrence` (daily, weekdays ou weekly), data de início e horário; para tirar da rotina, apague a tarefa ou mude a `recurrence` com update_task. O check de cada dia é marcar a tarefa como feita (update_task com done: true, vale para hoje). Os CHECK-INS são os avisos do app (plano do dia, métricas da quinta, revisão do sábado, lembrete de estudo): use update_checkins para ligar, desligar ou mudar o horário deles. Não diga que não consegue mexer na rotina ou nos check-ins: você consegue. Uma tarefa recorrente só aparece a partir da data de início (`startsOn` em list_tasks) e não tem data final: dias antes dela ficam vazios. Se o usuário quer a rotina também em dias anteriores, mude a data de início com update_task em vez de criar outra tarefa. Antes de criar uma rotina, veja com list_tasks se ela já existe, para não duplicar. Nunca descreva o que aparece na tela sem conferir com list_tasks.",
+      "ROTINA e CHECK: a rotina do usuário é feita de tarefas que se repetem. Para pôr algo na rotina (leitura, exercício...), crie a tarefa com `recurrence` (daily, weekdays ou weekly), data de início e horário; para tirar da rotina, apague a tarefa ou mude a `recurrence` com update_task. O check de cada dia é marcar a tarefa como feita (update_task com done: true, vale para hoje). Os CHECK-INS são os avisos do app (plano do dia, métricas da quinta, revisão do sábado, lembrete de estudo): use update_checkins para ligar, desligar ou mudar o horário deles. Não diga que não consegue mexer na rotina ou nos check-ins: você consegue.",
       ...organize,
       ...common,
     ].join("\n");
