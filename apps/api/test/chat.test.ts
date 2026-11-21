@@ -631,6 +631,15 @@ describe("assistentes com poder sobre o app", () => {
     expect(lastToolResult()).toContain("Protocolo confiável");
   });
 
+  it("histórico antigo com bloco de raciocínio: reenvia sem o bloco (a assinatura não vale com ferramentas novas)", async () => {
+    const { trimHistory } = await import("../src/chat/agent.js");
+    const out = trimHistory([
+      { role: "user", content: "oi" },
+      { role: "assistant", content: [{ type: "thinking", thinking: "hm", signature: "x" }, { type: "redacted_thinking", data: "y" }, { type: "text", text: "Olá" }] },
+    ]);
+    expect(out[1]!.content).toEqual([{ type: "text", text: "Olá" }]);
+  });
+
   it("apagar SEMPRE pede aprovação, mesmo no modo automático; aprovado vai para a lixeira", async () => {
     await setAuto(true);
     const id = await makePage("Velha", [para("x")]);

@@ -84,5 +84,12 @@ export function trimHistory(stored: { role: "user" | "assistant"; content: strin
   const isUserText = (m: { role: string; content: string | Block[] }) => m.role === "user" && (typeof m.content === "string" || m.content.some((b) => b.type === "text"));
   const starts = stored.map((m, i) => (isUserText(m) ? i : -1)).filter((i) => i >= 0);
   const from = starts.length > maxUserTurns ? starts[starts.length - maxUserTurns]! : 0;
-  return stored.slice(from).map((m) => ({ role: m.role, content: m.content }));
+  // Blocos de raciocínio guardados ficam amarrados ao prefixo exato (sistema + ferramentas) em que nasceram: reenviados depois de
+  // uma mudança nas ferramentas ou no prompt, a API recusa ("Invalid `signature` in `thinking` block"). Os de turnos antigos não
+  // fazem falta, então saem do histórico; os do turno em andamento (em `fresh`) continuam, pois o prefixo é o mesmo.
+  const withoutThinking = (content: string | Block[]) => (typeof content === "string" ? content : content.filter((b) => b.type !== "thinking" && b.type !== "redacted_thinking"));
+  return stored
+    .slice(from)
+    .map((m) => ({ role: m.role, content: withoutThinking(m.content) }))
+    .filter((m) => typeof m.content === "string" || m.content.length > 0);
 }
