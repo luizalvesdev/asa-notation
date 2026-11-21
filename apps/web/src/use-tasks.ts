@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { tasksApi } from "./api";
+import { useDataVersion } from "./data-events";
 import { applyDone, applySubtaskDone } from "./tasks-logic";
 import { EMPTY_LIST, type NewTaskInput, type TaskItem, type TaskList } from "./tasks-types";
 
@@ -25,6 +26,7 @@ export function useTasks(from: string, to: string, today: string): TasksState {
   const [list, setList] = useState<TaskList>(EMPTY_LIST);
   const [status, setStatus] = useState<TasksStatus>("carregando");
   const [version, setVersion] = useState(0);
+  const dataVersion = useDataVersion();
 
   useEffect(() => {
     let live = true;
@@ -39,7 +41,7 @@ export function useTasks(from: string, to: string, today: string): TasksState {
     return () => {
       live = false;
     };
-  }, [from, to, today, version]);
+  }, [from, to, today, version, dataVersion]);
 
   const reload = useCallback(() => {
     setStatus((current) => (current === "pronto" ? current : "carregando"));

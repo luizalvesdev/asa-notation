@@ -1,3 +1,4 @@
+import { notifyDataChanged } from "./data-events";
 import { DEMO, resetDemo } from "./demo-flag";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, capturesApi, pagesApi, studyApi } from "./api";
@@ -518,7 +519,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       <div className={`chat-wrap${chatOpen ? " open" : ""}`} inert={!chatOpen} aria-hidden={!chatOpen}>
         {chatMounted && (
           <Suspense fallback={null}>
-            <ChatPanel active={chatOpen} request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={pages.reload} />
+            <ChatPanel active={chatOpen} request={chatRequest} onClose={() => setChatOpen(false)} onToast={setToast} onDataChanged={() => { pages.reload(); notifyDataChanged(); }} />
           </Suspense>
         )}
       </div>

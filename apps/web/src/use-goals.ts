@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { goalsApi, tasksApi } from "./api";
+import { useDataVersion } from "./data-events";
 import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
 import { applyDone, applySubtaskDone } from "./tasks-logic";
 import { EMPTY_LIST, type TaskItem } from "./tasks-types";
@@ -20,6 +21,7 @@ export function useGoals(): GoalsState {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [status, setStatus] = useState<LoadStatus>("carregando");
   const [version, setVersion] = useState(0);
+  const dataVersion = useDataVersion();
 
   useEffect(() => {
     let live = true;
@@ -34,7 +36,7 @@ export function useGoals(): GoalsState {
     return () => {
       live = false;
     };
-  }, [version]);
+  }, [version, dataVersion]);
 
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
   const reload = useCallback(() => {

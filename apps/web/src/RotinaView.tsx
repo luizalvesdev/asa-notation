@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { routineApi, settingsApi } from "./api";
+import { useDataVersion } from "./data-events";
 import { routeHash } from "./nav";
 import { formatStudy, VERDICT_TEXT } from "./routine-logic";
 import type { RoutineWeek, WeeklyReview } from "./routine-types";
@@ -133,6 +134,7 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
   const [week, setWeek] = useState<RoutineWeek | null>(null);
   const [status, setStatus] = useState<"carregando" | "erro" | "pronto">("carregando");
   const [settings, setSettings] = useState<Settings | null>(null);
+  const dataVersion = useDataVersion();
   const [attempt, setAttempt] = useState(0);
   const reviewKey = useRef(0);
 
@@ -146,7 +148,7 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
     return () => {
       live = false;
     };
-  }, []);
+  }, [dataVersion]);
 
   useEffect(() => {
     let live = true;

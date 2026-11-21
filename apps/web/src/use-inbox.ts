@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { capturesApi } from "./api";
+import { useDataVersion } from "./data-events";
 import { EMPTY_COUNTS, type Capture, type Counts, type Kind, type KindFilter } from "./captures-types";
 import type { Page } from "./pages-types";
 
@@ -21,6 +22,7 @@ export function useInbox(filter: KindFilter): InboxState {
   const [counts, setCounts] = useState<Counts>(EMPTY_COUNTS);
   const [status, setStatus] = useState<InboxStatus>("carregando");
   const [version, setVersion] = useState(0);
+  const dataVersion = useDataVersion();
 
   useEffect(() => {
     let live = true;
@@ -36,7 +38,7 @@ export function useInbox(filter: KindFilter): InboxState {
     return () => {
       live = false;
     };
-  }, [filter, version]);
+  }, [filter, version, dataVersion]);
 
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
   const reload = useCallback(() => {

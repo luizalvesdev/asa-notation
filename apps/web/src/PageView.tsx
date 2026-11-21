@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ApiError, isConflict, pagesApi } from "./api";
+import { useDataVersion } from "./data-events";
 import { createAutosaver, type Autosaver, type SaveState } from "./autosave";
 import { Backlinks } from "./Backlinks";
 import { Subpages } from "./Subpages";
@@ -37,13 +38,37 @@ type Load = { status: "carregando" } | { status: "ausente" } | { status: "erro" 
 export function PageView({ pageId, nodes, onSaved, onDelete, onToast }: PageViewProps) {
   const [load, setLoad] = useState<Load>({ status: "carregando" });
   const [attempt, setAttempt] = useState(0);
+  const dataVersion = useDataVersion();
+  // Maior versão que esta tela já conhece (carregada ou salva por quem edita), para não confundir o próprio autosave com mudança de fora.
+  const knownRev = useRef(0);
+
+  // Um assistente pode ter editado esta página: busca de novo em silêncio e só troca se a versão mudou.
+  useEffect(() => {
+    if (dataVersion === 0) return;
+    let live = true;
+    pagesApi
+      .get(pageId)
+      .then((page) => {
+        if (!live || page.rev <= knownRev.current) return;
+        knownRev.current = page.rev;
+        setLoad((cur) => (cur.status === "pronto" && cur.page.id === page.id ? { status: "pronto", page } : cur));
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [dataVersion, pageId]);
 
   useEffect(() => {
     let live = true;
     setLoad({ status: "carregando" });
     pagesApi
       .get(pageId)
-      .then((page) => live && setLoad({ status: "pronto", page }))
+      .then((page) => {
+        if (!live) return;
+        knownRev.current = page.rev;
+        setLoad({ status: "pronto", page });
+      })
       .catch((err: unknown) => live && setLoad({ status: err instanceof ApiError && err.status === 404 ? "ausente" : "erro" }));
     return () => {
       live = false;
@@ -86,7 +111,7 @@ export function PageView({ pageId, nodes, onSaved, onDelete, onToast }: PageView
   if (load.page.kind === "database") {
     return <Suspense fallback={<Loading />}><DatabaseView key={load.page.id} page={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onToast={onToast} /></Suspense>;
   }
-  return <PageEditor key={`${load.page.id}:${attempt}`} initial={load.page} nodes={nodes} onSaved={onSaved} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} onToast={onToast} />;
+  return <PageEditor key={`${load.page.id}:${attempt}:${load.page.rev}`} initial={load.page} nodes={nodes} onSaved={(page) => { knownRev.current = Math.max(knownRev.current, page.rev); onSaved(page); }} onDelete={onDelete} onReload={() => setAttempt((n) => n + 1)} onToast={onToast} />;
 }
 
 interface PageEditorProps {

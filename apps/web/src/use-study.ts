@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { studyApi } from "./api";
+import { useDataVersion } from "./data-events";
 import { localDayStartIso } from "./tasks-dates";
 import type { Overview } from "./study-types";
 
@@ -9,6 +10,7 @@ export function useStudyOverview() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [status, setStatus] = useState<LoadStatus>("carregando");
   const [version, setVersion] = useState(0);
+  const dataVersion = useDataVersion();
 
   useEffect(() => {
     let live = true;
@@ -23,7 +25,7 @@ export function useStudyOverview() {
     return () => {
       live = false;
     };
-  }, [version]);
+  }, [version, dataVersion]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
   const retry = useCallback(() => {

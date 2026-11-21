@@ -1,3 +1,4 @@
+import { useDataVersion } from "./data-events";
 import { DEMO, DEMO_AI_OFF } from "./demo-flag";
 import { useEffect, useMemo, useState } from "react";
 import { goalsApi, studyApi } from "./api";
@@ -347,6 +348,7 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
   };
   const [creating, setCreating] = useState(false);
   const [cardsVersion, setCardsVersion] = useState(0);
+  const dataVersion = useDataVersion();
 
   useEffect(() => {
     let live = true;
@@ -354,7 +356,12 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
     return () => {
       live = false;
     };
-  }, []);
+  }, [dataVersion]);
+
+  // Um assistente mexeu em cards ou baralhos: recarrega a lista de cards aberta.
+  useEffect(() => {
+    if (dataVersion > 0) setCardsVersion((v) => v + 1);
+  }, [dataVersion]);
 
   const decks = overview?.decks ?? [];
   // Sem escolha, abre a primeira trilha; "none" mostra os cards que não pertencem a nenhuma.
