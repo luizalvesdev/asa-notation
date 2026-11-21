@@ -38,11 +38,3 @@
 .qopt.wrong{border-color:var(--danger);background:var(--danger-soft)}
 .qopt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .kpad{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font:600 calc(11px * var(--fs, 1))/1 var(--mono);background:var(--bg-2);color:var(--text-2);flex:none}
-
-/* Trabalho: quadro e chat do card */
-.kb-tile{background:var(--bg);border:1px solid var(--border);transition:border-color var(--rapido, 120ms) ease}
-.kb-tile:hover{border-color:var(--text-3, var(--border))}
-/* O campo de mensagem fica preso embaixo; a sombra cobre o respiro que a barra inferior do celular deixa. */
-.agent-composer{box-shadow:0 80px 0 var(--bg)}
-.reply-code{font-size:.92em;padding:1px 4px;border-radius:4px;background:var(--bg-2)}
-.repo-chip[aria-pressed="true"]{background:var(--accent-soft, var(--hover));border-color:var(--accent);color:var(--accent)}

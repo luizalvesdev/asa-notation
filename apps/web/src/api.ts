@@ -8,7 +8,6 @@ import type { ApiToken, Settings } from "./settings-types";
 import type { Notification, ProgressData, RoutineWeek, WeeklyReview } from "./routine-types";
 import type { Agent, ChatMessage, Conversation } from "./chat-types";
 import type { NewTaskInput, TaskItem, TaskList } from "./tasks-types";
-import type { AgentEvent, AgentJob, AgentState, CardThread } from "./agent-types";
 
 export class ApiError extends Error {
   constructor(
@@ -68,20 +67,6 @@ export const pagesApi = {
 
 export const publicApi = {
   get: (slug: string) => request<{ page: { title: string; icon: string | null; cover: string | null; kind: string; body: unknown; updatedAt: string } }>("GET", `/public/${slug}`).then((r) => r.page),
-};
-
-type JobDetail = { job: AgentJob; events: AgentEvent[] };
-
-export const agentApi = {
-  state: () => request<AgentState>("GET", "/agent"),
-  job: (id: string) => request<JobDetail>("GET", `/agent/jobs/${id}`),
-  thread: (ref: string) => request<CardThread>("GET", `/agent/cards/${encodeURIComponent(ref)}`),
-  create: (ref: string, instruction: string, repos: string[] = [], base: string | null = null) =>
-    request<{ job: AgentJob }>("POST", "/agent/jobs", { ref, instruction, repos, ...(base ? { base } : {}) }).then((r) => r.job),
-  approve: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/approve`),
-  feedback: (id: string, text: string) => request<JobDetail>("POST", `/agent/jobs/${id}/feedback`, { text }),
-  cancel: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/cancel`),
-  interrupt: (id: string) => request<JobDetail>("POST", `/agent/jobs/${id}/interrupt`),
 };
 
 export const tasksApi = {
