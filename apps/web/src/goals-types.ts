@@ -34,3 +34,29 @@ export interface GoalPatch {
 }
 
 export type GoalStatus = "concluida" | "batida" | "ritmo" | "atras" | "risco";
+
+/** Árvore de uma meta ligada a uma página: grupos (títulos) > cursos > seções > aulas. */
+export interface OutlineLesson {
+  text: string;
+  checked: boolean;
+}
+export interface OutlineSection {
+  title: string;
+  done: number;
+  total: number;
+  lessons: OutlineLesson[];
+}
+export interface OutlineItem {
+  title: string;
+  /** Página do curso, quando o item aponta para uma página filha. */
+  pageId: string | null;
+  done: number;
+  total: number;
+  sections: OutlineSection[];
+}
+export interface OutlineGroup {
+  title: string | null;
+  done: number;
+  total: number;
+  items: OutlineItem[];
+}

@@ -2,7 +2,7 @@ import type { Page, PagePatch, SearchHit, TrashItem, TreeNode } from "./pages-ty
 import { NetworkError } from "./capture-outbox";
 import { SseParser } from "./sse";
 import type { Capture, Counts, Kind, KindFilter } from "./captures-types";
-import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
+import type { Goal, GoalPatch, NewGoalInput, OutlineGroup } from "./goals-types";
 import type { Candidate, Deck, NewCardInput, Overview, QueueCard, ReviewResponse, Stats, StudyCard } from "./study-types";
 import type { ApiToken, Settings } from "./settings-types";
 import type { Notification, ProgressData, RoutineWeek, WeeklyReview } from "./routine-types";
@@ -86,7 +86,7 @@ export const tasksApi = {
 
 export const goalsApi = {
   list: () => request<{ goals: Goal[] }>("GET", "/goals").then((r) => r.goals),
-  get: (id: string) => request<{ goal: Goal; tasks: TaskItem[] }>("GET", `/goals/${id}`),
+  get: (id: string) => request<{ goal: Goal; tasks: TaskItem[]; outline: OutlineGroup[] | null }>("GET", `/goals/${id}`),
   create: (input: NewGoalInput) => request<{ goal: Goal }>("POST", "/goals", input).then((r) => r.goal),
   update: (id: string, patch: GoalPatch) => request<{ goal: Goal }>("PATCH", `/goals/${id}`, patch).then((r) => r.goal),
   remove: (id: string) => request<{ deleted: number }>("DELETE", `/goals/${id}`),

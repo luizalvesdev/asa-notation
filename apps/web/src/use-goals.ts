@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { goalsApi, tasksApi } from "./api";
 import { useDataVersion } from "./data-events";
-import type { Goal, GoalPatch, NewGoalInput } from "./goals-types";
+import type { Goal, GoalPatch, NewGoalInput, OutlineGroup } from "./goals-types";
 import { applyDone, applySubtaskDone } from "./tasks-logic";
 import { EMPTY_LIST, type TaskItem } from "./tasks-types";
 
@@ -80,6 +80,8 @@ export function useGoals(): GoalsState {
 export interface GoalDetailState {
   status: LoadStatus;
   tasks: TaskItem[];
+  /** Conteúdo da página ligada (cursos e aulas), ou null sem página. */
+  outline: OutlineGroup[] | null;
   reload: () => void;
   toggle: (item: TaskItem) => Promise<boolean>;
   toggleSubtask: (subId: string, done: boolean) => Promise<boolean>;
@@ -93,6 +95,7 @@ export interface GoalDetailState {
 /** Tarefas ligadas a uma meta. `onChanged` roda depois de cada mudança confirmada (para recontar o progresso). */
 export function useGoalDetail(goalId: string | null, onChanged: () => void): GoalDetailState {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [outline, setOutline] = useState<OutlineGroup[] | null>(null);
   const [status, setStatus] = useState<LoadStatus>("carregando");
   const [version, setVersion] = useState(0);
 
@@ -105,6 +108,7 @@ export function useGoalDetail(goalId: string | null, onChanged: () => void): Goa
       .then((data) => {
         if (!live) return;
         setTasks(data.tasks);
+        setOutline(data.outline);
         setStatus("pronto");
       })
       .catch(() => live && setStatus("erro"));
@@ -119,7 +123,11 @@ export function useGoalDetail(goalId: string | null, onChanged: () => void): Goa
     let live = true;
     goalsApi
       .get(goalId)
-      .then((data) => live && setTasks(data.tasks))
+      .then((data) => {
+        if (!live) return;
+        setTasks(data.tasks);
+        setOutline(data.outline);
+      })
       .catch(() => undefined);
     return () => {
       live = false;
@@ -182,5 +190,5 @@ export function useGoalDetail(goalId: string | null, onChanged: () => void): Goa
   const addSubtask = useCallback((parentId: string, title: string) => attempt(() => tasksApi.create({ title, parentId })), [attempt]);
   const unlinkTask = useCallback((item: TaskItem) => attempt(() => tasksApi.update(item.id, { goalId: null })), [attempt]);
 
-  return { status, tasks, reload, toggle, toggleSubtask, addTask, removeTask, restoreTask, unlinkTask, addSubtask };
+  return { status, tasks, outline, reload, toggle, toggleSubtask, addTask, removeTask, restoreTask, unlinkTask, addSubtask };
 }

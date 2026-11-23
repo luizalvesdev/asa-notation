@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AddTask } from "./AddTask";
+import { GoalOutline } from "./GoalOutline";
 import { pageHash } from "./nav";
 import { goalPct, goalStatus, STATUS_BADGE, STATUS_LABEL, progressLabel } from "./goals-logic";
 import type { Goal } from "./goals-types";
@@ -200,6 +201,8 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
         onChange={(e) => setDescription(e.target.value)}
         onBlur={saveDescription}
       />
+
+      {detail.outline && <GoalOutline outline={detail.outline} />}
 
       <div className="col" style={{ gap: 2 }}>
         <div className="row" style={{ paddingBottom: 6 }}>
