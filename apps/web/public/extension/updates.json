@@ -3,9 +3,9 @@
     "salvar-no-asa@luizalves.dev": {
       "updates": [
         {
-          "version": "0.3.0",
-          "update_link": "https://asa.luizalves.dev/extension/salvar-no-asa-0.3.0.xpi",
-          "update_hash": "sha256:b83c890ae61e765879b48a6831ce9aa9c5b59ca35873834f93799cf44ac9e227"
+          "version": "0.3.1",
+          "update_link": "https://asa.luizalves.dev/extension/salvar-no-asa-0.3.1.xpi",
+          "update_hash": "sha256:5a1b49213efbd2e77618116782d9937fcc8e92487b59b0d29d45db540c30c361"
         }
       ]
     }
