@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyGrade, clozeAnswers, fillDays, clozeSegments, current, estimateMinutes, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize } from "../src/study-logic";
+import { applyGrade, clozeAnswers, fillDays, clozeSegments, hiddenAnswer, hiddenQuestion, current, estimateMinutes, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize } from "../src/study-logic";
 import type { QueueCard } from "../src/study-types";
 
 const NOW = Date.parse("2026-11-18T12:00:00.000Z");
@@ -135,5 +135,19 @@ describe("editar durante a revisão", () => {
     expect(next.revealed).toBe(true);
     expect(next.queue.map((c) => c.id)).toEqual(["a", "b"]);
     expect(replaceCurrent(s, { id: "b", front: "x", back: "y" })).toBe(s);
+  });
+});
+
+describe("sugerir cards: resposta escondida", () => {
+  it("básico: só a pergunta aparece; a resposta é o verso", () => {
+    const c = { kind: "basic" as const, front: "O que o Reflection permite?", back: "Inspecionar tipos em tempo de execução" };
+    expect(hiddenQuestion(c)).toBe("O que o Reflection permite?");
+    expect(hiddenAnswer(c)).toBe("Inspecionar tipos em tempo de execução");
+  });
+
+  it("cloze: a lacuna vira […] e a resposta são os trechos escondidos", () => {
+    const c = { kind: "cloze" as const, front: "O {{Raft}} elege um {{líder}}", back: "" };
+    expect(hiddenQuestion(c)).toBe("O […] elege um […]");
+    expect(hiddenAnswer(c)).toBe("Raft, líder");
   });
 });

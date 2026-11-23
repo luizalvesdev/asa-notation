@@ -149,3 +149,13 @@ export function fillDays(stats: Pick<Stats, "days">, today: string, days: number
     return { day, reviews: found?.reviews ?? 0, remembered: found?.remembered ?? 0 };
   });
 }
+
+/** Como a pergunta aparece antes de aprovar o card: a resposta fica escondida (lacuna vira "[…]"). */
+export function hiddenQuestion(card: { kind: "basic" | "cloze"; front: string }): string {
+  return card.kind === "cloze" ? clozeSegments(card.front).map((s) => (s.blank ? "[…]" : s.text)).join("") : card.front;
+}
+
+/** A resposta escondida: o verso (básico) ou o que estava nas lacunas (cloze). */
+export function hiddenAnswer(card: { kind: "basic" | "cloze"; front: string; back: string }): string {
+  return card.kind === "cloze" ? clozeSegments(card.front).filter((s) => s.blank).map((s) => s.text).join(", ") : card.back;
+}
