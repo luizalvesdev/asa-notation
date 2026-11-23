@@ -51,6 +51,10 @@ function toPage(row: Row): Page {
   };
 }
 
+function sectionOf(row: Row): string | null {
+  return typeof row.section === "string" ? row.section : null;
+}
+
 function toRef(row: Row): PageRef {
   return { id: row.id as string, title: row.title as string, icon: (row.icon as string | null) ?? null };
 }
@@ -82,7 +86,7 @@ export class PgPageStore {
 
   async tree(): Promise<TreeNode[]> {
     const rows = await this.sql.query(
-      `select id, parent_id, title, icon, favorite, position, kind from pages
+      `select id, parent_id, title, icon, favorite, position, kind, props->>'section' as section from pages
         where deleted_at is null and kind <> 'row' order by position asc, created_at asc, id asc`,
     );
     return rows.map((row) => ({
@@ -93,7 +97,21 @@ export class PgPageStore {
       favorite: row.favorite as boolean,
       position: row.position as string,
       kind: row.kind as Page["kind"],
+      section: sectionOf(row),
     }));
+  }
+
+  /**
+   * Página raiz que serve de contêiner de uma seção da barra lateral ("career" = Minha Carreira).
+   * Criada na primeira vez; as páginas da seção ficam dentro dela e a barra lateral mostra só os filhos.
+   */
+  async ensureSection(section: "career", init: { title: string; icon: string }): Promise<Page> {
+    const rows = await this.sql.query(
+      `select ${COLUMNS} from pages where parent_id is null and deleted_at is null and kind = 'page' and props->>'section' = $1 order by created_at limit 1`,
+      [section],
+    );
+    if (rows[0]) return toPage(rows[0]);
+    return (await this.create({ parentId: null, title: init.title, icon: init.icon, body: null, props: { section } }))!;
   }
 
   /** Esquema de uma database (ou null se o id não é de uma database ativa). */

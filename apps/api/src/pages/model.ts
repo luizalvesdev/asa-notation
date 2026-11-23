@@ -30,6 +30,8 @@ export interface TreeNode {
   favorite: boolean;
   position: string;
   kind: PageKind;
+  /** Página raiz que é o contêiner de uma seção da barra lateral (ex.: "career"); null nas demais. */
+  section: string | null;
 }
 
 export interface TrashItem {
@@ -126,3 +128,7 @@ export interface PublicPage {
   body: unknown | null;
   updatedAt: string;
 }
+
+/** Seção "Minha Carreira" da barra lateral: nome e ícone da página raiz que a contém. */
+export const CAREER_TITLE = "Minha Carreira";
+export const CAREER_ICON = "💼";

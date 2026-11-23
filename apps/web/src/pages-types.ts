@@ -26,6 +26,8 @@ export interface TreeNode {
   favorite: boolean;
   position: string;
   kind: PageKind;
+  /** Contêiner de uma seção da barra lateral ("career" = Minha Carreira); null nas demais. */
+  section: string | null;
 }
 
 export interface PagePatch {
@@ -47,6 +49,7 @@ export function toTreeNode(page: Page): TreeNode {
     favorite: page.favorite,
     position: page.position,
     kind: page.kind,
+    section: typeof page.props?.section === "string" ? page.props.section : null,
   };
 }
 

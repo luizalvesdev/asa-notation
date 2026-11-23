@@ -28,16 +28,22 @@ beforeEach(async () => {
 });
 
 describe("salvar recorte", () => {
-  it("índice de curso cai na pasta Cursos (criada uma vez), separada de Leituras", async () => {
+  it("índice de curso cai em Minha Carreira > Alura (criadas uma vez), fora de Leituras", async () => {
     const secret = await token();
     const a = await viaToken(secret, "/clips", { url: "https://cursos.alura.com.br/dashboard/career/x", title: "Carreira X", markdown: "- [ ] C#", kind: "course" });
     const b = await viaToken(secret, "/clips", { url: "https://cursos.alura.com.br/dashboard/career/y", title: "Carreira Y", markdown: "- [ ] Java", kind: "course" });
-    const parent = (a.body as { page: { parentId: string } }).page.parentId;
-    expect((b.body as { page: { parentId: string } }).page.parentId).toBe(parent);
-    const all = ((await app.call("GET", "/pages/tree", { cookies })).body as { pages: { id: string; title: string; icon: string | null; parentId: string | null }[] }).pages;
-    const folders = all.filter((n) => n.title === "Cursos" && n.parentId === null);
-    expect(folders.map((f) => f.id)).toEqual([parent]);
-    expect(folders[0]!.icon).toBe("🎓");
+    const folder = (a.body as { page: { parentId: string } }).page.parentId;
+    expect((b.body as { page: { parentId: string } }).page.parentId).toBe(folder);
+    const all = ((await app.call("GET", "/pages/tree", { cookies })).body as { pages: { id: string; title: string; icon: string | null; parentId: string | null; section: string | null }[] }).pages;
+    const careers = all.filter((n) => n.section === "career");
+    expect(careers).toHaveLength(1);
+    expect(careers[0]).toMatchObject({ title: "Minha Carreira", parentId: null });
+    const alura = all.filter((n) => n.title === "Alura");
+    expect(alura.map((n) => [n.id, n.parentId])).toEqual([[folder, careers[0]!.id]]);
+    expect(all.some((n) => n.title === "Leituras")).toBe(false);
+    // O contêiner é reaproveitado pela rota da barra lateral.
+    const ensured = await app.call("POST", "/pages/career", { cookies });
+    expect((ensured.body as { page: { id: string } }).page.id).toBe(careers[0]!.id);
   });
 
   it("cria a página em Leituras (criada uma vez), com a fonte e o Markdown convertido", async () => {

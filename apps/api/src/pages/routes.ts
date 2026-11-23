@@ -1,7 +1,7 @@
 import { parseCanvas, validCover } from "../canvas/schema.js";
 import { defaultSchema, parseProps, parseSchema, type Schema } from "../databases/schema.js";
 import { UUID_SOURCE, badRequest, isRecord, isUuid, json, notFound, type Route } from "../routing.js";
-import type { MoveTarget, PagePatch } from "./model.js";
+import { CAREER_ICON, CAREER_TITLE, type MoveTarget, type PagePatch } from "./model.js";
 import type { PgPageStore } from "./store.js";
 
 const MAX_TITLE_LENGTH = 500;
@@ -34,6 +34,16 @@ function parseLimit(raw: string | undefined): number | null {
 
 export function pageRoutes(store: PgPageStore): Route[] {
   return [
+    {
+      // Minha Carreira: devolve a página raiz da seção, criando na primeira vez.
+      method: "POST",
+      pattern: /^\/pages\/career$/,
+      access: "session",
+      handle: async () => {
+        const page = await store.ensureSection("career", { title: CAREER_TITLE, icon: CAREER_ICON });
+        return json(200, { page });
+      },
+    },
     {
       method: "GET",
       pattern: /^\/pages\/tree$/,

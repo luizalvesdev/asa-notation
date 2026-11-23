@@ -9,6 +9,9 @@ import { pageHash } from "./nav";
 interface SidebarProps {
   route: Route;
   tree: TreeItem[];
+  /** Raízes da seção Minha Carreira (os filhos da página-contêiner). */
+  careerTree: TreeItem[];
+  onCreateCareerPage: () => void;
   treeStatus: "carregando" | "pronto" | "erro";
   expanded: ReadonlySet<string>;
   onToggleExpanded: (id: string) => void;
@@ -76,7 +79,7 @@ function ShortcutLink({ node, current, onNavigate }: { node: TreeNode; current: 
   );
 }
 
-export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites }: SidebarProps) {
+export function Sidebar({ route, tree, careerTree, onCreateCareerPage, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
@@ -145,6 +148,19 @@ export function Sidebar({ route, tree, treeStatus, expanded, onToggleExpanded, o
           </button>
         )}
         <PageTree items={tree} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
+        <div className="sgroup">
+          <span>Minha Carreira</span>
+          <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova página em Minha Carreira" onClick={() => { onNavigate?.(); onCreateCareerPage(); }} style={{ width: 22, height: 22 }}>
+            <Icon name="plus" />
+          </button>
+        </div>
+        {treeStatus === "pronto" && careerTree.length === 0 && (
+          <button className="plain tr" type="button" onClick={() => { onNavigate?.(); onCreateCareerPage(); }}>
+            <Icon name="plus" />
+            <span className="lab">Cursos, documentos e artigos</span>
+          </button>
+        )}
+        <PageTree items={careerTree} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
       </div>
       <div style={{ flex: "none", padding: 8, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 1 }}>
         {NAV_FOOTER.map((item) => (

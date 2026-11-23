@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { childPages } from "../src/Subpages";
 
-const n = (id: string, parentId: string | null, position: string) => ({ id, parentId, title: id, icon: null, favorite: false, position, kind: "page" as const });
+const n = (id: string, parentId: string | null, position: string) => ({ id, parentId, title: id, icon: null, favorite: false, position, kind: "page" as const, section: null });
 
 describe("subpáginas", () => {
   it("só os filhos diretos, na ordem da árvore", () => {

@@ -2,6 +2,7 @@ import { ProviderError } from "../ai/anthropic.js";
 import type { AiProvider } from "../ai/provider.js";
 import { markdownToDoc } from "../chat/markdown.js";
 import { localParts } from "../notifications/checkins.js";
+import { CAREER_ICON, CAREER_TITLE } from "../pages/model.js";
 import type { PgPageStore } from "../pages/store.js";
 import { badRequest, isRecord, isUuid, json, type Route } from "../routing.js";
 import type { PgSettingsStore } from "../settings/store.js";
@@ -16,7 +17,8 @@ import { NothingToRead, extractDates } from "./dates.js";
 
 /** Pasta raiz onde caem os recortes quando a extensão não escolhe outra. */
 export const DEFAULT_FOLDER = "Leituras";
-export const COURSES_FOLDER = "Cursos";
+/** Pasta, dentro de Minha Carreira, dos cursos salvos a partir da Alura. */
+const COURSES_SITE = "Alura";
 const MAX_MARKDOWN = 300_000;
 const MAX_TITLE = 200;
 const MAX_URL = 2000;
@@ -31,16 +33,28 @@ interface Deps {
 const validUrl = (v: unknown): v is string => typeof v === "string" && v.length <= MAX_URL && /^https?:\/\/\S+$/.test(v);
 
 export function clipRoutes({ sql, pages, settings, ai }: Deps): Route[] {
-  /** Pasta da raiz onde o recorte cai quando o usuário não escolhe: "Cursos" para índice de curso, "Leituras" para o resto. Criada na primeira vez. */
+  /**
+   * Onde o recorte cai quando o usuário não escolhe pasta: índice de curso vai para Minha Carreira > Alura,
+   * o resto para a pasta "Leituras" da raiz. As pastas são criadas na primeira vez.
+   */
   async function defaultFolder(kind: unknown): Promise<string> {
-    const [title, icon] = kind === "course" ? [COURSES_FOLDER, "🎓"] : [DEFAULT_FOLDER, "📚"];
+    if (kind === "course") {
+      const career = await pages.ensureSection("career", { title: CAREER_TITLE, icon: CAREER_ICON });
+      const rows = await sql.query(
+        `select id from pages where parent_id = $1 and deleted_at is null and kind = 'page' and lower(title) = lower($2) order by created_at limit 1`,
+        [career.id, COURSES_SITE],
+      );
+      const found = rows[0]?.id as string | undefined;
+      if (found) return found;
+      return (await pages.create({ parentId: career.id, title: COURSES_SITE, icon: "🎓", body: null }))!.id;
+    }
     const rows = await sql.query(
       `select id from pages where parent_id is null and deleted_at is null and kind = 'page' and lower(title) = lower($1) order by created_at limit 1`,
-      [title],
+      [DEFAULT_FOLDER],
     );
     const found = rows[0]?.id as string | undefined;
     if (found) return found;
-    const created = await pages.create({ parentId: null, title, icon, body: null });
+    const created = await pages.create({ parentId: null, title: DEFAULT_FOLDER, icon: "📚", body: null });
     return created!.id;
   }
 

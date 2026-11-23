@@ -16,6 +16,20 @@ export function buildTree(nodes: TreeNode[]): TreeItem[] {
   return roots;
 }
 
+/**
+ * Separa a árvore da barra lateral em "Páginas" e "Minha Carreira". A seção é uma página raiz marcada
+ * (section "career"): ela some de Páginas e seus filhos viram a raiz da seção.
+ */
+export function splitSections(nodes: TreeNode[]): { pages: TreeItem[]; career: TreeItem[]; careerId: string | null } {
+  const container = nodes.find((n) => n.section === "career" && n.parentId === null) ?? null;
+  const roots = buildTree(nodes);
+  return {
+    pages: roots.filter((r) => r.id !== container?.id),
+    career: roots.find((r) => r.id === container?.id)?.children ?? [],
+    careerId: container?.id ?? null,
+  };
+}
+
 /** Ancestrais de uma página, da raiz até o pai. Vazio se não existir ou estiver na raiz. */
 export function ancestorsOf(nodes: TreeNode[], id: string): TreeNode[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));

@@ -3,7 +3,7 @@
 Botão na barra do navegador que manda a aba aberta para o Asa:
 
 - **Salvar página**: artigo (lido com o Readability), transcrição de aula (seção "Transcrição" da Alura e afins, ou o painel de transcrição do YouTube depois de aberto) ou só o trecho selecionado. Vira uma página em "Leituras" (ou na pasta escolhida), com o link de origem no topo.
-- **Carreira da Alura** (`cursos.alura.com.br/dashboard/career/...`): o mesmo botão gera uma lista de tarefas, um `- [ ]` por curso com link e subtítulo, agrupada por nível (os níveis fechados entram também; curso a 100% já vem marcado). Por padrão cai na pasta "Cursos" (criada na primeira vez), separada de Leituras.
+- **Carreira da Alura** (`cursos.alura.com.br/dashboard/career/...`): o mesmo botão gera uma lista de tarefas, um `- [ ]` por curso com link e subtítulo, agrupada por nível (os níveis fechados entram também; curso a 100% já vem marcado). Por padrão cai em Minha Carreira > Alura (criadas na primeira vez), separada de Leituras.
 - **Importar datas desta página**: manda o texto (ou a seleção) para a IA do Asa, que devolve provas, entregas e aulas de hoje em diante. Você marca quais viram tarefa. As que já existem com o mesmo título e data aparecem como "já é tarefa".
 
 A extensão lê a página dentro do navegador, com o seu login, então funciona em área de aluno que o servidor não acessa. Vídeos não são guardados, só o texto.

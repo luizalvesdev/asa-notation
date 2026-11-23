@@ -20,7 +20,7 @@ import { CHAT_LIMITS, SIDE_LIMITS, clampWidth } from "./panel-size";
 import { useStoredWidth } from "./use-stored-width";
 import { SemanaView } from "./SemanaView";
 import { TrashView } from "./TrashView";
-import { ancestorsOf, buildTree, displayTitle } from "./pages-tree";
+import { ancestorsOf, displayTitle, splitSections } from "./pages-tree";
 import type { Page } from "./pages-types";
 import { Sidebar } from "./Sidebar";
 import type { Preference } from "./theme";
@@ -101,7 +101,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   const pending = usePending();
   const { unread, refresh: refreshUnread } = useUnread();
 
-  const tree = useMemo(() => buildTree(pages.nodes), [pages.nodes]);
+  const sections = useMemo(() => splitSections(pages.nodes), [pages.nodes]);
+  const tree = sections.pages;
   const favorites = useMemo(() => pages.nodes.filter((n) => n.favorite), [pages.nodes]);
   const pageId = route.kind === "pagina" ? route.pageId : null;
 
@@ -285,6 +286,16 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     [pages],
   );
 
+  /** Nova página dentro de Minha Carreira (cria a página raiz da seção se ainda não existe). */
+  const createCareerPage = useCallback(async () => {
+    try {
+      const careerId = await pages.ensureCareer();
+      await createPage(careerId);
+    } catch {
+      setToast({ text: "Não foi possível criar a página." });
+    }
+  }, [pages, createPage]);
+
   const deletePage = useCallback(
     async (page: Pick<Page, "id">) => {
       const node = pages.nodes.find((n) => n.id === page.id);
@@ -394,6 +405,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     treeStatus: pages.status,
     expanded,
     onToggleExpanded: toggleExpanded,
+    careerTree: sections.career,
+    onCreateCareerPage: () => void createCareerPage(),
     onCreatePage: (parentId: string | null) => void createPage(parentId),
     onCreateFrom: (extra: CreateExtra & { title?: string }) => void createPage(null, extra.title, extra),
     onRetryTree: pages.reload,

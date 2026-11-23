@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ancestorsOf, buildTree, displayTitle, subtreeIds } from "../src/pages-tree";
+import { ancestorsOf, buildTree, displayTitle, splitSections, subtreeIds } from "../src/pages-tree";
 import type { TreeNode } from "../src/pages-types";
 
 const node = (id: string, parentId: string | null, title = id): TreeNode => ({
@@ -9,6 +9,7 @@ const node = (id: string, parentId: string | null, title = id): TreeNode => ({
   icon: null,
   favorite: false,
   kind: "page",
+  section: null,
   position: "a0",
 });
 
@@ -59,5 +60,24 @@ describe("displayTitle", () => {
     expect(displayTitle("")).toBe("Sem título");
     expect(displayTitle("  ")).toBe("Sem título");
     expect(displayTitle("Raft")).toBe("Raft");
+  });
+});
+
+describe("splitSections", () => {
+  it("o contêiner de Minha Carreira some de Páginas e seus filhos viram a raiz da seção", () => {
+    const career: TreeNode = { ...node("carreira", null), section: "career" };
+    const nodes = [node("a", null), career, node("alura", "carreira"), node("curso", "alura"), node("a1", "a")];
+    const out = splitSections(nodes);
+    expect(out.careerId).toBe("carreira");
+    expect(out.pages.map((n) => n.id)).toEqual(["a"]);
+    expect(out.career.map((n) => n.id)).toEqual(["alura"]);
+    expect(out.career[0]!.children.map((n) => n.id)).toEqual(["curso"]);
+  });
+
+  it("sem contêiner, tudo fica em Páginas e a seção vem vazia", () => {
+    const out = splitSections(NODES);
+    expect(out.careerId).toBeNull();
+    expect(out.career).toEqual([]);
+    expect(out.pages.map((n) => n.id)).toEqual(["a", "b"]);
   });
 });

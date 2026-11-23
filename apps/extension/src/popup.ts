@@ -26,8 +26,8 @@ async function readTab(): Promise<Extracted> {
 
 async function fillFolders(api: Api, kind: Extracted["kind"]) {
   const select = $<HTMLSelectElement>("folder");
-  // Índice de curso tem pasta própria (o servidor cria "Cursos"); a última pasta escolhida vale só para o resto.
-  if (kind === "course") select.options[0]!.text = "🎓 Cursos";
+  // Índice de curso tem pasta própria (o servidor cria Minha Carreira > Alura); a última pasta escolhida vale só para o resto.
+  if (kind === "course") select.options[0]!.text = "💼 Minha Carreira › Alura";
   const { [LAST_FOLDER]: last } = await ext().storage.local.get([LAST_FOLDER]);
   for (const opt of folderOptions(await api.tree())) select.add(new Option(opt.label, opt.id));
   if (kind !== "course" && typeof last === "string" && [...select.options].some((o) => o.value === last)) select.value = last;
