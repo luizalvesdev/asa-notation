@@ -16,17 +16,25 @@ export function buildTree(nodes: TreeNode[]): TreeItem[] {
   return roots;
 }
 
+/** Seção criada pelo usuário: a página-contêiner (nome da seção) e as páginas dentro dela. */
+export interface CustomSection {
+  id: string;
+  title: string;
+  items: TreeItem[];
+}
+
 /**
- * Separa a árvore da barra lateral em "Páginas" e "Minha Carreira". A seção é uma página raiz marcada
- * (section "career"): ela some de Páginas e seus filhos viram a raiz da seção.
+ * Separa a árvore da barra lateral em "Páginas", "Minha Carreira" e as seções do usuário. Cada seção é uma
+ * página raiz marcada (section "career" ou "custom"): ela some de Páginas e seus filhos viram a raiz da seção.
  */
-export function splitSections(nodes: TreeNode[]): { pages: TreeItem[]; career: TreeItem[]; careerId: string | null } {
+export function splitSections(nodes: TreeNode[]): { pages: TreeItem[]; career: TreeItem[]; careerId: string | null; custom: CustomSection[] } {
   const container = nodes.find((n) => n.section === "career" && n.parentId === null) ?? null;
   const roots = buildTree(nodes);
   return {
-    pages: roots.filter((r) => r.id !== container?.id),
+    pages: roots.filter((r) => r.id !== container?.id && r.section !== "custom"),
     career: roots.find((r) => r.id === container?.id)?.children ?? [],
     careerId: container?.id ?? null,
+    custom: roots.filter((r) => r.section === "custom").map((r) => ({ id: r.id, title: r.title, items: r.children })),
   };
 }
 

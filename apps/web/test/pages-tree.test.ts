@@ -79,7 +79,19 @@ describe("splitSections", () => {
     const out = splitSections(NODES);
     expect(out.careerId).toBeNull();
     expect(out.career).toEqual([]);
+    expect(out.custom).toEqual([]);
     expect(out.pages.map((n) => n.id)).toEqual(["a", "b"]);
+  });
+
+  it("seções do usuário saem de Páginas, na ordem da árvore, com seus filhos", () => {
+    const freela: TreeNode = { ...node("freela", null), title: "Freela", section: "custom" };
+    const igreja: TreeNode = { ...node("igreja", null), title: "Igreja", section: "custom" };
+    const out = splitSections([node("a", null), freela, node("cliente", "freela"), igreja, node("a1", "a")]);
+    expect(out.pages.map((n) => n.id)).toEqual(["a"]);
+    expect(out.custom.map((s) => [s.id, s.title, s.items.map((i) => i.id)])).toEqual([
+      ["freela", "Freela", ["cliente"]],
+      ["igreja", "Igreja", []],
+    ]);
   });
 });
 

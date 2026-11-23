@@ -48,6 +48,8 @@ export const pagesApi = {
   tree: () => request<{ pages: TreeNode[] }>("GET", "/pages/tree").then((r) => r.pages),
   /** Página raiz da seção Minha Carreira (criada na primeira vez). */
   ensureCareer: () => request<{ page: Page }>("POST", "/pages/career").then((r) => r.page),
+  /** Seção nova da barra lateral (página raiz marcada "custom"). */
+  createSection: (title: string) => request<{ page: Page }>("POST", "/pages/sections", { title }).then((r) => r.page),
   get: (id: string) => request<{ page: Page }>("GET", `/pages/${id}`).then((r) => r.page),
   create: (input: { parentId?: string | null; title?: string; body?: unknown; icon?: string; kind?: "page" | "database" | "row" | "canvas"; props?: Record<string, unknown> }) =>
     request<{ page: Page }>("POST", "/pages", input).then((r) => r.page),

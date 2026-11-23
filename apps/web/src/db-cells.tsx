@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { pagesApi } from "./api";
 import { COLOR_BADGE, type Option, type Property, type PropValue, type Row } from "./db-types";
 import { displayTitle } from "./pages-tree";
 import { useDismiss } from "./use-dismiss";
-import { Presence } from "./Presence";
+import { LeavingContext, Presence } from "./Presence";
 
 export function OptionBadge({ option }: { option: Option }) {
   return <span className={COLOR_BADGE[option.color ?? "gray"] ?? "badge"} style={{ height: 20 }}>{option.name}</span>;
@@ -51,8 +51,10 @@ export function Popover({ anchor, onClose, children, width = 240 }: { anchor: Re
   }, [onClose]);
 
   const dark = !!document.querySelector(".ds.escuro");
+  // No portal o menu fica fora da `.presence.leaving`: a saída é marcada aqui para a animação de fechar rodar.
+  const leaving = useContext(LeavingContext);
   return createPortal(
-    <div className={`ds${dark ? " escuro" : ""}`} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 80, background: "transparent" }}>
+    <div className={`ds${dark ? " escuro" : ""}${leaving ? " presence leaving" : ""}`} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 80, background: "transparent" }}>
       <div ref={ref} className="menu on" style={{ position: "fixed", top: pos?.top ?? -9999, left: pos?.left ?? -9999, width, maxHeight: "min(420px, calc(100vh - 16px))", overflow: "auto", pointerEvents: "auto", visibility: pos ? "visible" : "hidden" }}>
         {children}
       </div>

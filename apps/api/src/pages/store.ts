@@ -114,6 +114,11 @@ export class PgPageStore {
     return (await this.create({ parentId: null, title: init.title, icon: init.icon, body: null, props: { section } }))!;
   }
 
+  /** Nova seção criada pelo usuário na barra lateral: uma página raiz marcada "custom", com o nome da seção como título. */
+  async createSection(title: string): Promise<Page> {
+    return (await this.create({ parentId: null, title, icon: null, body: null, props: { section: "custom" } }))!;
+  }
+
   /** Esquema de uma database (ou null se o id não é de uma database ativa). */
   async schemaOf(id: string): Promise<unknown | null> {
     const rows = await this.sql.query(`select schema from pages where id = $1 and kind = 'database' and deleted_at is null`, [id]);

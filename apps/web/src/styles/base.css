@@ -192,6 +192,16 @@ textarea.inp{height:auto;padding:8px 10px;resize:none}
 .tr .cnt{margin-left:auto;font-size:calc(12px * var(--fs, 1));color:var(--text-3);font-weight:400}
 .tr .lab{overflow:hidden;text-overflow:ellipsis}
 .sgroup{display:flex;align-items:center;justify-content:space-between;padding:14px 8px 4px;font:600 calc(11px * var(--fs, 1))/calc(16px * var(--fs, 1)) var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.sgroup-btn{display:inline-flex;align-items:center;gap:4px;min-width:0;flex:1;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-align:left;border-radius:4px;cursor:pointer}
+.sgroup-btn:hover{color:var(--text-2)}
+.sgroup-btn>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sgroup-btn .chev{width:12px;height:12px;flex:none;opacity:0;transition:transform var(--rapido) var(--padrao),opacity var(--rapido) var(--padrao)}
+.sgroup:hover .sgroup-btn .chev,.sgroup-btn:focus-visible .chev,.sgroup-btn[aria-expanded=false] .chev{opacity:1}
+.sec-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--medio) var(--padrao)}
+.sec-body.on{grid-template-rows:1fr}
+.sec-body>div{overflow:hidden;min-height:0;display:flex;flex-direction:column;gap:1px}
+.mrow.two{height:auto;min-height:32px;padding:6px 8px}
+.mrow.two .grow1{line-height:calc(17px * var(--fs, 1))}
 .chev{transition:transform var(--rapido) var(--padrao);color:var(--text-3);width:14px;height:14px}
 .chev.on{transform:rotate(90deg)}
 .kids{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--medio) var(--padrao)}

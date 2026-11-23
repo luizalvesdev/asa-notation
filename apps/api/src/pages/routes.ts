@@ -6,6 +6,7 @@ import type { PgPageStore } from "./store.js";
 
 const MAX_TITLE_LENGTH = 500;
 const MAX_ICON_LENGTH = 16;
+const MAX_SECTION_TITLE = 80;
 const MAX_BODY_BYTES = 500_000;
 const SEARCH_DEFAULT_LIMIT = 20;
 const SEARCH_MAX_LIMIT = 50;
@@ -42,6 +43,18 @@ export function pageRoutes(store: PgPageStore): Route[] {
       handle: async () => {
         const page = await store.ensureSection("career", { title: CAREER_TITLE, icon: CAREER_ICON });
         return json(200, { page });
+      },
+    },
+    {
+      // Seção nova da barra lateral, com o nome escolhido pelo usuário.
+      method: "POST",
+      pattern: /^\/pages\/sections$/,
+      access: "session",
+      handle: async ({ req }) => {
+        const body = isRecord(req.body) ? req.body : {};
+        const title = typeof body.title === "string" ? body.title.trim() : "";
+        if (title === "" || title.length > MAX_SECTION_TITLE) return badRequest("invalid_title");
+        return json(201, { page: await store.createSection(title) });
       },
     },
     {

@@ -28,14 +28,14 @@ export function NewMenu({ onCreate }: NewMenuProps) {
               <Icon name="doc" />
               <span className="grow1">Página</span>
             </button>
-            <button className="plain mrow" type="button" role="menuitem" onClick={() => pick({ kind: "database", title: "Database", icon: "🗂️" })}>
+            <button className="plain mrow two" type="button" role="menuitem" onClick={() => pick({ kind: "database", title: "Database", icon: "🗂️" })}>
               <Icon name="table" />
               <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                 <span>Database</span>
                 <span className="subtle" style={{ fontSize: "calc(11px * var(--fs, 1))" }}>Tabela, kanban, lista e calendário</span>
               </span>
             </button>
-            <button className="plain mrow" type="button" role="menuitem" onClick={() => pick({ kind: "canvas", title: "Quadro", icon: "🎨" })}>
+            <button className="plain mrow two" type="button" role="menuitem" onClick={() => pick({ kind: "canvas", title: "Quadro", icon: "🎨" })}>
               <Icon name="canvas" />
               <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                 <span>Quadro</span>
@@ -44,7 +44,7 @@ export function NewMenu({ onCreate }: NewMenuProps) {
             </button>
             <div className="mgroup">Modelos</div>
             {TEMPLATES.map((t) => (
-              <button key={t.id} className="plain mrow" type="button" role="menuitem" onClick={() => pick({ title: t.pageTitle, body: t.body, icon: t.icon })}>
+              <button key={t.id} className="plain mrow two" type="button" role="menuitem" onClick={() => pick({ title: t.pageTitle, body: t.body, icon: t.icon })}>
                 <span className="page-emoji" aria-hidden="true">{t.icon}</span>
                 <span className="col grow1" style={{ alignItems: "flex-start", gap: 0 }}>
                   <span>{t.title}</span>

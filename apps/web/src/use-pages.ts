@@ -17,6 +17,8 @@ export interface PagesApi {
   reload: () => void;
   /** Garante a página raiz de Minha Carreira (na árvore e no servidor) e devolve o id. */
   ensureCareer: () => Promise<string>;
+  /** Cria uma seção nova na barra lateral e devolve o id da página-contêiner. */
+  createSection: (title: string) => Promise<string>;
   /** Cria uma página (no fim das irmãs) e a coloca na árvore. */
   create: (parentId: string | null, title?: string, extra?: CreateExtra) => Promise<Page>;
   /** Reflete na árvore uma página salva em outro lugar (título, ícone, favorito). */
@@ -89,6 +91,12 @@ export function usePages(): PagesApi {
     return page.id;
   }, []);
 
+  const createSection = useCallback(async (title: string) => {
+    const page = await pagesApi.createSection(title);
+    setNodes((current) => [...current, toTreeNode(page)]);
+    return page.id;
+  }, []);
+
   const applySaved = useCallback((page: Page) => {
     setNodes((current) => current.map((n) => (n.id === page.id ? toTreeNode(page) : n)));
   }, []);
@@ -111,5 +119,5 @@ export function usePages(): PagesApi {
     setVersion((v) => v + 1);
   }, []);
 
-  return { nodes, status, reload, ensureCareer, create, applySaved, remove, restore };
+  return { nodes, status, reload, ensureCareer, createSection, create, applySaved, remove, restore };
 }

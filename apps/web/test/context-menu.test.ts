@@ -7,7 +7,7 @@ const ids = (items: { id: string }[]) => items.map((i) => i.id);
 describe("menuFor", () => {
   it("página: ações da página, com excluir por último e em destaque", () => {
     const items = menuFor({ kind: "page", id: "x", favorite: false });
-    expect(ids(items)).toEqual(["open", "new-child", "favorite", "copy-link", "delete", "new-page", "capture", "search", "chat", "theme"]);
+    expect(ids(items)).toEqual(["open", "new-child", "favorite", "copy-link", "delete", "new-page", "new-section", "capture", "search", "chat", "theme"]);
     expect(items[4]).toMatchObject({ danger: true, separator: true });
     expect(items[5]).toMatchObject({ id: "new-page", separator: true });
     expect(items[2]!.label).toBe("Adicionar às favoritas");
@@ -22,13 +22,13 @@ describe("menuFor", () => {
   it("ações de uma tela vêm primeiro, o apagar separado no fim, e as gerais depois de um divisor", () => {
     const run = () => undefined;
     const items = menuFor({ kind: "local", hasSelection: false, items: [{ label: "Concluir", run }, { label: "Mover para hoje", run }, { label: "Apagar tarefa", danger: true, run }] });
-    expect(ids(items)).toEqual(["local:0", "local:1", "local:2", "new-page", "capture", "search", "chat", "theme"]);
+    expect(ids(items)).toEqual(["local:0", "local:1", "local:2", "new-page", "new-section", "capture", "search", "chat", "theme"]);
     expect(items[2]).toMatchObject({ label: "Apagar tarefa", danger: true, separator: true });
     expect(items[3]).toMatchObject({ separator: true });
     expect(items[0]!.separator).toBeUndefined();
   });
   it("fora de tudo: atalhos do app; com texto selecionado, Copiar vem primeiro", () => {
-    expect(ids(menuFor({ kind: "none", hasSelection: false }))).toEqual(["new-page", "capture", "search", "chat", "theme"]);
+    expect(ids(menuFor({ kind: "none", hasSelection: false }))).toEqual(["new-page", "new-section", "capture", "search", "chat", "theme"]);
     const withSel = menuFor({ kind: "none", hasSelection: true });
     expect(ids(withSel)[0]).toBe("copy-text");
     expect(withSel[1]).toMatchObject({ id: "new-page", separator: true });

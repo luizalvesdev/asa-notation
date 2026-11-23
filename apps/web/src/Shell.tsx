@@ -35,6 +35,7 @@ import type { Stats } from "./study-types";
 import { Presence } from "./Presence";
 import { askConfirm } from "./confirm";
 import { ConfirmHost } from "./ConfirmHost";
+import { SectionNameDialog } from "./SectionNameDialog";
 
 const SIDE_KEY = "asa:side-width";
 const CHAT_KEY = "asa:chat-width";
@@ -73,6 +74,26 @@ interface ShellProps {
   onLogout: () => void;
 }
 
+const CLOSED_SECTIONS_KEY = "asa.sidebar.closedSections";
+
+/** Seções da barra lateral que o usuário recolheu, lembradas entre visitas. */
+function loadClosedSections(): ReadonlySet<string> {
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(CLOSED_SECTIONS_KEY) ?? "[]");
+    return new Set(Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveClosedSections(ids: ReadonlySet<string>): void {
+  try {
+    localStorage.setItem(CLOSED_SECTIONS_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Sem armazenamento (modo privado): vale só nesta visita.
+  }
+}
+
 export function Shell({ dark, route, preference, onPreference, onToggleTheme, onLogout }: ShellProps) {
   const pages = usePages();
   const [collapsed, setCollapsed] = useState(false);
@@ -88,6 +109,8 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
   }, []);
   const [drawer, setDrawer] = useState(false);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const [closedSections, setClosedSections] = useState<ReadonlySet<string>>(loadClosedSections);
+  const [sectionDialog, setSectionDialog] = useState<{ mode: "new" } | { mode: "rename"; id: string; title: string } | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
@@ -296,6 +319,45 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     }
   }, [pages, createPage]);
 
+  const closeSectionDialog = useCallback(() => setSectionDialog(null), []);
+
+  const toggleSection = useCallback((id: string) => {
+    setClosedSections((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      saveClosedSections(next);
+      return next;
+    });
+  }, []);
+
+  /** Nova página numa seção do usuário: a seção abre, se estava recolhida, para a página aparecer. */
+  const createInSection = useCallback(
+    (parentId: string | null) => {
+      if (parentId && closedSections.has(parentId)) toggleSection(parentId);
+      void createPage(parentId);
+    },
+    [closedSections, toggleSection, createPage],
+  );
+
+  const submitSection = useCallback(
+    async (title: string) => {
+      const dialog = sectionDialog;
+      setSectionDialog(null);
+      if (!dialog) return;
+      try {
+        if (dialog.mode === "new") {
+          await pages.createSection(title);
+          setToast({ text: `Seção “${title}” criada` });
+        } else {
+          pages.applySaved(await pagesApi.update(dialog.id, { title }));
+        }
+      } catch {
+        setToast({ text: dialog.mode === "new" ? "Não foi possível criar a seção." : "Não foi possível renomear a seção." });
+      }
+    },
+    [sectionDialog, pages],
+  );
+
   const deletePage = useCallback(
     async (page: Pick<Page, "id">) => {
       const node = pages.nodes.find((n) => n.id === page.id);
@@ -384,6 +446,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       // Ações gerais: valem em qualquer menu (vêm depois do divisor).
       if (action === "copy-text") copy(window.getSelection()?.toString() ?? "", "Copiado");
       else if (action === "new-page") void createPage(null);
+      else if (action === "new-section") setSectionDialog({ mode: "new" });
       else if (action === "capture") setCaptureOpen(true);
       else if (action === "search") setSearchOpen(true);
       else if (action === "chat") setChatOpen(true);
@@ -407,7 +470,12 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
     onToggleExpanded: toggleExpanded,
     careerTree: sections.career,
     onCreateCareerPage: () => void createCareerPage(),
-    onCreatePage: (parentId: string | null) => void createPage(parentId),
+    onCreatePage: createInSection,
+    customSections: sections.custom,
+    closedSections,
+    onToggleSection: toggleSection,
+    onRenameSection: (id: string) => setSectionDialog({ mode: "rename", id, title: pages.nodes.find((n) => n.id === id)?.title ?? "" }),
+    onDeleteSection: (id: string) => void deletePage({ id }),
     onCreateFrom: (extra: CreateExtra & { title?: string }) => void createPage(null, extra.title, extra),
     onRetryTree: pages.reload,
     onOpenSearch: () => setSearchOpen(true),
@@ -561,6 +629,16 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
         )}
       </Presence>
       <ConfirmHost />
+      <Presence show={sectionDialog !== null}>
+        {sectionDialog && (
+          <SectionNameDialog
+            mode={sectionDialog.mode}
+            initial={sectionDialog.mode === "rename" ? sectionDialog.title : ""}
+            onSubmit={(title) => void submitSection(title)}
+            onClose={closeSectionDialog}
+          />
+        )}
+      </Presence>
       <Presence show={searchOpen}>
         <SearchPalette
           nodes={pages.nodes}

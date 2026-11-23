@@ -86,6 +86,26 @@ describe("criar e ler", () => {
   });
 });
 
+describe("seções da barra lateral", () => {
+  it("cria uma seção nova: página raiz marcada custom, com o nome aparado", async () => {
+    const res = await app.call("POST", "/pages/sections", { cookies, body: { title: "  Freela  " } });
+    expect(res.status).toBe(201);
+    const page = (res.body as { page: PageJson }).page;
+    expect(page).toMatchObject({ title: "Freela", parentId: null });
+    const tree = (await app.call("GET", "/pages/tree", { cookies })).body as { pages: (PageJson & { section: string | null })[] };
+    expect(tree.pages.find((p) => p.id === page.id)!.section).toBe("custom");
+    // Duas seções com o mesmo nome são seções diferentes.
+    const again = await app.call("POST", "/pages/sections", { cookies, body: { title: "Freela" } });
+    expect((again.body as { page: PageJson }).page.id).not.toBe(page.id);
+  });
+
+  it("recusa nome vazio ou longo demais", async () => {
+    for (const title of ["", "   ", "x".repeat(81), 3]) {
+      expect((await app.call("POST", "/pages/sections", { cookies, body: { title } })).status).toBe(400);
+    }
+  });
+});
+
 describe("editar", () => {
   it("altera só os campos enviados e avança o rev", async () => {
     const page = await create({ title: "Antes", icon: "📘" });

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useEffect, useRef, useState, type ReactNode } from "react";
+
+/**
+ * Verdadeiro dentro de um <Presence> que está saindo. Serve a quem renderiza num portal (Popover):
+ * o conteúdo vai para fora da `.presence.leaving` no DOM e precisa marcar a saída por conta própria.
+ */
+export const LeavingContext = createContext(false);
 
 /** Duração da saída; casa com --rapido (140 ms) no CSS. */
 export const EXIT_MS = 140;
@@ -32,5 +38,9 @@ export function Presence({ show, children }: { show: boolean; children: ReactNod
 
   const out = !show && (leaving || prev !== show);
   if (!show && !out) return null;
-  return <div className={`presence${show ? "" : " leaving"}`} style={{ display: "contents" }}>{show ? children : last.current}</div>;
+  return (
+    <LeavingContext.Provider value={!show}>
+      <div className={`presence${show ? "" : " leaving"}`} style={{ display: "contents" }}>{show ? children : last.current}</div>
+    </LeavingContext.Provider>
+  );
 }

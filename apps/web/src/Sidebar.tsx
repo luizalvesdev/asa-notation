@@ -2,7 +2,10 @@ import { Icon, isIconName } from "./icons";
 import { NAV_FOOTER, NAV_HERMES, NAV_MAIN, goKey, navParent, routeHash, type NavItem, type Route, type RouteId } from "./nav";
 import { NewMenu } from "./NewMenu";
 import { PageTree } from "./PageTree";
-import { displayTitle, type TreeItem } from "./pages-tree";
+import { displayTitle, type CustomSection, type TreeItem } from "./pages-tree";
+import type { LocalItem } from "./context-menu";
+import { useContextItems } from "./use-context-items";
+import type { ReactNode } from "react";
 import type { TreeNode } from "./pages-types";
 import { pageHash } from "./nav";
 
@@ -12,6 +15,13 @@ interface SidebarProps {
   /** Raízes da seção Minha Carreira (os filhos da página-contêiner). */
   careerTree: TreeItem[];
   onCreateCareerPage: () => void;
+  /** Seções criadas pelo usuário, abaixo de Minha Carreira. */
+  customSections: CustomSection[];
+  onRenameSection: (id: string) => void;
+  onDeleteSection: (id: string) => void;
+  /** Seções recolhidas ("pages", "career" ou o id da seção do usuário). */
+  closedSections: ReadonlySet<string>;
+  onToggleSection: (id: string) => void;
   treeStatus: "carregando" | "pronto" | "erro";
   expanded: ReadonlySet<string>;
   onToggleExpanded: (id: string) => void;
@@ -79,8 +89,44 @@ function ShortcutLink({ node, current, onNavigate }: { node: TreeNode; current: 
   );
 }
 
-export function Sidebar({ route, tree, careerTree, onCreateCareerPage, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites }: SidebarProps) {
+/**
+ * Uma seção da barra lateral: clicar no nome recolhe ou mostra as páginas dela (com animação).
+ * `menu` são as ações próprias do botão direito no cabeçalho.
+ */
+function SidebarSection({ id, title, closed, onToggle, actions, menu, children, alwaysOpen }: {
+  id: string;
+  /** Barra recolhida (só ícones): os nomes das seções somem, então as páginas ficam sempre à mostra. */
+  alwaysOpen?: boolean;
+  title: string;
+  closed: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+  actions?: ReactNode;
+  menu?: () => LocalItem[];
+  children: ReactNode;
+}) {
+  const open = alwaysOpen || !closed.has(id);
+  const menuRef = useContextItems(() => menu?.() ?? []);
+  return (
+    <>
+      <div className="sgroup" ref={menuRef}>
+        <button className="plain sgroup-btn" type="button" aria-expanded={open} title={open ? `Recolher ${title}` : `Mostrar ${title}`} onClick={() => onToggle(id)}>
+          <span>{title}</span>
+          <svg className={`chev${open ? " on" : ""}`} viewBox="0 0 24 24" aria-hidden="true" style={{ fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }}>
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+        {actions && <span className="row" style={{ gap: 0, flex: "none" }}>{actions}</span>}
+      </div>
+      <div className={`sec-body${open ? " on" : ""}`} inert={!open} aria-hidden={!open || undefined}>
+        <div>{children}</div>
+      </div>
+    </>
+  );
+}
+
+export function Sidebar({ route, tree, careerTree, onCreateCareerPage, customSections, onRenameSection, onDeleteSection, closedSections, onToggleSection, treeStatus, expanded, onToggleExpanded, onCreatePage, onCreateFrom, onRetryTree, onOpenSearch, collapsed, onToggleCollapsed, onNavigate, inDrawer, badges, favorites }: SidebarProps) {
   const currentPageId = route.kind === "pagina" ? route.pageId : null;
+  const mini = collapsed && !inDrawer;
   return (
     <nav className={`side${collapsed && !inDrawer ? " min" : ""}`} aria-label="Navegação principal">
       <div className="row" style={{ height: 48, padding: "0 8px 0 12px", flex: "none", borderBottom: "1px solid var(--border)" }}>
@@ -117,50 +163,78 @@ export function Sidebar({ route, tree, careerTree, onCreateCareerPage, treeStatu
             {favorites.map((n) => <ShortcutLink key={n.id} node={n} current={currentPageId} onNavigate={onNavigate} />)}
           </>
         )}
-        <div className="sgroup">
-          <span>Páginas</span>
-          <span className="row" style={{ gap: 0 }}>
+        <SidebarSection alwaysOpen={mini} id="pages" title="Páginas" closed={closedSections} onToggle={onToggleSection} actions={
+          <>
             <NewMenu onCreate={(extra) => { onNavigate?.(); onCreateFrom(extra); }} />
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova página" onClick={() => onCreatePage(null)} style={{ width: 22, height: 22 }}>
               <Icon name="plus" />
             </button>
-          </span>
-        </div>
-        {treeStatus === "carregando" && tree.length === 0 && (
-          <div className="col" style={{ gap: 6, padding: "4px 8px" }} aria-label="Carregando páginas">
-            <span className="sk" style={{ height: 14, width: "70%" }} />
-            <span className="sk" style={{ height: 14, width: "55%" }} />
-            <span className="sk" style={{ height: 14, width: "62%" }} />
-          </div>
-        )}
-        {treeStatus === "erro" && (
-          <div className="col" style={{ gap: 6, padding: "4px 8px", fontSize: "calc(12px * var(--fs, 1))" }}>
-            <span className="muted">Não foi possível carregar as páginas.</span>
-            <button className="btn btn-sec btn-sm" type="button" onClick={onRetryTree} style={{ alignSelf: "flex-start" }}>
-              Tentar de novo
+          </>
+        }>
+          {treeStatus === "carregando" && tree.length === 0 && (
+            <div className="col" style={{ gap: 6, padding: "4px 8px" }} aria-label="Carregando páginas">
+              <span className="sk" style={{ height: 14, width: "70%" }} />
+              <span className="sk" style={{ height: 14, width: "55%" }} />
+              <span className="sk" style={{ height: 14, width: "62%" }} />
+            </div>
+          )}
+          {treeStatus === "erro" && (
+            <div className="col" style={{ gap: 6, padding: "4px 8px", fontSize: "calc(12px * var(--fs, 1))" }}>
+              <span className="muted">Não foi possível carregar as páginas.</span>
+              <button className="btn btn-sec btn-sm" type="button" onClick={onRetryTree} style={{ alignSelf: "flex-start" }}>
+                Tentar de novo
+              </button>
+            </div>
+          )}
+          {treeStatus === "pronto" && tree.length === 0 && (
+            <button className="plain tr" type="button" onClick={() => onCreatePage(null)}>
+              <Icon name="plus" />
+              <span className="lab">Criar a primeira página</span>
             </button>
-          </div>
-        )}
-        {treeStatus === "pronto" && tree.length === 0 && (
-          <button className="plain tr" type="button" onClick={() => onCreatePage(null)}>
-            <Icon name="plus" />
-            <span className="lab">Criar a primeira página</span>
-          </button>
-        )}
-        <PageTree items={tree} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
-        <div className="sgroup">
-          <span>Minha Carreira</span>
+          )}
+          <PageTree items={tree} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
+        </SidebarSection>
+        <SidebarSection alwaysOpen={mini} id="career" title="Minha Carreira" closed={closedSections} onToggle={onToggleSection} actions={
           <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Nova página em Minha Carreira" onClick={() => { onNavigate?.(); onCreateCareerPage(); }} style={{ width: 22, height: 22 }}>
             <Icon name="plus" />
           </button>
-        </div>
-        {treeStatus === "pronto" && careerTree.length === 0 && (
-          <button className="plain tr" type="button" onClick={() => { onNavigate?.(); onCreateCareerPage(); }}>
-            <Icon name="plus" />
-            <span className="lab">Cursos, documentos e artigos</span>
-          </button>
-        )}
-        <PageTree items={careerTree} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
+        }>
+          {treeStatus === "pronto" && careerTree.length === 0 && (
+            <button className="plain tr" type="button" onClick={() => { onNavigate?.(); onCreateCareerPage(); }}>
+              <Icon name="plus" />
+              <span className="lab">Cursos, documentos e artigos</span>
+            </button>
+          )}
+          <PageTree items={careerTree} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
+        </SidebarSection>
+        {customSections.map((section) => (
+          <SidebarSection
+            key={section.id}
+            alwaysOpen={mini}
+            id={section.id}
+            title={displayTitle(section.title)}
+            closed={closedSections}
+            onToggle={onToggleSection}
+            menu={() => [
+              { label: "Nova página na seção", run: () => { onNavigate?.(); onCreatePage(section.id); } },
+              { label: "Renomear seção", run: () => onRenameSection(section.id) },
+              { label: "Excluir seção", danger: true, run: () => onDeleteSection(section.id) },
+            ]}
+            actions={
+              <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label={`Nova página em ${displayTitle(section.title)}`} onClick={() => { onNavigate?.(); onCreatePage(section.id); }} style={{ width: 22, height: 22 }}>
+                <Icon name="plus" />
+              </button>
+            }
+          >
+            {section.items.length === 0 && (
+              <button className="plain tr" type="button" onClick={() => { onNavigate?.(); onCreatePage(section.id); }}>
+                <Icon name="plus" />
+                <span className="lab">Nova página</span>
+              </button>
+            )}
+            <PageTree items={section.items} currentId={currentPageId} expanded={expanded} onToggle={onToggleExpanded} onCreateChild={onCreatePage} onNavigate={onNavigate} />
+          </SidebarSection>
+        ))}
       </div>
       <div style={{ flex: "none", padding: 8, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 1 }}>
         {NAV_FOOTER.map((item) => (
