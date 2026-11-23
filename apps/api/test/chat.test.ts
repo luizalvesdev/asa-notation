@@ -732,6 +732,53 @@ describe("assistentes com poder sobre o app", () => {
     expect(provider.calls[0]!.body.tools!.map((t) => t.name)).toEqual(expect.arrayContaining(["create_cards", "update_card", "delete_card", "update_deck", "create_goal", "propose_tasks", "update_checkins"]));
   });
 
+  it("Tutor: ferramentas de contexto e diário só para ele", async () => {
+    replies.push(ok(text("ok")), ok(text("ok")));
+    await send("tutor", "oi");
+    await send("hermes", "oi");
+    const names = (i: number) => provider.calls[i]!.body.tools!.map((t) => t.name);
+    expect(names(0)).toEqual(expect.arrayContaining(["study_status", "goal_progress", "tutor_diary", "tutor_diary_log"]));
+    expect(names(1)).not.toContain("tutor_diary");
+    expect(provider.calls[0]!.body.system).toContain("tutor_diary");
+  });
+
+  it("Tutor: study_status e goal_progress mostram o estudo e os próximos itens da meta", async () => {
+    await app.call("POST", "/study/cards", { cookies, body: { kind: "basic", front: "O que é quorum?", back: "A maioria" } });
+    const item = (t: string, checked: boolean) => ({ type: "taskItem", attrs: { checked }, content: [{ type: "paragraph", content: [{ type: "text", text: t }] }] });
+    const page = ((await app.call("POST", "/pages", { cookies, body: { title: "Carreira", body: { type: "doc", content: [{ type: "taskList", content: [item("C# básico", true), item("C# e Exceções", false), item("Reflection", false)] }] } } })).body as { page: { id: string } }).page.id;
+    await app.call("POST", "/goals", { cookies, body: { title: "Terminar a carreira", pageId: page } });
+    replies.push(ok(tool("study_status", {}, "a")), ok(tool("goal_progress", {}, "b")), ok(text("Plano")));
+    await send("tutor", "vamos estudar");
+    const results = JSON.stringify(provider.calls[2]!.body.messages);
+    expect(results).toContain("revisoesAtrasadas");
+    expect(results).toContain("totalCards");
+    expect(results).toContain("C# e Exceções");
+    expect(results).toContain("Reflection");
+    expect(results).not.toContain("C# básico\\\"");
+  });
+
+  it("Tutor: o diário nasce em Minha Carreira, acumula entradas e atualiza o perfil", async () => {
+    replies.push(ok(tool("tutor_diary", {}, "a")), ok(text("ok")));
+    await send("tutor", "oi");
+    const tree = () => app.call("GET", "/pages/tree", { cookies }).then((r) => (r.body as { pages: { id: string; title: string; parentId: string | null; section: string | null }[] }).pages);
+    let pages = await tree();
+    const career = pages.find((p) => p.section === "career")!;
+    const diary = pages.find((p) => p.title === "Diário do Tutor")!;
+    expect(diary.parentId).toBe(career.id);
+
+    replies.push(ok(tool("tutor_diary_log", { entry: "Vimos Reflection. Errou o uso de Activator.", profile: "Nível júnior em C#." }, "b")), ok(text("ok")));
+    await send("tutor", "pode parar");
+    replies.push(ok(tool("tutor_diary_log", { entry: "Segunda sessão: exceções." }, "c")), ok(text("ok")));
+    await send("tutor", "mais uma");
+    pages = await tree();
+    expect(pages.filter((p) => p.title === "Diário do Tutor")).toHaveLength(1);
+    const md = JSON.stringify(((await app.call("GET", `/pages/${diary.id}`, { cookies })).body as { page: { body: unknown } }).page.body);
+    expect(md).toContain("Nível júnior em C#.");
+    expect(md).toContain("Vimos Reflection");
+    expect(md).toContain("Segunda sessão");
+    expect(md).not.toContain("O Tutor preenche");
+  });
+
   it("cards e baralhos pelo assistente", async () => {
     await setAuto(true);
     replies.push(ok(tool("create_deck", { title: "CAP" }, "a")), ok(text("ok")));

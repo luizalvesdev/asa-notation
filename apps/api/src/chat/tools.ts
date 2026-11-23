@@ -13,7 +13,10 @@ import type { ToolHandler } from "./agent.js";
 import type { Agent, DraftKind } from "./store.js";
 import { KINDS } from "../captures/model.js";
 import { ACTIONS, ACTION_NAMES } from "./actions.js";
-import { docToMarkdown, outline, readSection } from "./doc-edit.js";
+import { appendBlocks, docToMarkdown, outline, readSection, replaceSection } from "./doc-edit.js";
+import { markdownToDoc } from "./markdown.js";
+import { CAREER_ICON, CAREER_TITLE } from "../pages/model.js";
+import { uncheckedItems } from "../goals/checks.js";
 
 /** O que as escritas precisam para rodar: as lojas e o dia de hoje no fuso do dono (AAAA-MM-DD). */
 export interface StoreContext {
@@ -48,6 +51,26 @@ const SPECS: Record<string, ToolSpec> = {
     name: "list_weak_cards",
     description: "Lista os cards de estudo que o usuário mais errou nos últimos 14 dias, com pergunta e resposta.",
     input_schema: obj({}),
+  },
+  study_status: {
+    name: "study_status",
+    description: "Mostra como está o estudo do usuário: revisões atrasadas, cards novos, retenção, minutos e dias estudados nos últimos 14 dias, e o que vence em cada trilha. Use no começo de uma sessão.",
+    input_schema: obj({}),
+  },
+  goal_progress: {
+    name: "goal_progress",
+    description: "Progresso das metas ativas. Para metas ligadas a uma página (ex.: uma carreira com cursos em checkbox) mostra itens feitos, alvo e os próximos itens ainda não marcados.",
+    input_schema: obj({}),
+  },
+  tutor_diary: {
+    name: "tutor_diary",
+    description: "Abre o Diário do Tutor (página em Minha Carreira, criada na primeira vez): o perfil do usuário (nível, objetivos, pontos fortes e fracos) e os últimos registros de sessões. É a sua memória entre conversas: leia no começo de toda sessão.",
+    input_schema: obj({}),
+  },
+  tutor_diary_log: {
+    name: "tutor_diary_log",
+    description: "Registra no Diário do Tutor o que aconteceu na sessão (o que foi coberto, acertos, erros e o próximo passo). Só acrescenta; nunca apaga. Use no fim de toda sessão, sem pedir licença. Em `profile` (opcional) vai o perfil atualizado, que substitui o anterior.",
+    input_schema: obj({ entry: str("Entrada da sessão em Markdown curto (até 10 linhas)"), profile: str("Perfil atualizado do usuário, opcional") }, ["entry"]),
   },
   propose_tasks: {
     name: "propose_tasks",
@@ -95,6 +118,22 @@ const SPECS: Record<string, ToolSpec> = {
 const RECURRENCES: readonly string[] = ["daily", "weekdays", "weekly"];
 const clip = (value: string, max: number) => (value.length > max ? `${value.slice(0, max)}…` : value);
 
+const DIARY_TITLE = "Diário do Tutor";
+
+/** A página do diário, em Minha Carreira (criada na primeira vez, com as seções Perfil e Registro). */
+async function ensureDiary(ctx: ToolContext): Promise<{ id: string; body: unknown }> {
+  const career = await ctx.pages.ensureSection("career", { title: CAREER_TITLE, icon: CAREER_ICON });
+  const found = (await ctx.pages.tree()).find((n) => n.parentId === career.id && n.kind === "page" && n.title === DIARY_TITLE);
+  if (found) {
+    const page = await ctx.pages.get(found.id);
+    if (page) return { id: page.id, body: page.body };
+  }
+  const body = markdownToDoc("## Perfil\n\n(O Tutor preenche: nível, objetivos, pontos fortes e fracos.)\n\n## Registro\n\n(Uma entrada por sessão de estudo.)");
+  const created = await ctx.pages.create({ parentId: career.id, title: DIARY_TITLE, icon: "🧑‍🏫", body });
+  if (!created) throw new Error("Não foi possível criar o Diário do Tutor.");
+  return { id: created.id, body: created.body };
+}
+
 export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; handlers: Record<string, ToolHandler> } {
   const handlers: Record<string, ToolHandler> = {
     async list_tasks(input) {
@@ -129,6 +168,56 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
       });
       const out = await ctx.submit("tasks", { tasks });
       return out.done ? `Feito: ${out.message}` : `Rascunho com ${tasks.length} ${tasks.length === 1 ? "tarefa" : "tarefas"} criado. Aguardando a aprovação do usuário; diga isso a ele.`;
+    },
+    async study_status() {
+      const { timezone } = await ctx.settings.get();
+      const [overview, stats] = await Promise.all([ctx.study.overview(new Date(`${ctx.today}T00:00:00Z`)), ctx.study.stats(timezone, 14)]);
+      const studied = stats.days.filter((d: { reviews: number }) => d.reviews > 0);
+      return JSON.stringify({
+        revisoesAtrasadas: overview.dueReview,
+        cardsNovosDisponiveis: overview.newAvailable,
+        totalCards: overview.totalCards,
+        retencaoUltimos14Dias: stats.retention === null ? null : `${Math.round(stats.retention * 100)}%`,
+        ultimos14Dias: { diasComEstudo: studied.length, revisoes: stats.reviews, minutos: Math.round(stats.seconds / 60) },
+        trilhas: overview.decks.map((d: { title: string; cards: number; due: number; learned: number }) => ({ titulo: d.title, cards: d.cards, vencem: d.due, aprendidos: d.learned })),
+        maisErrados: stats.hardest.slice(0, 5).map((c: { front: string }) => clip(c.front, 120)),
+      });
+    },
+    async goal_progress() {
+      const goals = (await ctx.goals.list()).filter((g) => !g.done);
+      const out = [];
+      for (const g of goals.slice(0, 15)) {
+        if (!g.page) {
+          out.push({ meta: g.title, prazo: g.dueDate, tarefas: `${g.tasksDone} de ${g.tasksTotal}` });
+          continue;
+        }
+        const page = await ctx.pages.get(g.page.id);
+        const { done, total } = goalProgress(g);
+        out.push({ meta: g.title, prazo: g.dueDate, pagina: g.page.title, paginaId: g.page.id, feitos: done, alvo: total, proximosItens: uncheckedItems(page?.body ?? null, 5) });
+      }
+      return JSON.stringify(out);
+    },
+    async tutor_diary() {
+      const diary = await ensureDiary(ctx);
+      const profile = readSection(diary.body, "Perfil");
+      const log = readSection(diary.body, "Registro") ?? "";
+      return JSON.stringify({ paginaId: diary.id, perfil: profile ?? "", registrosRecentes: log.length > 4000 ? `…${log.slice(-4000)}` : log });
+    },
+    async tutor_diary_log(input) {
+      const entry = typeof input.entry === "string" ? input.entry.trim() : "";
+      if (entry === "" || entry.length > 3000) throw new Error("A entrada do diário precisa ter até 3000 caracteres.");
+      const profile = typeof input.profile === "string" ? input.profile.trim() : "";
+      if (profile.length > 3000) throw new Error("O perfil precisa ter até 3000 caracteres.");
+      const diary = await ensureDiary(ctx);
+      let body: unknown = diary.body;
+      if (profile !== "") {
+        const replaced = replaceSection(body, "Perfil", markdownToDoc(profile).content as never[]);
+        if (replaced) body = replaced.doc;
+      }
+      const { doc } = appendBlocks(body, markdownToDoc(`### ${ctx.today}\n\n${entry}`).content as never[], "Registro");
+      const res = await ctx.pages.update(diary.id, { body: doc });
+      if (res.kind !== "ok") throw new Error("Não foi possível salvar o diário.");
+      return "Registrado no Diário do Tutor.";
     },
     async search_notes(input) {
       const query = typeof input.query === "string" ? input.query.slice(0, 200) : "";
@@ -212,7 +301,7 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
 
   const READ = ["list_tasks", "list_goals", "list_pages", "search_notes", "read_note", "list_inbox", "list_decks", "list_cards"];
   const WRITE = ["propose_tasks", "propose_capture", "propose_page", "propose_diagram", ...ACTION_NAMES];
-  const names = agent === "tutor" ? ["list_weak_cards", ...READ, ...WRITE] : [...READ, ...WRITE];
+  const names = agent === "tutor" ? ["list_weak_cards", "study_status", "goal_progress", "tutor_diary", "tutor_diary_log", ...READ, ...WRITE] : [...READ, ...WRITE];
   const specOf = (n: string) => SPECS[n] ?? ACTIONS[n]!.spec;
   return { specs: names.map(specOf), handlers: Object.fromEntries(names.map((n) => [n, handlers[n]!])) };
 }
@@ -247,9 +336,11 @@ export function systemPrompt(agent: Agent, today: string, timezone: string, auto
   }
   if (agent === "tutor") {
     return [
-      "Você é o Tutor, um professor socrático. Ajuda o usuário a aprender fazendo perguntas, não dando respostas prontas.",
-      "Comece com list_weak_cards (pontos fracos) ou, se o usuário disser um tema, com search_notes e read_note para se basear nas notas dele.",
-      "Faça UMA pergunta por vez, espere a resposta, dê uma pista se ele errar e só explique de vez depois de duas tentativas. Elogie o que estiver certo. No fim, resuma em 3 linhas o que ele já domina e o que revisar.",
+      "Você é o Tutor do usuário: um professor particular que se responsabiliza pela evolução dele, não um simples respondedor. O método é socrático e prático: ele aprende fazendo, errando e explicando com as próprias palavras.",
+      "ABERTURA de toda sessão, antes de falar: chame tutor_diary (sua memória: perfil e últimos registros), study_status (revisões, retenção, constância) e goal_progress (metas e próximos itens, como o próximo curso da carreira). Se ele já trouxe um assunto, comece por ele, mas leia o diário mesmo assim. Em poucas linhas, diga onde ele está e proponha o plano de hoje com no máximo 3 itens (por exemplo: zerar as revisões atrasadas, o próximo item da meta, um exercício). Pergunte se quer ajustar e siga o que ele escolher.",
+      "CICLO para ensinar um tema: 1) Diagnosticar: uma ou duas perguntas para ver o que ele já sabe. 2) Ensinar de forma socrática: UMA pergunta por vez, espere a resposta, dê uma pista se errar e só explique de vez depois de duas tentativas. 3) Praticar: proponha um exercício concreto (um trecho de código curto para escrever ou para prever a saída) e avalie a resposta com feedback específico: o que está certo, o que falta e por quê. 4) Verificar: de 2 a 3 perguntas sem pista sobre o que acabou de ver. 5) Fechar: resuma em 3 linhas o que ele domina e o que revisar.",
+      "REGRAS: peça que ele explique com as palavras dele; se disser que entendeu sem provar, teste com uma pergunta. Elogie só o que estiver realmente certo. Baseie-se nas notas dele (search_notes e read_note) e cite o título da página; se algo não estiver nas notas e você não tiver certeza, diga que não tem certeza em vez de afirmar. Não invente fatos nem exemplos que pareçam reais mas não são. Quando ele errar algo importante, ofereça criar um card (pergunta específica, resposta curta, um conceito por card). Se houver muitas revisões atrasadas, diga com franqueza e sugira zerá-las antes de conteúdo novo. Sugira alternar temas em vez de um só por horas.",
+      "FECHAMENTO: quando a sessão acabar (ele pediu para parar ou terminou a verificação), chame tutor_diary_log SEM pedir licença, que é a sua memória: o que foi coberto, o que ele acertou e errou, e o próximo passo. Quando aprender algo novo sobre o nível, o ritmo ou os pontos fortes e fracos dele, mande também o `profile` atualizado (substitui o anterior). Nunca apague nada do diário.",
       "Você também tem poder sobre o app, a pedido do usuário: pode criar e editar baralhos e cards de estudo, metas, tarefas e rotina, e páginas. O método socrático vale para ensinar; quando o usuário pedir uma ação (ex.: criar cards do que ele errou), faça direto, sem sabatina.",
       ...organize,
       ...common,
