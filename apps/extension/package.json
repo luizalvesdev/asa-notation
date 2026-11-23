@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "package": "node build.mjs && web-ext build --source-dir dist --artifacts-dir ../../.dev/extension --overwrite-dest",
     "sign": "node build.mjs && web-ext sign --source-dir dist --artifacts-dir ../../.dev/extension --channel unlisted",
-    "release": "npm run sign && node publish.mjs"
+    "release": "node release.mjs",
+    "release:setup": "node release.mjs --setup"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

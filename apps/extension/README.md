@@ -30,9 +30,11 @@ npx vitest run apps/extension        # testes da extração e do cliente da API
 
 O manifest tem `update_url` apontando para `https://asa.luizalves.dev/extension/updates.json`. Com isso o Firefox/Zen busca versões novas sozinho (uma vez por dia, ou em `about:addons` > engrenagem > "Verificar atualizações"). Só vale para uma instalação feita a partir de um `.xpi` que já tenha o `update_url` (a partir da 0.2.0); a primeira vez é manual.
 
+As chaves da Mozilla ficam em `~/.config/asa-notation/mozilla.env` (modo 600, fora do repositório). Para guardá-las uma vez: `npm run release:setup -w @asa/extension` (pede o JWT issuer e o JWT secret; o secret não aparece ao digitar).
+
 Para lançar uma versão:
 1. Aumente `version` em `static/manifest.json` e `package.json`.
-2. `WEB_EXT_API_KEY=... WEB_EXT_API_SECRET=... npm run release -w @asa/extension` assina e copia o `.xpi` e o `updates.json` (com o hash) para `apps/web/public/extension/`.
+2. `npm run release -w @asa/extension` assina e copia o `.xpi` e o `updates.json` (com o hash) para `apps/web/public/extension/`.
 3. Commit e deploy normal da web (build, S3 sync, invalidação do CloudFront). A versão só chega ao navegador depois disso.
 
 
