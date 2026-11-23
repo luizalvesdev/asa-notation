@@ -46,6 +46,16 @@ describe("salvar recorte", () => {
     expect((ensured.body as { page: { id: string } }).page.id).toBe(careers[0]!.id);
   });
 
+  it("aulas de um curso (lessons) também caem em Minha Carreira > Alura, com o ícone de livro", async () => {
+    const secret = await token();
+    const res = await viaToken(secret, "/clips", { url: "https://cursos.alura.com.br/course/x", title: "Curso X", markdown: "## Seção\n\n- [ ] Aula 1", kind: "lessons" });
+    expect(res.status).toBe(201);
+    const page = (res.body as { page: { id: string; parentId: string } }).page;
+    const all = ((await app.call("GET", "/pages/tree", { cookies })).body as { pages: { id: string; title: string; icon: string | null; parentId: string | null }[] }).pages;
+    expect(all.find((n) => n.id === page.parentId)).toMatchObject({ title: "Alura" });
+    expect(all.find((n) => n.id === page.id)!.icon).toBe("📘");
+  });
+
   it("cria a página em Leituras (criada uma vez), com a fonte e o Markdown convertido", async () => {
     const secret = await token();
     const md = "## Partições\n\nCada tópico tem **partições**.\n\n![diagrama](https://cdn.example.com/a.png)\n\n```java\nproducer.send(r);\n```";

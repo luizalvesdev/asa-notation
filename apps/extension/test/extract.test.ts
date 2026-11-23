@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from "vitest";
 import { ApiError, createApi, errorMessage, folderOptions, normalizeServer } from "../src/api.js";
-import { extract, findCourseIndex, findTranscript, toMarkdown } from "../src/extract.js";
+import { extract, findCourseIndex, findCourseLessons, findTranscript, toMarkdown } from "../src/extract.js";
 
 const LONG = "Neste vídeo a gente vai entender como o Kafka distribui as mensagens entre as partições de um tópico. ".repeat(4);
 
@@ -85,6 +85,47 @@ describe("índice de curso (carreira da Alura)", () => {
     const out = extract(window);
     expect(out.kind).toBe("course");
     expect(out.title).toBe("Carreira X");
+  });
+});
+
+describe("aulas de um curso da Alura", () => {
+  const section = (name: string, progress: string, time: string, lessons: string[]) =>
+    `<div class="ds-accordion-item"><div class="ds-accordion-header"><div><div><a class="font-brand">${name}</a></div><button>Ver primeiro vídeo</button><span>${progress}</span><span>${time}</span></div></div><div class="ds-accordion-content"><div class="ds-accordion-body"><ul>${lessons.map((l) => `<li><span>${l}</span></li>`).join("")}</ul></div></div></div>`;
+
+  it("seção vira título, aula vira checkbox; progresso e duração lidos separados", () => {
+    document.title = "Pensamento computacional: fundamentos | Alura - Cursos online de tecnologia";
+    document.body.innerHTML = `<h2>Aulas</h2><div class="ds-accordion flex course-progress-information-x">${section("Mundo da Computação", "0 / 10", "36min", ["Apresentação", "Para saber mais", "Papel da pessoa desenvolvedora"])}${section("Lógica", "2 / 3", "1h 5min", ["a", "b", "c"])}</div>`;
+    const out = findCourseLessons(document)!;
+    expect(out.lessons).toBe(6);
+    expect(out.markdown).toBe(
+      [
+        "## Mundo da Computação",
+        "",
+        "3 aulas · 36min",
+        "",
+        "- [ ] Apresentação",
+        "- [ ] Para saber mais",
+        "- [ ] Papel da pessoa desenvolvedora",
+        "",
+        "## Lógica",
+        "",
+        "3 aulas · 1h5min · 2 de 3 feitas na Alura",
+        "",
+        "- [ ] a",
+        "- [ ] b",
+        "- [ ] c",
+      ].join("\n"),
+    );
+    const e = extract(window);
+    expect(e.kind).toBe("lessons");
+    expect(e.title).toBe("Pensamento computacional: fundamentos");
+  });
+
+  it("seção completa na Alura (3 / 3) já vem marcada; sem seções não é curso", () => {
+    document.body.innerHTML = `<div class="ds-accordion course-progress-information-x">${section("Feita", "3 / 3", "20min", ["x", "y", "z"])}</div>`;
+    expect(findCourseLessons(document)!.markdown).toContain("- [x] x\n- [x] y\n- [x] z");
+    document.body.innerHTML = `<div class="ds-accordion"><div class="ds-accordion-item"><div class="ds-accordion-header">Fórum</div></div></div>`;
+    expect(findCourseLessons(document)).toBeNull();
   });
 });
 

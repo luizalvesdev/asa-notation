@@ -38,7 +38,7 @@ export function clipRoutes({ sql, pages, settings, ai }: Deps): Route[] {
    * o resto para a pasta "Leituras" da raiz. As pastas são criadas na primeira vez.
    */
   async function defaultFolder(kind: unknown): Promise<string> {
-    if (kind === "course") {
+    if (kind === "course" || kind === "lessons") {
       const career = await pages.ensureSection("career", { title: CAREER_TITLE, icon: CAREER_ICON });
       const rows = await sql.query(
         `select id from pages where parent_id = $1 and deleted_at is null and kind = 'page' and lower(title) = lower($2) order by created_at limit 1`,
@@ -75,7 +75,7 @@ export function clipRoutes({ sql, pages, settings, ai }: Deps): Route[] {
 
         const source = `Fonte: [${new URL(body.url).hostname}](${body.url})`;
         const doc = markdownToDoc(`${source}\n\n${markdown}`);
-        const page = await pages.create({ parentId: parentId ?? (await defaultFolder(body.kind)), title, icon: body.kind === "transcript" ? "🎬" : body.kind === "course" ? "🎓" : null, body: doc });
+        const page = await pages.create({ parentId: parentId ?? (await defaultFolder(body.kind)), title, icon: body.kind === "transcript" ? "🎬" : body.kind === "course" ? "🎓" : body.kind === "lessons" ? "📘" : null, body: doc });
         if (!page) return json(404, { error: "parent_not_found" });
         return json(201, { page: { id: page.id, title: page.title, parentId: page.parentId } });
       },

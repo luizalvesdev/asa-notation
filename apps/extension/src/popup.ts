@@ -3,7 +3,7 @@ import { ext, loadConfig } from "./browser.js";
 import type { Extracted } from "./extract.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const KIND_LABEL: Record<Extracted["kind"], string> = { article: "Artigo", transcript: "Transcrição do vídeo", selection: "Trecho selecionado", course: "Cursos da trilha" };
+const KIND_LABEL: Record<Extracted["kind"], string> = { article: "Artigo", transcript: "Transcrição do vídeo", selection: "Trecho selecionado", course: "Cursos da trilha", lessons: "Aulas do curso" };
 const LAST_FOLDER = "lastFolder";
 
 function show(id: string) {
@@ -27,10 +27,10 @@ async function readTab(): Promise<Extracted> {
 async function fillFolders(api: Api, kind: Extracted["kind"]) {
   const select = $<HTMLSelectElement>("folder");
   // Índice de curso tem pasta própria (o servidor cria Minha Carreira > Alura); a última pasta escolhida vale só para o resto.
-  if (kind === "course") select.options[0]!.text = "💼 Minha Carreira › Alura";
+  if (kind === "course" || kind === "lessons") select.options[0]!.text = "💼 Minha Carreira › Alura";
   const { [LAST_FOLDER]: last } = await ext().storage.local.get([LAST_FOLDER]);
   for (const opt of folderOptions(await api.tree())) select.add(new Option(opt.label, opt.id));
-  if (kind !== "course" && typeof last === "string" && [...select.options].some((o) => o.value === last)) select.value = last;
+  if (kind !== "course" && kind !== "lessons" && typeof last === "string" && [...select.options].some((o) => o.value === last)) select.value = last;
 }
 
 function eventLabel(e: DateEvent): string {
@@ -141,7 +141,7 @@ async function main() {
     const folder = $<HTMLSelectElement>("folder").value || null;
     try {
       const saved = await api.clip({ url: page.url, title: $<HTMLInputElement>("title").value.trim() || page.title, markdown: page.markdown, kind: page.kind, parentId: folder });
-      if (page.kind !== "course") await ext().storage.local.set({ [LAST_FOLDER]: folder ?? "" });
+      if (page.kind !== "course" && page.kind !== "lessons") await ext().storage.local.set({ [LAST_FOLDER]: folder ?? "" });
       status("Salvo no Asa.", "ok");
       const open = $<HTMLAnchorElement>("open");
       open.href = api.pageLink(saved.id);

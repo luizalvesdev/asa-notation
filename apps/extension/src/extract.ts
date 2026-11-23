@@ -6,7 +6,7 @@ import TurndownService from "turndown";
  * então lê também conteúdo de área de aluno (Alura, faculdade) que o servidor não acessa.
  */
 
-export type ClipKind = "selection" | "transcript" | "article" | "course";
+export type ClipKind = "selection" | "transcript" | "article" | "course" | "lessons";
 
 export interface Extracted {
   kind: ClipKind;
@@ -126,6 +126,32 @@ export function findCourseIndex(doc: Document, baseUrl: string): { title: string
   return { title, markdown: groups.join("\n\n") };
 }
 
+/**
+ * Página de um curso da Alura (cursos.alura.com.br/course/...): cada seção ("módulo") vira um título e cada aula
+ * um checkbox. Seção que a Alura mostra como completa (10 / 10) já vem marcada; parcial só informa o andamento,
+ * porque a página não diz quais aulas foram feitas.
+ */
+export function findCourseLessons(doc: Document): { markdown: string; lessons: number } | null {
+  const items = doc.querySelectorAll('.ds-accordion[class*="course-progress"] > .ds-accordion-item');
+  const parts: string[] = [];
+  let lessons = 0;
+  for (const item of items) {
+    const titles = [...item.querySelectorAll(".ds-accordion-body li")].map((li) => clean(li.textContent ?? "")).filter(Boolean);
+    if (titles.length === 0) continue;
+    const head = item.querySelector(".ds-accordion-header");
+    // Cada trecho do cabeçalho separado (textContent cola "0 / 10" com "36min").
+    const bits = [...(head?.querySelectorAll("*") ?? [])].filter((e) => e.children.length === 0).map((e) => clean(e.textContent ?? "")).filter(Boolean);
+    const name = clean(head?.querySelector("a")?.textContent ?? "") || bits[0] || "";
+    const progress = bits.map((b) => /^(\d+)\s*\/\s*(\d+)$/.exec(b)).find(Boolean) ?? null;
+    const duration = bits.find((b) => /^(\d+\s*h(\s*\d+\s*min)?|\d+\s*min)$/i.test(b));
+    const complete = !!progress && Number(progress[2]) > 0 && progress[1] === progress[2];
+    const info = [`${titles.length} ${titles.length === 1 ? "aula" : "aulas"}`, duration?.replace(/\s+/g, ""), progress && !complete && Number(progress[1]) > 0 ? `${progress[1]} de ${progress[2]} feitas na Alura` : null].filter(Boolean).join(" · ");
+    parts.push(`## ${name || "Seção"}\n\n${info}\n\n${titles.map((t) => `- [${complete ? "x" : " "}] ${t}`).join("\n")}`);
+    lessons += titles.length;
+  }
+  return lessons === 0 ? null : { markdown: parts.join("\n\n"), lessons };
+}
+
 function selectionHtml(win: Window): { html: string; text: string } | null {
   const sel = win.getSelection();
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
@@ -139,7 +165,7 @@ function selectionHtml(win: Window): { html: string; text: string } | null {
 export function extract(win: Window): Extracted {
   const doc = win.document;
   const url = win.location.href;
-  const pageTitle = clean(doc.title || url).replace(/\s+[|\-–—]\s+(Alura|YouTube)$/i, "");
+  const pageTitle = clean(doc.title || url).replace(/\s+[|\-–—]\s+(Alura|YouTube)\b.*$/i, "");
   const fullText = () => clean(doc.body?.innerText ?? doc.body?.textContent ?? "").slice(0, MAX_TEXT);
 
   const sel = selectionHtml(win);
@@ -147,6 +173,9 @@ export function extract(win: Window): Extracted {
 
   const course = findCourseIndex(doc, url);
   if (course) return { kind: "course", title: course.title || pageTitle, url, markdown: course.markdown, text: fullText() };
+
+  const lessons = findCourseLessons(doc);
+  if (lessons) return { kind: "lessons", title: pageTitle, url, markdown: lessons.markdown, text: fullText() };
 
   const transcript = findTranscript(doc);
   if (transcript) return { kind: "transcript", title: pageTitle, url, markdown: transcript, text: fullText() };
