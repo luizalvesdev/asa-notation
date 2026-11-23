@@ -13,6 +13,7 @@ import { Editor } from "./Editor";
 import { HistoryPanel } from "./HistoryPanel";
 import { IconPicker } from "./IconPicker";
 import { SharePopover } from "./SharePopover";
+import { GoalLink, useGoalOfPage } from "./GoalLink";
 import { Icon } from "./icons";
 import type { Page, TreeNode } from "./pages-types";
 import { Presence } from "./Presence";
@@ -140,7 +141,8 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload, onToast }: Pa
   const [saveState, setSaveState] = useState<SaveState>("salvo");
   const [conflict, setConflict] = useState<Page | null>(null);
   const [focusBody, setFocusBody] = useState(0);
-  const [panel, setPanel] = useState<"history" | "share" | null>(null);
+  const [panel, setPanel] = useState<"history" | "share" | "goal" | null>(null);
+  const goalOfPage = useGoalOfPage(initial.id);
   const [schema, setSchema] = useState<Schema | null>(null);
   const [rowProps, setRowProps] = useState<Record<string, PropValue>>((initial.props ?? {}) as Record<string, PropValue>);
   // Altura do título dentro da página: a lista "páginas dentro" começa ali (muda com a capa e o tamanho da tela).
@@ -239,6 +241,13 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload, onToast }: Pa
         <button className="btn btn-fan btn-sm ai-toggle" type="button" aria-expanded={aiOpen} onClick={() => setAiOpen((v) => !v)}>
           ✦ IA
         </button>
+        <span style={{ position: "relative" }}>
+          <button className={`btn btn-fan btn-sm${goalOfPage.goal ? " on" : ""}`} type="button" aria-expanded={panel === "goal"} aria-label={goalOfPage.goal ? "Meta ligada a esta página" : "Ligar a uma meta"} onClick={() => setPanel(panel === "goal" ? null : "goal")}>
+            <Icon name="target" />
+            Meta
+          </button>
+          <Presence show={panel === "goal"}><GoalLink pageId={initial.id} title={title} goals={goalOfPage.goals} goal={goalOfPage.goal} onChanged={goalOfPage.refresh} onClose={() => setPanel(null)} onToast={onToast} /></Presence>
+        </span>
         <span style={{ position: "relative" }}>
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
             Compartilhar

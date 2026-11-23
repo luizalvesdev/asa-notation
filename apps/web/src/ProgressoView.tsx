@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { goalsApi, progressApi } from "./api";
-import { goalPct, goalStatus, STATUS_BADGE, STATUS_LABEL, tasksLabel } from "./goals-logic";
+import { goalPct, goalStatus, STATUS_BADGE, STATUS_LABEL, progressLabel } from "./goals-logic";
 import type { Goal } from "./goals-types";
 import { routeHash } from "./nav";
 import { activityLevel, formatStudy } from "./routine-logic";
@@ -102,7 +102,7 @@ export function ProgressoView() {
                 <a key={g.id} href={routeHash("metas")} className="col" style={{ gap: 6, textDecoration: "none", color: "var(--text)" }}>
                   <span className="row" style={{ fontSize: "calc(13px * var(--fs, 1))" }}><span className="grow1 trunc">{g.title}</span><span className={STATUS_BADGE[status]} style={{ height: 20 }}>{STATUS_LABEL[status]}</span></span>
                   <div className="bar"><span style={{ width: `${goalPct(g)}%` }} /></div>
-                  <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{goalPct(g)}% · {tasksLabel(g)}{g.dueDate ? ` · prazo ${formatDate(g.dueDate)}` : ""}</span>
+                  <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>{goalPct(g)}% · {progressLabel(g)}{g.dueDate ? ` · prazo ${formatDate(g.dueDate)}` : ""}</span>
                 </a>
               );
             })}

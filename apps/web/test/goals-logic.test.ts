@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalPct, goalStatus, tasksLabel } from "../src/goals-logic";
+import { goalExcess, goalPct, goalStatus, progressLabel } from "../src/goals-logic";
 import type { Goal } from "../src/goals-types";
 
 const goal = (over: Partial<Goal> = {}): Goal => ({
@@ -11,6 +11,10 @@ const goal = (over: Partial<Goal> = {}): Goal => ({
   createdAt: "2026-11-01T12:00:00.000Z",
   tasksTotal: 10,
   tasksDone: 5,
+  page: null,
+  target: null,
+  checked: 0,
+  checkboxes: 0,
   ...over,
 });
 
@@ -60,10 +64,45 @@ describe("goalStatus", () => {
   });
 });
 
-describe("tasksLabel", () => {
+describe("progressLabel", () => {
   it("singular, plural e vazio", () => {
-    expect(tasksLabel({ tasksTotal: 12, tasksDone: 5 })).toBe("5 de 12 tarefas");
-    expect(tasksLabel({ tasksTotal: 1, tasksDone: 0 })).toBe("0 de 1 tarefa");
-    expect(tasksLabel({ tasksTotal: 0, tasksDone: 0 })).toBe("sem tarefas");
+    expect(progressLabel({ tasksTotal: 12, tasksDone: 5 })).toBe("5 de 12 tarefas");
+    expect(progressLabel({ tasksTotal: 1, tasksDone: 0 })).toBe("0 de 1 tarefa");
+    expect(progressLabel({ tasksTotal: 0, tasksDone: 0 })).toBe("sem tarefas");
+  });
+});
+
+describe("meta ligada a uma página", () => {
+  const page = { id: "p", title: "Livros que li" };
+  const linked = (over: Partial<Goal>) => goal({ page, tasksDone: 0, tasksTotal: 0, ...over });
+
+  it("o progresso vem dos checkboxes; sem alvo, o alvo é o total de caixinhas", () => {
+    const g = linked({ checked: 7, checkboxes: 48 });
+    expect(goalPct(g)).toBe(15);
+    expect(progressLabel(g)).toBe("7 de 48 itens");
+  });
+
+  it("alvo fixo vale mais que o total de caixinhas", () => {
+    const g = linked({ checked: 12, checkboxes: 12, target: 30 });
+    expect(goalPct(g)).toBe(40);
+    expect(progressLabel(g)).toBe("12 de 30 itens");
+  });
+
+  it("bateu o alvo: meta batida; passou: mostra o excedente e a barra para em 100%", () => {
+    const exact = linked({ checked: 30, checkboxes: 30, target: 30 });
+    expect(goalStatus(exact, "2026-11-16")).toBe("batida");
+    expect(goalExcess(exact)).toBe(0);
+    const over = linked({ checked: 31, checkboxes: 31, target: 30 });
+    expect(goalStatus(over, "2026-11-16")).toBe("batida");
+    expect(goalPct(over)).toBe(100);
+    expect(goalExcess(over)).toBe(1);
+    expect(progressLabel(over)).toBe("31 de 30 itens · excedente de 1");
+  });
+
+  it("concluída à mão continua vencendo; página sem caixinhas não é meta batida", () => {
+    expect(goalStatus(linked({ done: true, checked: 1, checkboxes: 1 }), "2026-11-16")).toBe("concluida");
+    const empty = linked({ checked: 0, checkboxes: 0 });
+    expect(goalStatus(empty, "2026-11-16")).not.toBe("batida");
+    expect(progressLabel(empty)).toBe("sem itens");
   });
 });

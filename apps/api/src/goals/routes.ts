@@ -1,4 +1,4 @@
-import { UUID_SOURCE, badRequest, isRecord, json, notFound, type Route } from "../routing.js";
+import { UUID_SOURCE, badRequest, isRecord, isUuid, json, notFound, type Route } from "../routing.js";
 import { isDate } from "../tasks/recurrence.js";
 import type { PgTaskStore } from "../tasks/store.js";
 import type { GoalPatch } from "./model.js";
@@ -11,6 +11,8 @@ const ID = `(${UUID_SOURCE})`;
 
 const validTitle = (value: unknown): value is string => typeof value === "string" && value.trim().length >= 1 && value.length <= MAX_TITLE_LENGTH;
 const validDescription = (value: unknown): value is string => typeof value === "string" && value.length <= MAX_DESCRIPTION_LENGTH;
+const validPageId = (value: unknown): value is string | null => value === null || (typeof value === "string" && isUuid(value));
+const validTarget = (value: unknown): value is number | null => value === null || (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100_000);
 const validDate = (value: unknown): value is string | null => value === null || isDate(value);
 
 export function goalRoutes(goals: PgGoalStore, tasks: PgTaskStore): Route[] {
@@ -33,7 +35,15 @@ export function goalRoutes(goals: PgGoalStore, tasks: PgTaskStore): Route[] {
         if (!validTitle(title)) return badRequest("invalid_title");
         if (!validDescription(description)) return badRequest("invalid_description");
         if (!validDate(dueDate)) return badRequest("invalid_date");
-        return json(201, { goal: await goals.create({ title, description, dueDate }) });
+        const pageId = body.pageId ?? null;
+        const target = body.target ?? null;
+        if (!validPageId(pageId)) return badRequest("invalid_page");
+        if (!validTarget(target)) return badRequest("invalid_target");
+        if (pageId) {
+          const problem = await goals.pageProblem(pageId, null);
+          if (problem) return problem === "page_taken" ? json(409, { error: problem }) : badRequest(problem);
+        }
+        return json(201, { goal: await goals.create({ title, description, dueDate, pageId, target }) });
       },
     },
     {
@@ -68,6 +78,18 @@ export function goalRoutes(goals: PgGoalStore, tasks: PgTaskStore): Route[] {
         if (body.done !== undefined) {
           if (typeof body.done !== "boolean") return badRequest("invalid_done");
           patch.done = body.done;
+        }
+        if (body.pageId !== undefined) {
+          if (!validPageId(body.pageId)) return badRequest("invalid_page");
+          if (body.pageId) {
+            const problem = await goals.pageProblem(body.pageId, match[1]!);
+            if (problem) return problem === "page_taken" ? json(409, { error: problem }) : badRequest(problem);
+          }
+          patch.pageId = body.pageId;
+        }
+        if (body.target !== undefined) {
+          if (!validTarget(body.target)) return badRequest("invalid_target");
+          patch.target = body.target;
         }
         if (Object.keys(patch).length === 0) return badRequest("empty_patch");
         const goal = await goals.update(match[1]!, patch);

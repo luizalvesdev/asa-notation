@@ -166,3 +166,55 @@ describe("tarefas ligadas", () => {
     expect(back.undated[0]!.goalTitle).toBe("A");
   });
 });
+
+describe("meta ligada a uma página", () => {
+  const item = (text: string, checked: boolean) => ({ type: "taskItem", attrs: { checked }, content: [{ type: "paragraph", content: [{ type: "text", text }] }] });
+  const doc = (items: unknown[]) => ({ type: "doc", content: [{ type: "taskList", content: items }] });
+  const makePage = async (title: string, body: unknown) => {
+    const res = await app.call("POST", "/pages", { cookies, body: { title, body } });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    return (res.body as { page: { id: string } }).page.id;
+  };
+  type Linked = GoalJson & { page: { id: string; title: string } | null; target: number | null; checked: number; checkboxes: number };
+  const get = async (id: string) => ((await app.call("GET", `/goals/${id}`, { cookies })).body as { goal: Linked }).goal;
+
+  it("o progresso vem dos checkboxes marcados; sem alvo, o alvo é o total de caixinhas", async () => {
+    const page = await makePage("Carreira", doc([item("a", true), item("b", false), item("c", true)]));
+    const goal = (await createGoal({ title: "Terminar a carreira", pageId: page })) as Linked;
+    expect(goal.page).toEqual({ id: page, title: "Carreira" });
+    expect([goal.checked, goal.checkboxes, goal.target]).toEqual([2, 3, null]);
+    await app.call("PATCH", `/pages/${page}`, { cookies, body: { body: doc([item("a", true), item("b", true), item("c", true)]) } });
+    expect((await get(goal.id)).checked).toBe(3);
+  });
+
+  it("alvo fixo: marcados além do alvo passam de 100% (o excedente é conta do cliente)", async () => {
+    const page = await makePage("Livros que li", doc(Array.from({ length: 31 }, (_, i) => item(`livro ${i}`, true))));
+    const goal = await createGoal({ title: "Ler 30 livros", pageId: page, target: 30 });
+    const read = await get(goal.id);
+    expect([read.checked, read.checkboxes, read.target]).toEqual([31, 31, 30]);
+  });
+
+  it("uma página liga a uma meta só (1 para 1); desligar libera", async () => {
+    const page = await makePage("P", doc([item("x", false)]));
+    const first = await createGoal({ title: "A", pageId: page });
+    const second = await app.call("POST", "/goals", { cookies, body: { title: "B", pageId: page } });
+    expect(second.status).toBe(409);
+    const other = await createGoal({ title: "C" });
+    expect((await app.call("PATCH", `/goals/${other.id}`, { cookies, body: { pageId: page } })).status).toBe(409);
+    expect((await app.call("PATCH", `/goals/${first.id}`, { cookies, body: { pageId: null } })).status).toBe(200);
+    expect((await app.call("PATCH", `/goals/${other.id}`, { cookies, body: { pageId: page } })).status).toBe(200);
+  });
+
+  it("valida página e alvo", async () => {
+    expect((await app.call("POST", "/goals", { cookies, body: { title: "X", pageId: "00000000-0000-4000-8000-000000000000" } })).status).toBe(400);
+    expect((await app.call("POST", "/goals", { cookies, body: { title: "X", target: 0 } })).status).toBe(400);
+    expect((await app.call("POST", "/goals", { cookies, body: { title: "X", pageId: "nada" } })).status).toBe(400);
+  });
+
+  it("página na lixeira deixa de valer: a meta volta a contar tarefas", async () => {
+    const page = await makePage("Some", doc([item("x", true)]));
+    const goal = await createGoal({ title: "G", pageId: page });
+    await app.call("DELETE", `/pages/${page}`, { cookies });
+    expect((await get(goal.id)).page).toBeNull();
+  });
+});

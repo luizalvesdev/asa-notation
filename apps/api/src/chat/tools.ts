@@ -1,3 +1,4 @@
+import { goalProgress } from "../goals/model.js";
 import type { ToolSpec } from "../ai/anthropic.js";
 import type { PgCaptureStore } from "../captures/store.js";
 import type { PgGoalStore } from "../goals/store.js";
@@ -105,7 +106,7 @@ export function toolsFor(agent: Agent, ctx: ToolContext): { specs: ToolSpec[]; h
       return JSON.stringify({ days: list.days.slice(0, 60).map(line), late: list.late.slice(0, 30).map(line), undated: list.undated.slice(0, 30).map(line) });
     },
     async list_goals() {
-      return JSON.stringify((await ctx.goals.list()).filter((g) => !g.done).map((g) => ({ id: g.id, title: g.title, dueDate: g.dueDate, tasksDone: g.tasksDone, tasksTotal: g.tasksTotal })));
+      return JSON.stringify((await ctx.goals.list()).filter((g) => !g.done).map((g) => ({ id: g.id, title: g.title, dueDate: g.dueDate, tasksDone: g.tasksDone, tasksTotal: g.tasksTotal, ...(g.page ? { pageId: g.page.id, pageProgress: goalProgress(g) } : {}) })));
     },
     async list_weak_cards() {
       const cards = await ctx.study.weakWithContent(10);

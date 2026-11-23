@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AddTask } from "./AddTask";
-import { goalPct, goalStatus, STATUS_BADGE, STATUS_LABEL, tasksLabel } from "./goals-logic";
+import { pageHash } from "./nav";
+import { goalPct, goalStatus, STATUS_BADGE, STATUS_LABEL, progressLabel } from "./goals-logic";
 import type { Goal } from "./goals-types";
 import { Icon } from "./icons";
 import { formatDate, formatWhen, localDate } from "./tasks-dates";
@@ -59,7 +60,7 @@ function GoalCard({ goal, today, selected, onPick, onToggleDone, onDelete }: Goa
       </span>
       <span className="row" style={{ gap: 12, fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" }}>
         <span>{pct}%</span>
-        <span>{tasksLabel(goal)}</span>
+        <span>{progressLabel(goal)}</span>
         <span style={{ marginLeft: "auto" }}>{goal.dueDate ? formatDate(goal.dueDate) : "sem prazo"}</span>
       </span>
     </button>
@@ -178,8 +179,17 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
         </span>
         <span className="pk">Progresso</span>
         <span className="pv">
-          {pct}% · {tasksLabel(goal)}
+          {pct}% · {progressLabel(goal)}
         </span>
+        {goal.page && (
+          <>
+            <span className="pk">Página</span>
+            <span className="pv">
+              <a href={pageHash(goal.page.id)}>{goal.page.title.trim() === "" ? "Sem título" : goal.page.title}</a>
+              {goal.target ? ` · alvo ${goal.target}` : ""}
+            </span>
+          </>
+        )}
       </div>
       <textarea
         className="goal-desc"
