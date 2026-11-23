@@ -39,6 +39,8 @@ export type GoalStatus = "concluida" | "batida" | "ritmo" | "atras" | "risco";
 export interface OutlineLesson {
   text: string;
   checked: boolean;
+  /** Anotação escrita dentro do checkbox ("" se não há). */
+  note: string;
 }
 export interface OutlineSection {
   title: string;

@@ -7,7 +7,21 @@ export function nodeText(node: unknown): string {
   if (typeof node !== "object" || node === null) return "";
   const n = node as Node;
   if (n.type === "text" && typeof n.text === "string") return n.text;
+  if (n.type === "hardBreak") return "\n";
   return Array.isArray(n.content) ? n.content.map(nodeText).join("") : "";
+}
+
+/** O título de um item de tarefa: o primeiro parágrafo. O que vem depois é a anotação do item. */
+export function itemTitle(item: unknown): unknown {
+  const content = typeof item === "object" && item !== null ? (item as Node).content : undefined;
+  return Array.isArray(content) ? content[0] : undefined;
+}
+
+/** A anotação de um item de tarefa: o texto dos blocos depois do título, um por linha. */
+export function itemNote(item: unknown): string {
+  const content = typeof item === "object" && item !== null ? (item as Node).content : undefined;
+  if (!Array.isArray(content)) return "";
+  return content.slice(1).map(nodeText).map((t) => t.trim()).filter(Boolean).join("\n");
 }
 
 /** Primeiro link (normalizado) dentro de um nó, ou null. */
@@ -34,7 +48,7 @@ export function countChecks(body: unknown, skip: ReadonlySet<string> = new Set()
     if (typeof node !== "object" || node === null) return;
     const n = node as Node;
     if (n.type === "taskItem") {
-      const link = skip.size > 0 ? firstLink(n) : null;
+      const link = skip.size > 0 ? firstLink(itemTitle(n)) : null;
       if (!(link && skip.has(link))) {
         total++;
         if (n.attrs?.checked === true) done++;
@@ -53,7 +67,7 @@ export function uncheckedItems(body: unknown, limit: number): string[] {
     if (out.length >= limit || typeof node !== "object" || node === null) return;
     const n = node as Node;
     if (n.type === "taskItem" && n.attrs?.checked !== true) {
-      const text = nodeText(n).replace(/\s+/g, " ").trim();
+      const text = nodeText(itemTitle(n)).replace(/\s+/g, " ").trim();
       if (text !== "") out.push(text.slice(0, 160));
     }
     if (Array.isArray(n.content)) for (const child of n.content) walk(child);

@@ -1,9 +1,11 @@
-import { firstLink, nodeText } from "./checks.js";
+import { firstLink, itemNote, itemTitle, nodeText } from "./checks.js";
 
 /** Árvore para a tela da meta: grupos (títulos da página) > itens (cursos) > seções > aulas. */
 export interface OutlineLesson {
   text: string;
   checked: boolean;
+  /** Anotação escrita dentro do checkbox ("" se não há). */
+  note: string;
 }
 export interface OutlineSection {
   title: string;
@@ -61,7 +63,7 @@ function sectionsOf(body: unknown): OutlineSection[] {
       }
       for (const item of taskItems(block)) {
         const checked = item.attrs?.checked === true;
-        current.lessons.push({ text: clean(nodeText(item)), checked });
+        current.lessons.push({ text: clean(nodeText(itemTitle(item))), checked, note: itemNote(item) });
         current.total++;
         if (checked) current.done++;
       }
@@ -85,8 +87,8 @@ export function buildOutline(rootBody: unknown, children: ChildPage[]): OutlineG
     } else if (typeOf(block) === "taskList") {
       const g = group ?? open(null);
       for (const item of taskItems(block)) {
-        const title = clean(nodeText(item));
-        const link = firstLink(item);
+        const title = clean(nodeText(itemTitle(item)));
+        const link = firstLink(itemTitle(item));
         const child = link ? bySource.get(link) : undefined;
         let entry: OutlineItem;
         if (child) {

@@ -409,7 +409,69 @@ body.block-sorting .dh {
 
 .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
   color: var(--text-3);
+}
+
+/* Só o título do item é riscado; a anotação (e listas dentro do item) continua legível. */
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div > p:first-child {
   text-decoration: line-through;
+}
+
+/* Anotação dentro do checkbox: tudo que vem depois do título do item. */
+.ProseMirror ul[data-type="taskList"] li > div > p:not(:first-child) {
+  margin: 2px 0 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border-2);
+  font-size: calc(13px * var(--fs, 1));
+  line-height: calc(20px * var(--fs, 1));
+  color: var(--text-2);
+}
+
+.ProseMirror .task-note-empty::before {
+  content: "Anotação… (Enter quebra a linha, Esc volta ao título)";
+  float: left;
+  height: 0;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.ProseMirror .task-note-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0;
+  vertical-align: middle;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  opacity: 0;
+  user-select: none;
+  transition: opacity var(--rapido) var(--padrao), background-color var(--rapido) var(--padrao);
+}
+
+.ProseMirror ul[data-type="taskList"] li:hover > div > p:first-child .task-note-btn,
+.ProseMirror ul[data-type="taskList"] li:focus-within > div > p:first-child .task-note-btn {
+  opacity: 0.7;
+}
+
+.ProseMirror .task-note-btn:hover {
+  opacity: 1;
+  background: var(--hover);
+}
+
+/* Com anotação escrita: sempre à vista e na cor de destaque. */
+.ProseMirror .task-note-btn.has-note {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.ProseMirror .task-note-btn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
 }
 
 .slash-menu-box .mrow {

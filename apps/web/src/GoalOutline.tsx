@@ -61,9 +61,18 @@ function Item({ item, open, onToggle, openSections, onToggleSection, keyBase }: 
                 <Reveal show={sOpen}>
                   <div className="col" style={{ gap: 2, padding: "2px 0 6px 28px" }}>
                     {s.lessons.map((l, j) => (
-                      <div key={j} className="row" style={{ gap: 10, minHeight: 26 }}>
-                        <Tick on={l.checked} />
-                        <span style={{ fontSize: "calc(13px * var(--fs, 1))", overflowWrap: "anywhere", textDecoration: l.checked ? "line-through" : undefined, color: l.checked ? "var(--text-3)" : "var(--text-2)" }}>{l.text}</span>
+                      <div key={j} className="col" style={{ gap: 2 }}>
+                        <div className="row" style={{ gap: 10, minHeight: 26 }}>
+                          <Tick on={l.checked} />
+                          <span style={{ fontSize: "calc(13px * var(--fs, 1))", overflowWrap: "anywhere", textDecoration: l.checked ? "line-through" : undefined, color: l.checked ? "var(--text-3)" : "var(--text-2)" }}>{l.text}</span>
+                          {l.note !== "" && (
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Tem anotação" style={{ flex: "none" }}>
+                              <title>Tem anotação</title>
+                              <path d="M5 4h14v12l-5 5H5z" /><path d="M14 21v-5h5" /><path d="M8 9h8M8 13h4" />
+                            </svg>
+                          )}
+                        </div>
+                        {l.note !== "" && <span style={{ marginLeft: 26, paddingLeft: 10, borderLeft: "2px solid var(--border-2)", fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{l.note}</span>}
                       </div>
                     ))}
                   </div>

@@ -4,6 +4,7 @@ import { EditorContent, useEditor, type Editor as TiptapEditor, type JSONContent
 import { useEffect, useMemo, useRef, useState } from "react";
 import { quietly, startBlockSort } from "./block-sort";
 import { contentExtensions } from "./editor-extensions";
+import { TaskNotes } from "./task-notes";
 import { FormatMenu } from "./FormatMenu";
 import { uiOf } from "./editor-nodes";
 import { PageMention, WikiLink } from "./page-link";
@@ -35,6 +36,7 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId, onReady 
       ...contentExtensions(),
       Placeholder.configure({ placeholder: "Escreva algo, / para os blocos, [[ ou @ para linkar uma página…" }),
       SlashCommand,
+      TaskNotes,
       WikiLink,
       PageMention,
     ],

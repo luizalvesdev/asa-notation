@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ancestorsOf, buildTree, displayTitle, splitSections, subtreeIds } from "../src/pages-tree";
 import type { TreeNode } from "../src/pages-types";
+import { taskNoteState } from "../src/task-notes";
 
 const node = (id: string, parentId: string | null, title = id): TreeNode => ({
   id,
@@ -79,5 +80,22 @@ describe("splitSections", () => {
     expect(out.careerId).toBeNull();
     expect(out.career).toEqual([]);
     expect(out.pages.map((n) => n.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("taskNoteState", () => {
+  const item = (...texts: string[]) => ({ childCount: texts.length, child: (i: number) => ({ textContent: texts[i]! }) });
+
+  it("sem nota: só o título", () => {
+    expect(taskNoteState(item("Aula 1"))).toEqual({ exists: false, filled: false });
+  });
+
+  it("bloco de nota vazio existe mas não conta como escrito", () => {
+    expect(taskNoteState(item("Aula 1", "  "))).toEqual({ exists: true, filled: false });
+  });
+
+  it("com texto na nota, qualquer bloco depois do título", () => {
+    expect(taskNoteState(item("Aula 1", "rever laços"))).toEqual({ exists: true, filled: true });
+    expect(taskNoteState(item("Aula 1", "", "segundo bloco"))).toEqual({ exists: true, filled: true });
   });
 });

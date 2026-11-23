@@ -247,14 +247,28 @@ describe("meta ligada a uma carreira: cursos com aulas", () => {
   it("detalhe da meta devolve a árvore: grupos, cursos, seções e aulas", async () => {
     const { rootId, aId } = await career();
     const goal = await createGoal({ title: "Terminar a carreira", pageId: rootId });
-    type Outline = { title: string | null; done: number; total: number; items: { title: string; pageId: string | null; done: number; total: number; sections: { title: string; done: number; total: number; lessons: { text: string; checked: boolean }[] }[] }[] }[];
+    type Outline = { title: string | null; done: number; total: number; items: { title: string; pageId: string | null; done: number; total: number; sections: { title: string; done: number; total: number; lessons: { text: string; checked: boolean; note: string }[] }[] }[] }[];
     const { outline } = (await app.call("GET", `/goals/${goal.id}`, { cookies })).body as { outline: Outline };
     expect(outline.map((g) => [g.title, g.done, g.total])).toEqual([["Base", 2, 4], ["Nível 1", 0, 1]]);
     const courseA = outline[0]!.items[0]!;
     expect(courseA).toMatchObject({ pageId: aId, done: 2, total: 3 });
     expect(courseA.sections.map((s) => [s.title, s.done, s.total])).toEqual([["Seção 1", 1, 2], ["Seção 2", 1, 1]]);
-    expect(courseA.sections[0]!.lessons).toEqual([{ text: "Aula 1", checked: true }, { text: "Aula 2", checked: false }]);
+    expect(courseA.sections[0]!.lessons).toEqual([{ text: "Aula 1", checked: true, note: "" }, { text: "Aula 2", checked: false, note: "" }]);
     expect(outline[1]!.items[0]).toMatchObject({ title: "Curso C", pageId: null, done: 0, total: 1 });
+  });
+
+  it("anotação dentro do checkbox: aparece na árvore da meta e não vira título nem muda a contagem", async () => {
+    const { rootId, aId } = await career();
+    const withNote = (title: string, note: string, checked = false) => ({ type: "taskItem", attrs: { checked }, content: [{ type: "paragraph", content: [{ type: "text", text: title }] }, { type: "paragraph", content: note.split("\n").flatMap((line, i) => (i === 0 ? [{ type: "text", text: line }] : [{ type: "hardBreak" }, { type: "text", text: line }])) }] });
+    const plain = (title: string) => ({ type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: title }] }] });
+    const body = { type: "doc", content: [{ type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Seção 1" }] }, { type: "taskList", content: [withNote("Aula 1", "rever laços\ne tipos", true), plain("Aula 2")] }] };
+    expect((await app.call("PATCH", `/pages/${aId}`, { cookies, body: { body } })).status).toBe(200);
+    const goal = await createGoal({ title: "Carreira", pageId: rootId });
+    const res = (await app.call("GET", `/goals/${goal.id}`, { cookies })).body as { goal: { checked: number; checkboxes: number }; outline: { items: { pageId: string | null; sections: { lessons: { text: string; checked: boolean; note: string }[] }[] }[] }[] };
+    const course = res.outline[0]!.items.find((i) => i.pageId === aId)!;
+    expect(course.sections[0]!.lessons).toEqual([{ text: "Aula 1", checked: true, note: "rever laços\ne tipos" }, { text: "Aula 2", checked: false, note: "" }]);
+    // A: 2 aulas (1 feita), B: 1 aula, C: sem página => 1 de 4
+    expect([res.goal.checked, res.goal.checkboxes]).toEqual([1, 4]);
   });
 
   it("salvar o mesmo curso de novo não duplica a página (mesmo endereço, com ou sem query)", async () => {
