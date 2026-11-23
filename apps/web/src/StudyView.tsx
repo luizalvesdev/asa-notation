@@ -21,8 +21,6 @@ interface StudyViewProps {
   onToast: (toast: Toast) => void;
 }
 
-const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" } as const;
-
 function CardText({ card }: { card: Pick<StudyCard, "kind" | "front" | "back"> }) {
   if (card.kind === "cloze") {
     return (
@@ -377,9 +375,9 @@ export function StudyView({ nodes, onToast }: StudyViewProps) {
   const newCount = overview?.newAvailable ?? 0;
 
   return (
-    <div style={{ padding: "36px 40px 120px", display: "flex", flexDirection: "column", gap: 24 }}>
-      <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-        <h1 style={H1}>Estudo</h1>
+    <div className="screen screen-col">
+      <div className="screen-head">
+        <h1 className="screen-title">Estudo</h1>
         <a className="btn btn-fan btn-sm" href={routeHash("estudo-stats")} style={{ marginLeft: "auto" }}>Estatísticas</a>
       </div>
 

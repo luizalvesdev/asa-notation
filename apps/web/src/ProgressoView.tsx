@@ -46,10 +46,10 @@ export function ProgressoView() {
   const maxDay = data ? Math.max(0, ...data.days.map((d) => d.tasks + d.reviews)) : 0;
 
   return (
-    <div style={{ padding: "36px 40px 120px", display: "flex", flexDirection: "column", gap: 24 }}>
-      <div className="row" style={{ alignItems: "flex-end", gap: 12 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Progresso</h1>
-        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>últimas {WEEKS} semanas</span>
+    <div className="screen screen-col">
+      <div className="screen-head">
+        <h1 className="screen-title">Progresso</h1>
+        <span className="muted screen-sub">últimas {WEEKS} semanas</span>
       </div>
 
       {load.status === "carregando" && <span className="sk" style={{ height: 200, borderRadius: 12 }} aria-busy="true" aria-label="Carregando o progresso" />}

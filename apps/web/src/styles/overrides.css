@@ -214,3 +214,16 @@ body,
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Telas (Hoje, Semana, Inbox, Estudo, Metas, Rotina, Progresso...): mesmo recuo, mesmo título, mesma largura. */
+.screen { padding: 36px 40px 120px; }
+.screen-col { display: flex; flex-direction: column; gap: 24px; }
+.screen-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.screen-title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: calc(40px * var(--fs, 1));
+  line-height: calc(44px * var(--fs, 1));
+  letter-spacing: -.02em;
+}
+.screen-sub { font-size: calc(15px * var(--fs, 1)); padding-bottom: 4px; }

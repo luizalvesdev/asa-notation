@@ -163,10 +163,10 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
   const ready = inbox.status === "pronto";
 
   return (
-    <div style={{ maxWidth: 880, margin: "0 auto", padding: "36px 32px 140px", display: "flex", flexDirection: "column", gap: 14 }}>
-      <div className="row" style={{ flexWrap: "wrap", gap: 10, alignItems: "flex-end" }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Inbox</h1>
-        <span className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", paddingBottom: 4 }}>
+    <div className="screen" style={{ paddingBottom: 140, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="screen-head" style={{ marginBottom: 10 }}>
+        <h1 className="screen-title">Inbox</h1>
+        <span className="muted screen-sub">
           {inbox.counts.total + pending.length} {inbox.counts.total + pending.length === 1 ? "item" : "itens"}
           {inbox.counts.none > 0 ? ` · ${inbox.counts.none} sem tipo` : ""}
         </span>

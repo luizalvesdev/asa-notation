@@ -29,8 +29,6 @@ type Tab = (typeof ALL_TABS)[number];
 // Na demo não há conta, tokens de API nem MCP.
 const TABS = DEMO ? ALL_TABS.filter((t) => t !== "API" && t !== "Conta") : ALL_TABS;
 
-const H1 = { fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" } as const;
-
 function useSettings(onToast: (t: Toast) => void) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [failed, setFailed] = useState(false);
@@ -578,8 +576,8 @@ export function SettingsView({ preference, onPreference, onLogout, onToast }: Se
   const s = settings ?? DEFAULT_SETTINGS;
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", padding: "36px 32px 120px", display: "flex", flexDirection: "column", gap: 18 }}>
-      <h1 style={H1}>Configurações</h1>
+    <div className="screen" style={{ maxWidth: 940, display: "flex", flexDirection: "column", gap: 18 }}>
+      <h1 className="screen-title" style={{ marginBottom: 6 }}>Configurações</h1>
       <div className="tabs" role="tablist" aria-label="Seções" style={{ overflowX: "auto", overflowY: "hidden" }}>
         {TABS.map((t) => (
           <button key={t} className={`plain tab${tab === t ? " on" : ""}`} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ whiteSpace: "nowrap", position: "relative", padding: "8px 12px", height: 36 }}>{t}</button>

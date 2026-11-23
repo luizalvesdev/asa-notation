@@ -183,10 +183,10 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
 
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 32, padding: "36px 40px 120px" }}>
-      <div style={{ flex: "999 1 520px", minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
-        <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-          <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Rotina</h1>
-          <span className="muted" style={{ fontSize: "calc(14px * var(--fs, 1))", paddingBottom: 4 }}>{formatWeekRange(start)}</span>
+      <div style={{ flex: "999 1 520px", minWidth: 0, display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className="screen-head">
+          <h1 className="screen-title">Rotina</h1>
+          <span className="muted screen-sub">{formatWeekRange(start)}</span>
           <span className="row" style={{ marginLeft: "auto", gap: 2 }}>
             <button className="btn btn-fan btn-ico btn-sm" type="button" aria-label="Semana anterior" onClick={() => setStart(addDays(start, -7))}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
             <button className="btn btn-sec btn-sm" type="button" disabled={start === weekStart(today)} onClick={() => setStart(weekStart(today))}>Esta semana</button>

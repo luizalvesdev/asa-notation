@@ -64,9 +64,9 @@ export function NotificationsView({ onChanged, onToast }: NotificationsViewProps
   const ready = state.status === "pronto";
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "36px 32px 120px", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Notificações</h1>
+    <div className="screen" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="screen-head" style={{ marginBottom: 8, alignItems: "center" }}>
+        <h1 className="screen-title">Notificações</h1>
         <div className="seg" role="tablist" aria-label="Filtro" style={{ marginLeft: "auto" }}>
           <span className="seg-ind" style={{ width: "calc((100% - 4px) / 2)", transform: `translateX(${filter === "all" ? 0 : 100}%)` }} />
           <button className={`seg-b${filter === "all" ? " on" : ""}`} type="button" role="tab" aria-selected={filter === "all"} onClick={() => setFilter("all")}>Todas</button>

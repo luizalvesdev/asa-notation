@@ -48,8 +48,8 @@ export function TrashView({ onRestored }: TrashViewProps) {
   );
 
   return (
-    <div className="page" style={{ paddingTop: 40 }}>
-      <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Lixeira</h1>
+    <div className="screen">
+      <h1 className="screen-title">Lixeira</h1>
       <p className="muted" style={{ marginTop: 8, fontSize: "calc(14px * var(--fs, 1))", lineHeight: "calc(22px * var(--fs, 1))" }}>
         Páginas apagadas ficam aqui. Restaurar traz de volta a página e tudo que estava dentro dela.
       </p>

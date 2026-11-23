@@ -20,7 +20,7 @@ interface MetasViewProps {
 type Tab = "ativas" | "concluidas";
 
 function Title({ children }: { children: string }) {
-  return <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>{children}</h1>;
+  return <h1 className="screen-title">{children}</h1>;
 }
 
 interface GoalCardProps {
@@ -146,7 +146,7 @@ function GoalDetail({ goal, today, onBack, onChanged, onUpdate, onDelete, onToas
     });
 
   return (
-    <div className="enter rel metas-detail-in" style={{ padding: "32px 36px 120px", display: "flex", flexDirection: "column", gap: 18 }}>
+    <div className="enter rel metas-detail-in" style={{ padding: "36px 40px 120px", display: "flex", flexDirection: "column", gap: 18 }}>
       <button className="btn btn-fan btn-sm metas-back" type="button" onClick={onBack} style={{ alignSelf: "flex-start" }}>
         <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 6l-6 6 6 6" />
@@ -292,8 +292,8 @@ export function MetasView({ onToast }: MetasViewProps) {
     <div className={`metas${explicit ? " has-sel" : ""}`} style={{ display: "flex", minHeight: "100%" }}>
       {/* Sem meta para mostrar, a lista ocupa a tela toda (nada de painel vazio ao lado). */}
       <div className="metas-list" style={{ flex: "1 1 420px", ...(ready && effective ? { borderRight: "1px solid var(--border)" } : {}) }}>
-        <div style={{ padding: "32px 28px 120px", display: "flex", flexDirection: "column", gap: 14 }}>
-          <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
+        <div className="screen" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="screen-head" style={{ marginBottom: 10, alignItems: "center" }}>
             <Title>Metas</Title>
             <div className="seg" role="tablist" aria-label="Filtro" style={{ marginLeft: "auto" }}>
               <span className="seg-ind" style={{ width: "calc((100% - 4px) / 2)", transform: `translateX(${tab === "ativas" ? 0 : 100}%)` }} />

@@ -156,10 +156,10 @@ export function SemanaView({ onToast }: SemanaViewProps) {
   };
 
   return (
-    <div style={{ padding: "36px 32px 120px" }}>
-      <div className="row" style={{ flexWrap: "wrap", gap: 12, alignItems: "flex-end", marginBottom: 18 }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Semana</h1>
-        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>
+    <div className="screen">
+      <div className="screen-head" style={{ marginBottom: 24 }}>
+        <h1 className="screen-title">Semana</h1>
+        <span className="muted screen-sub">
           {formatWeekRange(start)}
         </span>
         <span className="row" style={{ marginLeft: "auto", gap: 2 }}>

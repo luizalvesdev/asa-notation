@@ -49,16 +49,16 @@ export function HojeView({ onToast }: HojeViewProps) {
   const rowProps = { onToggle: toggle, onToggleSubtask: toggleSub, onRemove: remove, onAddSubtask: (parentId: string, title: string) => tasks.addSubtask(parentId, title) };
 
   return (
-    <div style={{ padding: "40px 40px 120px" }}>
-      <div className="row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-        <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(40px * var(--fs, 1))", lineHeight: "calc(44px * var(--fs, 1))", letterSpacing: "-.02em" }}>Hoje</h1>
-        <span className="muted" style={{ fontSize: "calc(15px * var(--fs, 1))", paddingBottom: 4 }}>
+    <div className="screen">
+      <div className="screen-head" style={{ marginBottom: 24 }}>
+        <h1 className="screen-title">Hoje</h1>
+        <span className="muted screen-sub">
           {formatHeading(today)}
         </span>
       </div>
 
       {tasks.status === "carregando" && (
-        <div className="col" style={{ gap: 14, marginTop: 28 }} aria-label="Carregando as tarefas" aria-busy="true">
+        <div className="col" style={{ gap: 14 }} aria-label="Carregando as tarefas" aria-busy="true">
           <span className="sk" style={{ height: 6 }} />
           {[70, 55, 62].map((w) => (
             <span key={w} className="sk" style={{ height: 18, width: `${w}%` }} />
@@ -67,7 +67,7 @@ export function HojeView({ onToast }: HojeViewProps) {
       )}
 
       {tasks.status === "erro" && (
-        <div className="card" role="alert" style={{ marginTop: 28, padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="card" role="alert" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: "calc(14px * var(--fs, 1))" }}>Não foi possível carregar as tarefas.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={tasks.reload} style={{ marginLeft: "auto" }}>
             Tentar de novo
@@ -77,7 +77,7 @@ export function HojeView({ onToast }: HojeViewProps) {
 
       {ready && (
         <>
-          <div className="row" style={{ marginTop: 20, gap: 12 }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={stats.pct} aria-label="Progresso do dia">
+          <div className="row" style={{ gap: 12 }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={stats.pct} aria-label="Progresso do dia">
             <div className="bar grow1">
               <span style={{ width: `${stats.pct}%`, transition: "width var(--medio) var(--padrao)", animation: "none", background: stats.total > 0 && stats.pct === 100 ? "var(--success)" : undefined }} />
             </div>
