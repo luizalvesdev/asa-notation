@@ -65,7 +65,7 @@ export function createApi(config: Config, fetchImpl: typeof fetch = fetch) {
   return {
     tree: () => call<{ pages: TreePage[] }>("GET", "/pages/tree").then((r) => r.pages),
     clip: (input: { url: string; title: string; markdown: string; kind: string; parentId: string | null }) =>
-      call<{ page: { id: string; title: string; parentId: string } }>("POST", "/clips", input).then((r) => r.page),
+      call<{ page: { id: string; title: string; parentId: string }; existed?: boolean }>("POST", "/clips", input).then((r) => ({ ...r.page, existed: r.existed === true })),
     dates: (input: { url: string; title: string; text: string }) => call<{ today: string; events: DateEvent[] }>("POST", "/clips/dates", input),
     createTask: (input: { title: string; date: string; time: string | null }) => call<{ task: { id: string } }>("POST", "/tasks", input),
     pageLink: (id: string) => `${config.server}/#/p/${id}`,

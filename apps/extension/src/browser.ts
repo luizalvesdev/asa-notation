@@ -11,6 +11,7 @@ interface Browser {
   scripting: {
     executeScript(p: { target: { tabId: number }; files: string[] }): Promise<{ result?: unknown }[]>;
     executeScript(p: { target: { tabId: number }; func: () => unknown }): Promise<{ result?: unknown }[]>;
+    executeScript(p: { target: { tabId: number }; func: (arg: string) => unknown; args: [string] }): Promise<{ result?: unknown }[]>;
   };
   storage: { local: { get(keys: string[]): Promise<Record<string, unknown>>; set(items: Record<string, unknown>): Promise<void> } };
   runtime: { openOptionsPage(): Promise<void> };

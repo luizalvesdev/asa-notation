@@ -152,6 +152,35 @@ export function findCourseLessons(doc: Document): { markdown: string; lessons: n
   return lessons === 0 ? null : { markdown: parts.join("\n\n"), lessons };
 }
 
+/** Cursos listados numa carreira da Alura, na ordem da página: nome e endereço de cada um. */
+export function findCourseLinks(doc: Document, baseUrl: string): { title: string; href: string }[] {
+  const out: { title: string; href: string }[] = [];
+  const seen = new Set<string>();
+  for (const step of doc.querySelectorAll(".career-step")) {
+    const title = clean(step.querySelector(".step-description > p:first-child")?.textContent ?? "");
+    let href = "";
+    try {
+      href = new URL(step.closest("a")?.getAttribute("href") ?? "", baseUrl).href;
+    } catch {}
+    if (!title || !/^https?:\/\//.test(href) || seen.has(href)) continue;
+    seen.add(href);
+    out.push({ title, href });
+  }
+  return out;
+}
+
+/** Título de uma aba da Alura sem o rodapé ("| Alura - Cursos online de tecnologia"). */
+export function cleanTitle(raw: string): string {
+  return clean(raw).replace(/\s+[|\-–—]\s+(Alura|YouTube)\b.*$/i, "");
+}
+
+/** Lê uma página de curso já baixada (HTML de outra página) e devolve as aulas, ou o motivo de não ter. */
+export function parseCoursePage(doc: Document): { ok: true; title: string; markdown: string; lessons: number } | { ok: false; reason: "no_lessons" } {
+  const found = findCourseLessons(doc);
+  if (!found) return { ok: false, reason: "no_lessons" };
+  return { ok: true, title: cleanTitle(doc.title || ""), markdown: found.markdown, lessons: found.lessons };
+}
+
 function selectionHtml(win: Window): { html: string; text: string } | null {
   const sel = win.getSelection();
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;

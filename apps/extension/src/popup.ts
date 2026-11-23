@@ -39,6 +39,66 @@ function eventLabel(e: DateEvent): string {
   return `${day}${e.time ? ` ${e.time}` : ""}`;
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+type CourseResult = { ok: true; title: string; markdown: string; lessons: number } | { ok: false; reason: string };
+
+const BULK_ERRORS: Record<string, string> = {
+  login: "A sessão da Alura caiu. Entre de novo na Alura e tente outra vez (os cursos já salvos são pulados).",
+  no_lessons: "Esta página de curso não tem a lista de aulas.",
+  network: "Não consegui baixar a página do curso.",
+};
+
+/** Salva a carreira e, dentro dela, uma página por curso com as aulas. Pode ser repetido: o que já existe é pulado. */
+async function saveAllCourses(api: Api, page: Extracted) {
+  const button = $<HTMLButtonElement>("bulk");
+  button.disabled = true;
+  $<HTMLButtonElement>("save").disabled = true;
+  try {
+    const [tab] = await ext().tabs.query({ active: true, currentWindow: true });
+    const tabId = tab!.id!;
+    const courses = (await ext().scripting.executeScript({ target: { tabId }, func: () => (window as unknown as { __asaCourses: () => unknown }).__asaCourses() }))[0]!.result as { title: string; href: string }[];
+    if (courses.length === 0) return status("Não achei cursos nesta página.", "error");
+
+    status("Salvando a página da carreira…");
+    const folder = $<HTMLSelectElement>("folder").value || null;
+    const index = await api.clip({ url: page.url, title: $<HTMLInputElement>("title").value.trim() || page.title, markdown: page.markdown, kind: "course", parentId: folder });
+
+    let created = 0;
+    let skipped = 0;
+    let lessons = 0;
+    for (const [i, course] of courses.entries()) {
+      status(`Curso ${i + 1} de ${courses.length}: ${course.title}`);
+      const [res] = await ext().scripting.executeScript({ target: { tabId }, func: (url: string) => (window as unknown as { __asaFetchCourse: (u: string) => unknown }).__asaFetchCourse(url), args: [course.href] });
+      const got = res!.result as CourseResult;
+      if (!got.ok) {
+        status(`${BULK_ERRORS[got.reason] ?? "Não deu certo."} (parou em “${course.title}”; ${created} criados, ${skipped} já existiam.)`, "error");
+        return;
+      }
+      const saved = await api.clip({ url: course.href, title: got.title || course.title, markdown: got.markdown, kind: "lessons", parentId: index.id });
+      if (saved.existed) skipped++;
+      else {
+        created++;
+        lessons += got.lessons;
+      }
+      await sleep(350);
+    }
+    status(`Pronto: ${created} ${created === 1 ? "curso criado" : "cursos criados"} (${lessons} aulas)${skipped > 0 ? `, ${skipped} já existiam` : ""}.`, "ok");
+    const open = $<HTMLAnchorElement>("open");
+    open.href = api.pageLink(index.id);
+    open.hidden = false;
+    open.onclick = (e) => {
+      e.preventDefault();
+      void ext().tabs.create({ url: open.href }).then(() => window.close());
+    };
+  } catch (err) {
+    status(errorMessage(err), "error");
+  } finally {
+    button.disabled = false;
+    $<HTMLButtonElement>("save").disabled = false;
+  }
+}
+
 async function importDates(api: Api, page: Extracted) {
   const button = $<HTMLButtonElement>("dates");
   button.disabled = true;
@@ -128,6 +188,8 @@ async function main() {
   fillFolders(api, page.kind).catch((err) => status(errorMessage(err), "error"));
 
   $("dates").onclick = () => void importDates(api, page);
+  $("bulk-box").hidden = page.kind !== "course";
+  $("bulk").onclick = () => void saveAllCourses(api, page);
   $("back").onclick = () => {
     status("");
     show("clip");

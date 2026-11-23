@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from "vitest";
 import { ApiError, createApi, errorMessage, folderOptions, normalizeServer } from "../src/api.js";
-import { extract, findCourseIndex, findCourseLessons, findTranscript, toMarkdown } from "../src/extract.js";
+import { cleanTitle, extract, findCourseIndex, findCourseLessons, findCourseLinks, findTranscript, parseCoursePage, toMarkdown } from "../src/extract.js";
 
 const LONG = "Neste vídeo a gente vai entender como o Kafka distribui as mensagens entre as partições de um tópico. ".repeat(4);
 
@@ -126,6 +126,27 @@ describe("aulas de um curso da Alura", () => {
     expect(findCourseLessons(document)!.markdown).toContain("- [x] x\n- [x] y\n- [x] z");
     document.body.innerHTML = `<div class="ds-accordion"><div class="ds-accordion-item"><div class="ds-accordion-header">Fórum</div></div></div>`;
     expect(findCourseLessons(document)).toBeNull();
+  });
+});
+
+describe("salvar todos os cursos", () => {
+  it("lista os cursos da carreira na ordem, com endereço absoluto e sem repetir", () => {
+    const step = (name: string, path: string) => `<a href="${path}"><div class="career-step"><div class="step-description"><p>${name}</p><p class="description-text">x</p></div></div></a>`;
+    document.body.innerHTML = `<div class="ds-accordion-item">${step("Pensamento computacional", "/course/pc")}${step("C#", "/course/csharp")}${step("C#", "/course/csharp")}</div>`;
+    expect(findCourseLinks(document, "https://cursos.alura.com.br/dashboard/career/x")).toEqual([
+      { title: "Pensamento computacional", href: "https://cursos.alura.com.br/course/pc" },
+      { title: "C#", href: "https://cursos.alura.com.br/course/csharp" },
+    ]);
+  });
+
+  it("lê uma página de curso baixada: título limpo e aulas; sem aulas devolve o motivo", () => {
+    const doc = new DOMParser().parseFromString(
+      `<html><head><title>C#: criando sua primeira aplicação | Alura - Cursos online de tecnologia</title></head><body><div class="ds-accordion course-progress-information-x"><div class="ds-accordion-item"><div class="ds-accordion-header"><a>Seção</a><span>1 / 2</span><span>20min</span></div><div class="ds-accordion-content"><div class="ds-accordion-body"><ul><li><span>A</span></li><li><span>B</span></li></ul></div></div></div></div></body></html>`,
+      "text/html",
+    );
+    expect(parseCoursePage(doc)).toMatchObject({ ok: true, title: "C#: criando sua primeira aplicação", lessons: 2 });
+    expect(parseCoursePage(new DOMParser().parseFromString("<html><body>login</body></html>", "text/html"))).toEqual({ ok: false, reason: "no_lessons" });
+    expect(cleanTitle("Carreira | Alura - Cursos online de tecnologia")).toBe("Carreira");
   });
 });
 
