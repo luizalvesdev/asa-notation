@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Salvar no Asa",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Salva artigos, transcrições de aulas e trechos no Asa, e importa provas e entregas da agenda como tarefas.",
   "icons": { "48": "icons/icon-48.png", "96": "icons/icon-96.png" },
   "action": {
