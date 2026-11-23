@@ -4,7 +4,8 @@ import { EditorContent, useEditor, type Editor as TiptapEditor, type JSONContent
 import { useEffect, useMemo, useRef, useState } from "react";
 import { quietly, startBlockSort } from "./block-sort";
 import { contentExtensions } from "./editor-extensions";
-import { TaskNotes } from "./task-notes";
+import { TaskNotes, type NoteHover } from "./task-notes";
+import { NoteHoverCard, NoteModal } from "./TaskNoteUi";
 import { FormatMenu } from "./FormatMenu";
 import { uiOf } from "./editor-nodes";
 import { PageMention, WikiLink } from "./page-link";
@@ -30,13 +31,35 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId, onReady 
   const [target, setTarget] = useState<{ pos: number; size: number } | null>(null);
   const [askingImage, setAskingImage] = useState(false);
   const [askingEmbed, setAskingEmbed] = useState(false);
+  // Anotação de checkbox: o cartão do mouse em cima e a janela de edição (posição do item).
+  const [noteHover, setNoteHover] = useState<NoteHover | null>(null);
+  const [noteEdit, setNoteEdit] = useState<number | null>(null);
+  const noteTimer = useRef(0);
+  // O mouse está em cima do cartão: ele não fecha enquanto isso for verdade.
+  const overCard = useRef(false);
+  const hoverNote = useRef((info: NoteHover | null) => {
+    window.clearTimeout(noteTimer.current);
+    if (info) setNoteHover(info);
+    else
+      noteTimer.current = window.setTimeout(() => {
+        if (!overCard.current) setNoteHover(null);
+      }, 200);
+  });
 
   const editor = useEditor({
     extensions: [
       ...contentExtensions(),
       Placeholder.configure({ placeholder: "Escreva algo, / para os blocos, [[ ou @ para linkar uma página…" }),
       SlashCommand,
-      TaskNotes,
+      TaskNotes.configure({
+        onHover: (info) => hoverNote.current(info),
+        onOpen: (pos) => {
+          window.clearTimeout(noteTimer.current);
+          overCard.current = false;
+          setNoteHover(null);
+          setNoteEdit(pos);
+        },
+      }),
       WikiLink,
       PageMention,
     ],
@@ -173,6 +196,18 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId, onReady 
       )}
       {editor && <FormatMenu editor={editor} />}
       <EditorContent editor={editor} />
+      <NoteHoverCard
+        hover={noteHover}
+        onEnter={() => {
+          overCard.current = true;
+          window.clearTimeout(noteTimer.current);
+        }}
+        onLeave={() => {
+          overCard.current = false;
+          hoverNote.current(null);
+        }}
+      />
+      {editor && <NoteModal editor={editor} pos={noteEdit} onClose={() => setNoteEdit(null)} />}
       {askingEmbed && editor && (
         <UrlDialog
           title="Inserir link com cartão"

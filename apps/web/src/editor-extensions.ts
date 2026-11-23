@@ -10,6 +10,20 @@ import StarterKit from "@tiptap/starter-kit";
 import { lowlight } from "./code-highlight";
 import { Callout, Column, Columns, Embed, Mermaid, Ui } from "./editor-nodes";
 
+/** Item de tarefa com anotação: o texto fica no atributo `note` (vazio = sem nota). */
+const NoteTaskItem = TaskItem.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      note: {
+        default: "",
+        parseHTML: (el: HTMLElement) => el.getAttribute("data-note") ?? "",
+        renderHTML: (attrs: Record<string, unknown>) => (typeof attrs.note === "string" && attrs.note !== "" ? { "data-note": attrs.note } : {}),
+      },
+    };
+  },
+});
+
 /** Os blocos que a página sabe desenhar. Vale para edição e para leitura (histórico, link público). */
 export function contentExtensions(): Extensions {
   return [
@@ -18,7 +32,7 @@ export function contentExtensions(): Extensions {
     StarterKit.configure({ link: { openOnClick: false }, codeBlock: false, dropcursor: { color: "var(--accent)", width: 3, class: "drop-line" } }),
     CodeBlockLowlight.extend({ addNodeView: () => ReactNodeViewRenderer(CodeBlockView) }).configure({ lowlight, defaultLanguage: null }),
     TaskList,
-    TaskItem.configure({ nested: true }),
+    NoteTaskItem.configure({ nested: true }),
     Details.configure({ persist: true }),
     DetailsSummary,
     DetailsContent,

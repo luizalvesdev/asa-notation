@@ -86,3 +86,13 @@ describe("export em pastas", () => {
     expect(Object.fromEntries(pagePaths(pages))).toEqual({ 1: "Estudo.md", 2: "Estudo/Raft.md", 3: "Estudo/raft (2).md", 4: "Órfã.md" });
   });
 });
+
+describe("anotação de checkbox", () => {
+  it("vira uma linha de citação abaixo do item", () => {
+    const doc = { type: "doc", content: [{ type: "taskList", content: [
+      { type: "taskItem", attrs: { checked: true, note: "rever laços\ne tipos" }, content: [{ type: "paragraph", content: [{ type: "text", text: "Aula 1" }] }] },
+      { type: "taskItem", attrs: { checked: false, note: "" }, content: [{ type: "paragraph", content: [{ type: "text", text: "Aula 2" }] }] },
+    ] }] };
+    expect(docToMarkdown(doc)).toBe("- [x] Aula 1\n      > Anotação: rever laços e tipos\n- [ ] Aula 2\n");
+  });
+});

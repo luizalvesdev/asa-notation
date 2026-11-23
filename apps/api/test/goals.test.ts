@@ -257,9 +257,9 @@ describe("meta ligada a uma carreira: cursos com aulas", () => {
     expect(outline[1]!.items[0]).toMatchObject({ title: "Curso C", pageId: null, done: 0, total: 1 });
   });
 
-  it("anotação dentro do checkbox: aparece na árvore da meta e não vira título nem muda a contagem", async () => {
+  it("anotação do checkbox (atributo note): aparece na árvore da meta e não vira título nem muda a contagem", async () => {
     const { rootId, aId } = await career();
-    const withNote = (title: string, note: string, checked = false) => ({ type: "taskItem", attrs: { checked }, content: [{ type: "paragraph", content: [{ type: "text", text: title }] }, { type: "paragraph", content: note.split("\n").flatMap((line, i) => (i === 0 ? [{ type: "text", text: line }] : [{ type: "hardBreak" }, { type: "text", text: line }])) }] });
+    const withNote = (title: string, note: string, checked = false) => ({ type: "taskItem", attrs: { checked, note }, content: [{ type: "paragraph", content: [{ type: "text", text: title }] }] });
     const plain = (title: string) => ({ type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: title }] }] });
     const body = { type: "doc", content: [{ type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Seção 1" }] }, { type: "taskList", content: [withNote("Aula 1", "rever laços\ne tipos", true), plain("Aula 2")] }] };
     expect((await app.call("PATCH", `/pages/${aId}`, { cookies, body: { body } })).status).toBe(200);

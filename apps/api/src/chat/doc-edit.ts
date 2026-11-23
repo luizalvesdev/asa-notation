@@ -42,7 +42,9 @@ function block(node: Node, indent = ""): string {
           const marker = node.type === "orderedList" ? `${i + 1}.` : node.type === "taskList" ? `- [${item.attrs?.checked ? "x" : " "}]` : "-";
           const [first, ...rest] = item.content ?? [];
           const head = `${indent}${marker} ${first ? inline(first.content) : ""}`;
-          const nested = rest.map((n) => block(n, `${indent}  `)).join("\n");
+          const note = node.type === "taskList" && typeof item.attrs?.note === "string" ? item.attrs.note.trim() : "";
+          const noteLine = note ? `${indent}  > Anotação: ${note.replace(/\s*\n\s*/g, " ")}` : "";
+          const nested = [...rest.map((n) => block(n, `${indent}  `)), ...(noteLine ? [noteLine] : [])].join("\n");
           return nested ? `${head}\n${nested}` : head;
         })
         .join("\n");

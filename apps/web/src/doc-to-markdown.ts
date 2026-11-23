@@ -45,6 +45,9 @@ function listItem(item: Node, marker: string): string {
   const [first, ...rest] = item.content ?? [];
   const head = first ? block(first) : "";
   const tail = rest.map((child) => indent(block(child), marker.length));
+  // Anotação de um checkbox: uma linha de citação logo abaixo do item.
+  const note = marker.startsWith("- [") && typeof item.attrs?.note === "string" ? item.attrs.note.trim() : "";
+  if (note) tail.push(indent(`> Anotação: ${note.replace(/\s*\n\s*/g, " ")}`, marker.length));
   return [`${marker}${head}`, ...tail].join("\n");
 }
 

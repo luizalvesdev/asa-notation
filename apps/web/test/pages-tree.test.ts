@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ancestorsOf, buildTree, displayTitle, splitSections, subtreeIds } from "../src/pages-tree";
 import type { TreeNode } from "../src/pages-types";
-import { taskNoteState } from "../src/task-notes";
+import { MAX_NOTE, normalizeNote } from "../src/task-notes";
 
 const node = (id: string, parentId: string | null, title = id): TreeNode => ({
   id,
@@ -83,19 +83,10 @@ describe("splitSections", () => {
   });
 });
 
-describe("taskNoteState", () => {
-  const item = (...texts: string[]) => ({ childCount: texts.length, child: (i: number) => ({ textContent: texts[i]! }) });
-
-  it("sem nota: só o título", () => {
-    expect(taskNoteState(item("Aula 1"))).toEqual({ exists: false, filled: false });
-  });
-
-  it("bloco de nota vazio existe mas não conta como escrito", () => {
-    expect(taskNoteState(item("Aula 1", "  "))).toEqual({ exists: true, filled: false });
-  });
-
-  it("com texto na nota, qualquer bloco depois do título", () => {
-    expect(taskNoteState(item("Aula 1", "rever laços"))).toEqual({ exists: true, filled: true });
-    expect(taskNoteState(item("Aula 1", "", "segundo bloco"))).toEqual({ exists: true, filled: true });
+describe("normalizeNote", () => {
+  it("tira espaço das pontas, ajusta quebras de linha e respeita o limite", () => {
+    expect(normalizeNote("  rever laços  \r\n e tipos \n")).toBe("rever laços  \n e tipos");
+    expect(normalizeNote("   ")).toBe("");
+    expect(normalizeNote("x".repeat(MAX_NOTE + 50))).toHaveLength(MAX_NOTE);
   });
 });

@@ -4,8 +4,18 @@ import { ProviderError, createBudgetedModel, createModel } from "../src/ai/anthr
 import { MAX_STEPS, TRUNCATED, runTurn, trimHistory } from "../src/chat/agent.js";
 import { markdownToDoc } from "../src/chat/markdown.js";
 import { appendBlocks, asDoc, docToMarkdown, outline, readSection, replaceSection } from "../src/chat/doc-edit.js";
+import { extractText } from "../src/pages/text.js";
 import { decryptSecret, encryptSecret, secretsKey } from "../src/secrets/crypto.js";
 import { createTestApp, doc, type TestApp } from "./helpers.js";
+
+describe("anotação de checkbox no texto da página", () => {
+  const doc = { type: "doc", content: [{ type: "taskList", content: [{ type: "taskItem", attrs: { checked: false, note: "rever laços" }, content: [{ type: "paragraph", content: [{ type: "text", text: "Variáveis" }] }] }] }] };
+
+  it("entra na busca e na leitura dos assistentes", () => {
+    expect(extractText(doc)).toContain("rever laços");
+    expect(docToMarkdown(doc)).toBe("- [ ] Variáveis\n  > Anotação: rever laços");
+  });
+});
 
 describe("cofre de segredos", () => {
   const key = secretsKey("s".repeat(40));

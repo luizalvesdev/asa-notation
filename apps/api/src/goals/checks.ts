@@ -11,17 +11,16 @@ export function nodeText(node: unknown): string {
   return Array.isArray(n.content) ? n.content.map(nodeText).join("") : "";
 }
 
-/** O título de um item de tarefa: o primeiro parágrafo. O que vem depois é a anotação do item. */
+/** O título de um item de tarefa: o primeiro parágrafo. */
 export function itemTitle(item: unknown): unknown {
   const content = typeof item === "object" && item !== null ? (item as Node).content : undefined;
   return Array.isArray(content) ? content[0] : undefined;
 }
 
-/** A anotação de um item de tarefa: o texto dos blocos depois do título, um por linha. */
+/** A anotação de um item de tarefa: o atributo `note` ("" se não há). */
 export function itemNote(item: unknown): string {
-  const content = typeof item === "object" && item !== null ? (item as Node).content : undefined;
-  if (!Array.isArray(content)) return "";
-  return content.slice(1).map(nodeText).map((t) => t.trim()).filter(Boolean).join("\n");
+  const note = typeof item === "object" && item !== null ? (item as Node).attrs?.note : undefined;
+  return typeof note === "string" ? note.trim() : "";
 }
 
 /** Primeiro link (normalizado) dentro de um nó, ou null. */
