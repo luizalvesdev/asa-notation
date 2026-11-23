@@ -83,7 +83,7 @@ export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onC
   const small = { fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-2)" } as const;
 
   return (
-    <div ref={ref} className="menu on" role="dialog" aria-label="Sugerir cards" style={{ position: "absolute", top: 34, right: 0, width: 440, maxHeight: "min(70vh, 560px)", overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12, zIndex: 40 }}>
+    <div ref={ref} className="menu on" role="dialog" aria-label="Sugerir cards" style={{ position: "absolute", top: 34, right: 0, width: 440, maxHeight: "min(56vh, 460px)", padding: 16, display: "flex", flexDirection: "column", gap: 12, zIndex: 40 }}>
       <b style={{ fontWeight: 600 }}>Sugerir cards</b>
       {state.status === "lendo" && (
         <div className="col" style={{ gap: 8 }} aria-busy="true" aria-label="Lendo a página">
@@ -102,12 +102,15 @@ export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onC
       )}
       {state.status === "pronto" && created === null && (
         <>
-          {state.aiNote && <span style={small}>{state.aiNote}</span>}
-          {state.cards.length === 0 && <span style={small}>Não achei nada que valha um card nesta página.</span>}
+          {state.cards.length === 0 ? (
+            <span style={small}>{state.aiNote ? `${state.aiNote} Sem marcações de card (como "pergunta :: resposta") e sem IA, não há o que sugerir.` : "Não achei nada que valha um card nesta página."}</span>
+          ) : (
+            state.aiNote && <span style={small}>{state.aiNote}</span>
+          )}
           {state.cards.length > 0 && (
             <>
               <span style={small}>Marque os que quer criar. A resposta fica escondida até você pedir.</span>
-              <div className="col" style={{ gap: 6 }}>
+              <div className="col" style={{ gap: 6, flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
                 {state.cards.map((c) => {
                   const on = picked.has(c.sourceKey);
                   const open = shown.has(c.sourceKey);
@@ -134,7 +137,7 @@ export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onC
                   );
                 })}
               </div>
-              <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+              <div className="row" style={{ gap: 8, flexWrap: "wrap", flex: "none" }}>
                 <select className="inp" aria-label="Trilha de destino" value={deck} onChange={(e) => setDeck(e.target.value)} style={{ width: "auto", height: 30 }}>
                   <option value="none">Sem trilha</option>
                   {decks.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
