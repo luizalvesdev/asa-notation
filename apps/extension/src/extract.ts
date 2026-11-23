@@ -6,7 +6,7 @@ import TurndownService from "turndown";
  * então lê também conteúdo de área de aluno (Alura, faculdade) que o servidor não acessa.
  */
 
-export type ClipKind = "selection" | "transcript" | "article";
+export type ClipKind = "selection" | "transcript" | "article" | "course";
 
 export interface Extracted {
   kind: ClipKind;
@@ -92,6 +92,40 @@ export function findTranscript(doc: Document): string | null {
   return md.replace(/^#{1,3}\s*transcri[çc][ãa]o\s*\n+/i, "").trim() || null;
 }
 
+/**
+ * Índice de uma carreira ou formação da Alura (cursos.alura.com.br/dashboard/career/...): vira uma lista de tarefas,
+ * um item por curso, agrupada por nível. Os níveis fechados já estão no HTML, só escondidos.
+ */
+export function findCourseIndex(doc: Document, baseUrl: string): { title: string; markdown: string } | null {
+  const groups: string[] = [];
+  let courses = 0;
+  for (const item of doc.querySelectorAll(".ds-accordion-item")) {
+    const steps = [...item.querySelectorAll(".career-step")];
+    if (steps.length === 0) continue;
+    const level = clean(item.querySelector(".ds-accordion-title")?.textContent ?? "");
+    const lines: string[] = [];
+    for (const step of steps) {
+      const name = clean(step.querySelector(".step-description > p:first-child")?.textContent ?? "");
+      if (!name) continue;
+      const about = clean(step.querySelector(".description-text")?.textContent ?? "");
+      const progress = clean(step.querySelector(".text-card-body")?.textContent ?? "");
+      let href = "";
+      try {
+        href = new URL(step.closest("a")?.getAttribute("href") ?? "", baseUrl).href;
+      } catch {}
+      const label = clean(name.replace(/[\[\]]/g, " "));
+      const link = /^https?:\/\//.test(href) && !/[)\s]/.test(href) ? `[${label}](${href})` : label;
+      lines.push(`- [${progress === "100%" ? "x" : " "}] ${link}${about ? ` — ${about}` : ""}`);
+    }
+    if (lines.length === 0) continue;
+    courses += lines.length;
+    groups.push(`${level ? `## ${level}\n\n` : ""}${lines.join("\n")}`);
+  }
+  if (courses === 0) return null;
+  const title = clean(doc.querySelector("h2")?.textContent ?? "");
+  return { title, markdown: groups.join("\n\n") };
+}
+
 function selectionHtml(win: Window): { html: string; text: string } | null {
   const sel = win.getSelection();
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
@@ -110,6 +144,9 @@ export function extract(win: Window): Extracted {
 
   const sel = selectionHtml(win);
   if (sel) return { kind: "selection", title: pageTitle, url, markdown: toMarkdown(sel.html) || sel.text, text: sel.text.slice(0, MAX_TEXT) };
+
+  const course = findCourseIndex(doc, url);
+  if (course) return { kind: "course", title: course.title || pageTitle, url, markdown: course.markdown, text: fullText() };
 
   const transcript = findTranscript(doc);
   if (transcript) return { kind: "transcript", title: pageTitle, url, markdown: transcript, text: fullText() };

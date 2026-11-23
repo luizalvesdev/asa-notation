@@ -3,7 +3,7 @@ import { ext, loadConfig } from "./browser.js";
 import type { Extracted } from "./extract.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const KIND_LABEL: Record<Extracted["kind"], string> = { article: "Artigo", transcript: "Transcrição do vídeo", selection: "Trecho selecionado" };
+const KIND_LABEL: Record<Extracted["kind"], string> = { article: "Artigo", transcript: "Transcrição do vídeo", selection: "Trecho selecionado", course: "Cursos da trilha" };
 const LAST_FOLDER = "lastFolder";
 
 function show(id: string) {

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from "vitest";
 import { ApiError, createApi, errorMessage, folderOptions, normalizeServer } from "../src/api.js";
-import { extract, findTranscript, toMarkdown } from "../src/extract.js";
+import { extract, findCourseIndex, findTranscript, toMarkdown } from "../src/extract.js";
 
 const LONG = "Neste vídeo a gente vai entender como o Kafka distribui as mensagens entre as partições de um tópico. ".repeat(4);
 
@@ -49,6 +49,42 @@ describe("transcrição", () => {
   it("bloco curto não conta como transcrição", () => {
     document.body.innerHTML = `<div class="transcription-toggle">Ver transcrição</div>`;
     expect(findTranscript(document)).toBeNull();
+  });
+});
+
+describe("índice de curso (carreira da Alura)", () => {
+  const step = (n: string, name: string, about: string, pct: string, path: string) =>
+    `<div class="ds-accordion-body"><a class="career-step-wrapper" href="${path}"><div class="career-step"><span class="step-title">${n}</span><div class="step-description"><p class="font-sans">${name}</p>${about ? `<p class="description-text">${about}</p>` : ""}</div><span class="text-card-body">${pct}</span></div></a></div>`;
+  const level = (title: string, body: string) => `<div class="ds-accordion-item"><div class="ds-accordion-header"><span class="ds-accordion-title">${title}</span></div><div class="ds-accordion-content">${body}</div></div>`;
+
+  it("um item por curso, agrupado por nível, com link, subtítulo e check nos concluídos", () => {
+    document.body.innerHTML = `<h2>Desenvolvimento Back-End .NET</h2>
+      ${level("Comunidade", "<p>Fórum</p>")}
+      ${level("Base - Pensamento Computacional", step("01", "Pensamento computacional", "fundamentos da lógica", "0%", "/course/pc") + step("02", "C#", "criando sua primeira aplicação", "100%", "/course/csharp"))}
+      ${level("Nível 3", step("01", "Arquitetura [moderna]", "", "0%", "/course/arq"))}`;
+    const out = findCourseIndex(document, "https://cursos.alura.com.br/dashboard/career/x")!;
+    expect(out.title).toBe("Desenvolvimento Back-End .NET");
+    expect(out.markdown).toBe(
+      [
+        "## Base - Pensamento Computacional",
+        "",
+        "- [ ] [Pensamento computacional](https://cursos.alura.com.br/course/pc) — fundamentos da lógica",
+        "- [x] [C#](https://cursos.alura.com.br/course/csharp) — criando sua primeira aplicação",
+        "",
+        "## Nível 3",
+        "",
+        "- [ ] [Arquitetura moderna](https://cursos.alura.com.br/course/arq)",
+      ].join("\n"),
+    );
+  });
+
+  it("sem cursos na página não é índice, e extract() devolve o tipo course", () => {
+    document.body.innerHTML = `<p>nada</p>`;
+    expect(findCourseIndex(document, "https://a.com")).toBeNull();
+    document.body.innerHTML = `<h2>Carreira X</h2>${level("Base", step("01", "C#", "", "0%", "/course/c"))}`;
+    const out = extract(window);
+    expect(out.kind).toBe("course");
+    expect(out.title).toBe("Carreira X");
   });
 });
 

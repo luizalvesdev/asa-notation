@@ -58,7 +58,7 @@ export function clipRoutes({ sql, pages, settings, ai }: Deps): Route[] {
 
         const source = `Fonte: [${new URL(body.url).hostname}](${body.url})`;
         const doc = markdownToDoc(`${source}\n\n${markdown}`);
-        const page = await pages.create({ parentId: parentId ?? (await defaultFolder()), title, icon: body.kind === "transcript" ? "🎬" : null, body: doc });
+        const page = await pages.create({ parentId: parentId ?? (await defaultFolder()), title, icon: body.kind === "transcript" ? "🎬" : body.kind === "course" ? "🎓" : null, body: doc });
         if (!page) return json(404, { error: "parent_not_found" });
         return json(201, { page: { id: page.id, title: page.title, parentId: page.parentId } });
       },
