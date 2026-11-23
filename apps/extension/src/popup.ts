@@ -67,13 +67,21 @@ async function saveAllCourses(api: Api, page: Extracted) {
     let created = 0;
     let skipped = 0;
     let lessons = 0;
+    // Cursos cuja página não traz a lista de aulas (ou deu erro só nela): ficam de fora, e o resto segue.
+    const without: string[] = [];
     for (const [i, course] of courses.entries()) {
       status(`Curso ${i + 1} de ${courses.length}: ${course.title}`);
       const [res] = await ext().scripting.executeScript({ target: { tabId }, func: (url: string) => (window as unknown as { __asaFetchCourse: (u: string) => unknown }).__asaFetchCourse(url), args: [course.href] });
       const got = res!.result as CourseResult;
       if (!got.ok) {
-        status(`${BULK_ERRORS[got.reason] ?? "Não deu certo."} (parou em “${course.title}”; ${created} criados, ${skipped} já existiam.)`, "error");
-        return;
+        // Sessão caída ou sem rede: não adianta seguir. Qualquer outro motivo vale só para este curso.
+        if (got.reason === "login" || got.reason === "network") {
+          status(`${BULK_ERRORS[got.reason]} (parou em “${course.title}”; ${created} criados, ${skipped} já existiam.)`, "error");
+          return;
+        }
+        without.push(course.title);
+        await sleep(350);
+        continue;
       }
       const saved = await api.clip({ url: course.href, title: got.title || course.title, markdown: got.markdown, kind: "lessons", parentId: index.id });
       if (saved.existed) skipped++;
@@ -83,7 +91,8 @@ async function saveAllCourses(api: Api, page: Extracted) {
       }
       await sleep(350);
     }
-    status(`Pronto: ${created} ${created === 1 ? "curso criado" : "cursos criados"} (${lessons} aulas)${skipped > 0 ? `, ${skipped} já existiam` : ""}.`, "ok");
+    const missing = without.length > 0 ? ` Sem lista de aulas (ficam só na página da carreira): ${without.join("; ")}.` : "";
+    status(`Pronto: ${created} ${created === 1 ? "curso criado" : "cursos criados"} (${lessons} aulas)${skipped > 0 ? `, ${skipped} já existiam` : ""}.${missing}`, without.length > 0 ? "" : "ok");
     const open = $<HTMLAnchorElement>("open");
     open.href = api.pageLink(index.id);
     open.hidden = false;
