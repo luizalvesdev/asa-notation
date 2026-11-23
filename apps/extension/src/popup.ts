@@ -1,4 +1,4 @@
-import { createApi, errorMessage, folderOptions, type Api, type DateEvent } from "./api.js";
+import { ApiError, createApi, errorMessage, folderOptions, type Api, type DateEvent } from "./api.js";
 import { ext, loadConfig } from "./browser.js";
 import type { Extracted } from "./extract.js";
 
@@ -45,9 +45,18 @@ type CourseResult = { ok: true; title: string; markdown: string; lessons: number
 
 const BULK_ERRORS: Record<string, string> = {
   login: "A sessão da Alura caiu. Entre de novo na Alura e tente outra vez (os cursos já salvos são pulados).",
-  no_lessons: "Esta página de curso não tem a lista de aulas.",
-  network: "Não consegui baixar a página do curso.",
+  network: "Sem conexão com a Alura (várias falhas seguidas).",
 };
+
+/** Por que um curso ficou sem as aulas, em uma frase curta. */
+function whySkipped(reason: string): string {
+  if (reason === "coming_soon") return "ainda não liberado (em breve)";
+  if (reason === "no_lessons") return "a página não tem lista de aulas";
+  if (reason === "network") return "falha de rede ao baixar a página";
+  if (reason === "other_site") return "o endereço não é da Alura";
+  if (reason.startsWith("http_")) return `a Alura respondeu erro ${reason.slice(5)}`;
+  return "motivo desconhecido";
+}
 
 /** Salva a carreira e, dentro dela, uma página por curso com as aulas. Pode ser repetido: o que já existe é pulado. */
 async function saveAllCourses(api: Api, page: Extracted) {
@@ -69,21 +78,33 @@ async function saveAllCourses(api: Api, page: Extracted) {
     let lessons = 0;
     // Cursos cuja página não traz a lista de aulas (ou deu erro só nela): ficam de fora, e o resto segue.
     const without: string[] = [];
+    let networkFails = 0;
     for (const [i, course] of courses.entries()) {
       status(`Curso ${i + 1} de ${courses.length}: ${course.title}`);
       const [res] = await ext().scripting.executeScript({ target: { tabId }, func: (url: string) => (window as unknown as { __asaFetchCourse: (u: string) => unknown }).__asaFetchCourse(url), args: [course.href] });
       const got = res!.result as CourseResult;
       if (!got.ok) {
-        // Sessão caída ou sem rede: não adianta seguir. Qualquer outro motivo vale só para este curso.
-        if (got.reason === "login" || got.reason === "network") {
-          status(`${BULK_ERRORS[got.reason]} (parou em “${course.title}”; ${created} criados, ${skipped} já existiam.)`, "error");
+        // Sessão caída: não adianta seguir. Falha de rede só para depois de 3 seguidas. O resto vale só para este curso.
+        networkFails = got.reason === "network" ? networkFails + 1 : 0;
+        if (got.reason === "login" || networkFails >= 3) {
+          status(`${BULK_ERRORS[got.reason === "login" ? "login" : "network"]} (parou em “${course.title}”; ${created} criados, ${skipped} já existiam.)`, "error");
           return;
         }
-        without.push(got.reason === "coming_soon" ? `${course.title} (em breve)` : course.title);
+        without.push(`• ${course.title}: ${whySkipped(got.reason)}`);
         await sleep(350);
         continue;
       }
-      const saved = await api.clip({ url: course.href, title: got.title || course.title, markdown: got.markdown, kind: "lessons", parentId: index.id });
+      networkFails = 0;
+      let saved: { existed: boolean };
+      try {
+        saved = await api.clip({ url: course.href, title: got.title || course.title, markdown: got.markdown, kind: "lessons", parentId: index.id });
+      } catch (err) {
+        // Problema com o token ou com o Asa fora do ar vale para todos: para. Erro só deste curso: pula.
+        if (!(err instanceof ApiError) || err.status === 401 || err.status === 403 || err.code === "offline") throw err;
+        without.push(`• ${course.title}: o Asa recusou a página (${err.code})`);
+        await sleep(350);
+        continue;
+      }
       if (saved.existed) skipped++;
       else {
         created++;
@@ -91,7 +112,7 @@ async function saveAllCourses(api: Api, page: Extracted) {
       }
       await sleep(350);
     }
-    const missing = without.length > 0 ? ` Sem aulas para salvar (ficam só na página da carreira): ${without.join("; ")}.` : "";
+    const missing = without.length > 0 ? `\n\nFicaram sem as aulas (continuam na página da carreira):\n${without.join("\n")}` : "";
     status(`Pronto: ${created} ${created === 1 ? "curso criado" : "cursos criados"} (${lessons} aulas)${skipped > 0 ? `, ${skipped} já existiam` : ""}.${missing}`, without.length > 0 ? "" : "ok");
     const open = $<HTMLAnchorElement>("open");
     open.href = api.pageLink(index.id);

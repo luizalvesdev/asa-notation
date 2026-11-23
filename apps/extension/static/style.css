@@ -66,6 +66,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 #events { max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
 .event { flex-direction: row; align-items: flex-start; gap: 8px; color: var(--text); font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); margin: 0; }
 .event small { color: var(--text-2); }
-#status { margin: 8px 0 0; font-size: 12px; min-height: 1em; }
+#status { margin: 8px 0 0; font-size: 12px; min-height: 1em; white-space: pre-line; }
 #status.ok { color: var(--ok); }
 #status.error { color: var(--danger); }
