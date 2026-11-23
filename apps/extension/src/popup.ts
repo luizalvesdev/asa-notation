@@ -79,7 +79,7 @@ async function saveAllCourses(api: Api, page: Extracted) {
           status(`${BULK_ERRORS[got.reason]} (parou em “${course.title}”; ${created} criados, ${skipped} já existiam.)`, "error");
           return;
         }
-        without.push(course.title);
+        without.push(got.reason === "coming_soon" ? `${course.title} (em breve)` : course.title);
         await sleep(350);
         continue;
       }
@@ -91,7 +91,7 @@ async function saveAllCourses(api: Api, page: Extracted) {
       }
       await sleep(350);
     }
-    const missing = without.length > 0 ? ` Sem lista de aulas (ficam só na página da carreira): ${without.join("; ")}.` : "";
+    const missing = without.length > 0 ? ` Sem aulas para salvar (ficam só na página da carreira): ${without.join("; ")}.` : "";
     status(`Pronto: ${created} ${created === 1 ? "curso criado" : "cursos criados"} (${lessons} aulas)${skipped > 0 ? `, ${skipped} já existiam` : ""}.${missing}`, without.length > 0 ? "" : "ok");
     const open = $<HTMLAnchorElement>("open");
     open.href = api.pageLink(index.id);

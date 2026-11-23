@@ -175,9 +175,10 @@ export function cleanTitle(raw: string): string {
 }
 
 /** Lê uma página de curso já baixada (HTML de outra página) e devolve as aulas, ou o motivo de não ter. */
-export function parseCoursePage(doc: Document): { ok: true; title: string; markdown: string; lessons: number } | { ok: false; reason: "no_lessons" } {
+export function parseCoursePage(doc: Document): { ok: true; title: string; markdown: string; lessons: number } | { ok: false; reason: "no_lessons" | "coming_soon" } {
   const found = findCourseLessons(doc);
-  if (!found) return { ok: false, reason: "no_lessons" };
+  // Curso anunciado mas ainda sem aulas: a Alura põe "[EM BREVE]" no título da página.
+  if (!found) return { ok: false, reason: /\[\s*em breve\s*\]/i.test(doc.title || "") ? "coming_soon" : "no_lessons" };
   return { ok: true, title: cleanTitle(doc.title || ""), markdown: found.markdown, lessons: found.lessons };
 }
 

@@ -147,6 +147,8 @@ describe("salvar todos os cursos", () => {
     expect(parseCoursePage(doc)).toMatchObject({ ok: true, title: "C#: criando sua primeira aplicação", lessons: 2 });
     expect(parseCoursePage(new DOMParser().parseFromString("<html><body>login</body></html>", "text/html"))).toEqual({ ok: false, reason: "no_lessons" });
     expect(cleanTitle("Carreira | Alura - Cursos online de tecnologia")).toBe("Carreira");
+    const soon = new DOMParser().parseFromString("<html><head><title>Back-end com IA: Práticas Avançadas [EM BREVE] | Alura</title></head><body><h1>x</h1></body></html>", "text/html");
+    expect(parseCoursePage(soon)).toEqual({ ok: false, reason: "coming_soon" });
   });
 });
 
