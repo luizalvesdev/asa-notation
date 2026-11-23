@@ -292,7 +292,7 @@ function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMe
     { label: "Arquivar", run: onArchive },
   ]);
   return (
-    <div ref={menuRef} className="card enter inbox-card" style={{ display: "flex", gap: 12, padding: "12px 14px", boxShadow: selected ? "inset 0 0 0 2px var(--accent)" : undefined }}>
+    <div ref={menuRef} className="card enter inbox-card" style={{ display: "flex", gap: 12, padding: "12px 14px", boxShadow: selected ? "inset 0 0 0 2px var(--accent)" : undefined, ...(menuOpen ? { position: "relative", zIndex: 20 } : {}) }}>
       <button className="plain" type="button" role="checkbox" aria-checked={selected} aria-label="Selecionar" onClick={(e) => onToggle(e.shiftKey)} style={{ paddingTop: 1 }}>
         <Check on={selected} />
       </button>
