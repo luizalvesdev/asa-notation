@@ -252,6 +252,7 @@ body.block-sorting .dh {
 
 .ProseMirror a {
   color: var(--accent);
+  cursor: pointer;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {

@@ -66,15 +66,17 @@ export function Editor({ initial, onChange, focusSignal, pages, selfId, onReady 
     content: (initial as JSONContent | null) ?? undefined,
     editorProps: {
       attributes: { "aria-label": "Conteúdo da página" },
-      handleClick: (_view, _pos, event) => {
-        // Link para outra página: Ctrl/Cmd+clique abre (um clique simples só põe o cursor, para dar para editar).
-        const href = (event.target as HTMLElement).closest("a")?.getAttribute("href");
-        if (href?.startsWith("#/") && (event.metaKey || event.ctrlKey)) {
-          event.preventDefault();
-          location.hash = href;
-          return true;
-        }
-        return false;
+      handleClick: (view, _pos, event) => {
+        // Clique num link abre: página do asa navega aqui, endereço externo abre em nova aba.
+        // Arrastando para selecionar não abre; o texto do link continua editável pelo teclado ou pela seleção.
+        if (event.button !== 0 || !view.state.selection.empty) return false;
+        const href = (event.target as HTMLElement).closest("a[href]")?.getAttribute("href");
+        if (!href) return false;
+        event.preventDefault();
+        if (href.startsWith("#/")) location.hash = href;
+        else if (/^(https?:|mailto:)/i.test(href)) window.open(href, "_blank", "noopener,noreferrer");
+        else return false;
+        return true;
       },
     },
     onUpdate: ({ editor: instance }) => onChange(instance.getJSON()),

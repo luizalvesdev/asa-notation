@@ -27,7 +27,7 @@ const NoteTaskItem = TaskItem.extend({
 /** Os blocos que a página sabe desenhar. Vale para edição e para leitura (histórico, link público). */
 export function contentExtensions(): Extensions {
   return [
-    // Link interno só navega com Ctrl/Cmd+clique (ver Editor); nunca abre sozinho ao editar.
+    // O clique em link é tratado no Editor (handleClick): página interna navega, externo abre em nova aba.
     // Linha de destino ao arrastar um bloco: na cor de destaque e mais grossa, para ver bem onde ele vai cair.
     StarterKit.configure({ link: { openOnClick: false }, codeBlock: false, dropcursor: { color: "var(--accent)", width: 3, class: "drop-line" } }),
     CodeBlockLowlight.extend({ addNodeView: () => ReactNodeViewRenderer(CodeBlockView) }).configure({ lowlight, defaultLanguage: null }),
