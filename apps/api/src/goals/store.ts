@@ -1,5 +1,7 @@
 import type { Row, SqlClient } from "../sql.js";
+import { normalizeSourceUrl } from "../clips/url.js";
 import { countChecks } from "./checks.js";
+import type { ChildPage } from "./outline.js";
 import type { Goal, GoalPatch, NewGoal } from "./model.js";
 
 const SELECT = `g.id, g.title, g.description, g.due_date::text as d, g.done_at is not null as done, g.created_at,
@@ -40,12 +42,41 @@ export class PgGoalStore {
     return new Date(this.clock()).toISOString();
   }
 
-  /** Conta os checkboxes da página ligada a cada meta. */
+  /** Páginas abaixo da página ligada (ex.: uma página por curso da carreira), em qualquer profundidade. */
+  async descendants(pageId: string): Promise<ChildPage[]> {
+    const rows = await this.sql.query(
+      `with recursive d as (
+         select id, title, body, props->>'sourceUrl' as source from pages where parent_id = $1 and deleted_at is null and kind = 'page'
+         union all
+         select p.id, p.title, p.body, p.props->>'sourceUrl' from pages p join d on p.parent_id = d.id where p.deleted_at is null and p.kind = 'page'
+       ) select id, title, body, source from d`,
+      [pageId],
+    );
+    return rows.map((r) => ({ id: r.id as string, title: r.title as string, body: r.body ?? null, source: normalizeSourceUrl(r.source) }));
+  }
+
+  /** Corpo da página ligada, com as páginas filhas. */
+  async linkedContent(pageId: string): Promise<{ body: unknown; children: ChildPage[] }> {
+    const rows = await this.sql.query(`select body from pages where id = $1`, [pageId]);
+    return { body: rows[0]?.body ?? null, children: await this.descendants(pageId) };
+  }
+
+  /**
+   * Conta os checkboxes da página ligada a cada meta e os das páginas abaixo dela. Um item da página que aponta
+   * para uma página filha (o curso) não conta: vale pelas aulas dessa página.
+   */
   private async withChecks(goals: Goal[]): Promise<Goal[]> {
     for (const goal of goals) {
       if (!goal.page) continue;
-      const rows = await this.sql.query(`select body from pages where id = $1`, [goal.page.id]);
-      const { total, done } = countChecks(rows[0]?.body ?? null);
+      const { body, children } = await this.linkedContent(goal.page.id);
+      const skip = new Set(children.map((c) => c.source).filter((s): s is string => !!s));
+      let total = 0;
+      let done = 0;
+      for (const b of [body, ...children.map((c) => c.body)]) {
+        const counted = countChecks(b, skip);
+        total += counted.total;
+        done += counted.done;
+      }
       goal.checked = done;
       goal.checkboxes = total;
     }

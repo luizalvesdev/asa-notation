@@ -2,6 +2,7 @@ import { UUID_SOURCE, badRequest, isRecord, isUuid, json, notFound, type Route }
 import { isDate } from "../tasks/recurrence.js";
 import type { PgTaskStore } from "../tasks/store.js";
 import type { GoalPatch } from "./model.js";
+import { buildOutline } from "./outline.js";
 import type { PgGoalStore } from "./store.js";
 
 const MAX_TITLE_LENGTH = 300;
@@ -52,7 +53,9 @@ export function goalRoutes(goals: PgGoalStore, tasks: PgTaskStore): Route[] {
       access: "session",
       handle: async ({ match }) => {
         const goal = await goals.get(match[1]!);
-        return goal ? json(200, { goal, tasks: await tasks.forGoal(goal.id) }) : notFound();
+        if (!goal) return notFound();
+        const outline = goal.page ? await goals.linkedContent(goal.page.id).then((c) => buildOutline(c.body, c.children)) : null;
+        return json(200, { goal, tasks: await tasks.forGoal(goal.id), outline });
       },
     },
     {

@@ -218,3 +218,51 @@ describe("meta ligada a uma página", () => {
     expect((await get(goal.id)).page).toBeNull();
   });
 });
+
+describe("meta ligada a uma carreira: cursos com aulas", () => {
+  const clip = async (body: Record<string, unknown>) => app.call("POST", "/clips", { cookies, body });
+  const idOf = (res: { body: unknown }) => (res.body as { page: { id: string } }).page.id;
+
+  async function career() {
+    const root = await clip({
+      url: "https://cursos.alura.com.br/dashboard/career/x",
+      title: "Carreira X",
+      kind: "course",
+      markdown: "## Base\n\n- [ ] [Curso A](https://cursos.alura.com.br/course/a) — desc\n- [ ] [Curso B](https://cursos.alura.com.br/course/b)\n\n## Nível 1\n\n- [ ] [Curso C](https://cursos.alura.com.br/course/c)",
+    });
+    const rootId = idOf(root);
+    const a = await clip({ url: "https://cursos.alura.com.br/course/a?utm=1", title: "Curso A", kind: "lessons", parentId: rootId, markdown: "## Seção 1\n\n2 aulas\n\n- [x] Aula 1\n- [ ] Aula 2\n\n## Seção 2\n\n- [x] Aula 3" });
+    const b = await clip({ url: "https://cursos.alura.com.br/course/b", title: "Curso B", kind: "lessons", parentId: rootId, markdown: "## Única\n\n- [ ] Aula 4" });
+    return { rootId, aId: idOf(a), bId: idOf(b) };
+  }
+
+  it("a meta conta as aulas dos cursos, não os próprios cursos; curso sem página vale 1", async () => {
+    const { rootId } = await career();
+    const goal = await createGoal({ title: "Terminar a carreira", pageId: rootId });
+    const read = ((await app.call("GET", `/goals/${goal.id}`, { cookies })).body as { goal: GoalJson & { checked: number; checkboxes: number } }).goal;
+    // A: 3 aulas (2 feitas), B: 1 aula, C: sem página (1 item, não feito) => 2 de 5
+    expect([read.checked, read.checkboxes]).toEqual([2, 5]);
+  });
+
+  it("detalhe da meta devolve a árvore: grupos, cursos, seções e aulas", async () => {
+    const { rootId, aId } = await career();
+    const goal = await createGoal({ title: "Terminar a carreira", pageId: rootId });
+    type Outline = { title: string | null; done: number; total: number; items: { title: string; pageId: string | null; done: number; total: number; sections: { title: string; done: number; total: number; lessons: { text: string; checked: boolean }[] }[] }[] }[];
+    const { outline } = (await app.call("GET", `/goals/${goal.id}`, { cookies })).body as { outline: Outline };
+    expect(outline.map((g) => [g.title, g.done, g.total])).toEqual([["Base", 2, 4], ["Nível 1", 0, 1]]);
+    const courseA = outline[0]!.items[0]!;
+    expect(courseA).toMatchObject({ pageId: aId, done: 2, total: 3 });
+    expect(courseA.sections.map((s) => [s.title, s.done, s.total])).toEqual([["Seção 1", 1, 2], ["Seção 2", 1, 1]]);
+    expect(courseA.sections[0]!.lessons).toEqual([{ text: "Aula 1", checked: true }, { text: "Aula 2", checked: false }]);
+    expect(outline[1]!.items[0]).toMatchObject({ title: "Curso C", pageId: null, done: 0, total: 1 });
+  });
+
+  it("salvar o mesmo curso de novo não duplica a página (mesmo endereço, com ou sem query)", async () => {
+    const { rootId, aId } = await career();
+    const again = await clip({ url: "https://cursos.alura.com.br/course/a", title: "Curso A de novo", kind: "lessons", parentId: rootId, markdown: "## S\n\n- [ ] x" });
+    expect(again.status).toBe(200);
+    expect(again.body).toMatchObject({ existed: true, page: { id: aId } });
+    const tree = ((await app.call("GET", "/pages/tree", { cookies })).body as { pages: { parentId: string | null }[] }).pages;
+    expect(tree.filter((p) => p.parentId === rootId)).toHaveLength(2);
+  });
+});

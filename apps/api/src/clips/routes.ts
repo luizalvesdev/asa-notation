@@ -8,6 +8,7 @@ import { badRequest, isRecord, isUuid, json, type Route } from "../routing.js";
 import type { PgSettingsStore } from "../settings/store.js";
 import type { SqlClient } from "../sql.js";
 import { NothingToRead, extractDates } from "./dates.js";
+import { normalizeSourceUrl } from "./url.js";
 
 /**
  * Recortes da extensão do navegador: um artigo, a transcrição de uma aula ou um trecho selecionado vira página;
@@ -75,7 +76,18 @@ export function clipRoutes({ sql, pages, settings, ai }: Deps): Route[] {
 
         const source = `Fonte: [${new URL(body.url).hostname}](${body.url})`;
         const doc = markdownToDoc(`${source}\n\n${markdown}`);
-        const page = await pages.create({ parentId: parentId ?? (await defaultFolder(body.kind)), title, icon: body.kind === "transcript" ? "🎬" : body.kind === "course" ? "🎓" : body.kind === "lessons" ? "📘" : null, body: doc });
+        const isCourse = body.kind === "course" || body.kind === "lessons";
+        const target = parentId ?? (await defaultFolder(body.kind));
+        const sourceUrl = isCourse ? normalizeSourceUrl(body.url) : null;
+        // Salvar o mesmo curso de novo não duplica: devolve a página que já existe naquele lugar.
+        if (sourceUrl) {
+          const same = await sql.query(
+            `select id, title, parent_id from pages where parent_id = $1 and deleted_at is null and kind = 'page' and props->>'sourceUrl' = $2 order by created_at limit 1`,
+            [target, sourceUrl],
+          );
+          if (same[0]) return json(200, { existed: true, page: { id: same[0].id as string, title: same[0].title as string, parentId: same[0].parent_id as string } });
+        }
+        const page = await pages.create({ parentId: target, ...(sourceUrl ? { props: { sourceUrl } } : {}), title, icon: body.kind === "transcript" ? "🎬" : body.kind === "course" ? "🎓" : body.kind === "lessons" ? "📘" : null, body: doc });
         if (!page) return json(404, { error: "parent_not_found" });
         return json(201, { page: { id: page.id, title: page.title, parentId: page.parentId } });
       },
