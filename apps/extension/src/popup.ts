@@ -24,11 +24,13 @@ async function readTab(): Promise<Extracted> {
   return res!.result as Extracted;
 }
 
-async function fillFolders(api: Api) {
+async function fillFolders(api: Api, kind: Extracted["kind"]) {
   const select = $<HTMLSelectElement>("folder");
+  // Índice de curso tem pasta própria (o servidor cria "Cursos"); a última pasta escolhida vale só para o resto.
+  if (kind === "course") select.options[0]!.text = "🎓 Cursos";
   const { [LAST_FOLDER]: last } = await ext().storage.local.get([LAST_FOLDER]);
   for (const opt of folderOptions(await api.tree())) select.add(new Option(opt.label, opt.id));
-  if (typeof last === "string" && [...select.options].some((o) => o.value === last)) select.value = last;
+  if (kind !== "course" && typeof last === "string" && [...select.options].some((o) => o.value === last)) select.value = last;
 }
 
 function eventLabel(e: DateEvent): string {
@@ -123,7 +125,7 @@ async function main() {
   $("kind").textContent = KIND_LABEL[page.kind];
   $<HTMLInputElement>("title").value = page.title;
   $("size").textContent = `${page.markdown.split(/\s+/).filter(Boolean).length.toLocaleString("pt-BR")} palavras`;
-  fillFolders(api).catch((err) => status(errorMessage(err), "error"));
+  fillFolders(api, page.kind).catch((err) => status(errorMessage(err), "error"));
 
   $("dates").onclick = () => void importDates(api, page);
   $("back").onclick = () => {
@@ -139,7 +141,7 @@ async function main() {
     const folder = $<HTMLSelectElement>("folder").value || null;
     try {
       const saved = await api.clip({ url: page.url, title: $<HTMLInputElement>("title").value.trim() || page.title, markdown: page.markdown, kind: page.kind, parentId: folder });
-      await ext().storage.local.set({ [LAST_FOLDER]: folder ?? "" });
+      if (page.kind !== "course") await ext().storage.local.set({ [LAST_FOLDER]: folder ?? "" });
       status("Salvo no Asa.", "ok");
       const open = $<HTMLAnchorElement>("open");
       open.href = api.pageLink(saved.id);

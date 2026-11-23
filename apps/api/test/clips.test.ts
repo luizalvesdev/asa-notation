@@ -28,6 +28,18 @@ beforeEach(async () => {
 });
 
 describe("salvar recorte", () => {
+  it("índice de curso cai na pasta Cursos (criada uma vez), separada de Leituras", async () => {
+    const secret = await token();
+    const a = await viaToken(secret, "/clips", { url: "https://cursos.alura.com.br/dashboard/career/x", title: "Carreira X", markdown: "- [ ] C#", kind: "course" });
+    const b = await viaToken(secret, "/clips", { url: "https://cursos.alura.com.br/dashboard/career/y", title: "Carreira Y", markdown: "- [ ] Java", kind: "course" });
+    const parent = (a.body as { page: { parentId: string } }).page.parentId;
+    expect((b.body as { page: { parentId: string } }).page.parentId).toBe(parent);
+    const all = ((await app.call("GET", "/pages/tree", { cookies })).body as { pages: { id: string; title: string; icon: string | null; parentId: string | null }[] }).pages;
+    const folders = all.filter((n) => n.title === "Cursos" && n.parentId === null);
+    expect(folders.map((f) => f.id)).toEqual([parent]);
+    expect(folders[0]!.icon).toBe("🎓");
+  });
+
   it("cria a página em Leituras (criada uma vez), com a fonte e o Markdown convertido", async () => {
     const secret = await token();
     const md = "## Partições\n\nCada tópico tem **partições**.\n\n![diagrama](https://cdn.example.com/a.png)\n\n```java\nproducer.send(r);\n```";
