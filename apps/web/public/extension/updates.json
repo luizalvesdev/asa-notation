@@ -1,0 +1,13 @@
+{
+  "addons": {
+    "salvar-no-asa@luizalves.dev": {
+      "updates": [
+        {
+          "version": "0.2.0",
+          "update_link": "https://asa.luizalves.dev/extension/salvar-no-asa-0.2.0.xpi",
+          "update_hash": "sha256:8510f2c4ebf83920a11b16280e022cec8a0c237a7def17940cd3659220a2a4b9"
+        }
+      ]
+    }
+  }
+}
