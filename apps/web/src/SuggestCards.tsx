@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { studyApi } from "./api";
-import { hiddenAnswer, hiddenQuestion } from "./study-logic";
+import { deckNameForPage, defaultDeckChoice, hiddenAnswer, hiddenQuestion } from "./study-logic";
 import type { Candidate, Deck } from "./study-types";
 import { localDayStartIso } from "./tasks-dates";
 import type { Toast } from "./toast";
@@ -15,22 +15,27 @@ type State =
  * "Sugerir cards": lê a página (marcações `::` e, com a IA, o texto) e lista perguntas. Nada é criado antes
  * de o usuário marcar o que quer e confirmar. A resposta fica escondida até ele pedir para ver.
  */
-export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onClose: () => void; onToast: (toast: Toast) => void }) {
+export function SuggestCards({ pageId, title, onClose, onToast }: { pageId: string; title: string; onClose: () => void; onToast: (toast: Toast) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, true, onClose);
   const [state, setState] = useState<State>({ status: "lendo" });
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
   const [shown, setShown] = useState<ReadonlySet<string>>(new Set());
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [deck, setDeck] = useState("none");
+  const [deck, setDeck] = useState(() => defaultDeckChoice(title, []));
+  const deckName = deckNameForPage(title);
   const [busy, setBusy] = useState(false);
-  const [created, setCreated] = useState<number | null>(null);
+  const [created, setCreated] = useState<{ count: number; deckTitle: string | null } | null>(null);
 
   useEffect(() => {
     let live = true;
     studyApi
       .overview(localDayStartIso())
-      .then((o) => live && setDecks(o.decks))
+      .then((o) => {
+        if (!live) return;
+        setDecks(o.decks);
+        setDeck(defaultDeckChoice(title, o.decks));
+      })
       .catch(() => undefined);
     // Marcações (grátis) e IA (pode falhar sem derrubar as marcações).
     Promise.allSettled([studyApi.extract(pageId), studyApi.generate(pageId)]).then(([marked, ai]) => {
@@ -71,8 +76,10 @@ export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onC
     setBusy(true);
     try {
       const items = state.cards.filter((c) => picked.has(c.sourceKey)).map((c) => ({ kind: c.kind, front: c.front, back: c.back, sourcePageId: pageId, sourceKey: c.sourceKey }));
-      const res = await studyApi.createCards(deck === "none" ? null : deck, items);
-      setCreated(res.created);
+      // "new": cria a trilha com o nome da página antes de pôr os cards nela.
+      const target = deck === "new" ? await studyApi.createDeck(deckName, null) : decks.find((d) => d.id === deck) ?? null;
+      const res = await studyApi.createCards(deck === "none" ? null : target?.id ?? deck, items);
+      setCreated({ count: res.created, deckTitle: deck === "none" ? null : target?.title ?? null });
     } catch {
       onToast({ text: "Não foi possível criar os cards." });
     } finally {
@@ -96,7 +103,7 @@ export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onC
       {state.status === "erro" && <span role="alert" style={small}>{state.text}</span>}
       {state.status === "pronto" && created !== null && (
         <div className="col enter" style={{ gap: 8 }}>
-          <span>{created === 1 ? "1 card criado" : `${created} cards criados`} nos seus estudos.</span>
+          <span>{created.count === 1 ? "1 card criado" : `${created.count} cards criados`} {created.deckTitle ? `na trilha “${created.deckTitle}”` : "nos seus estudos"}.</span>
           <button className="btn btn-sec btn-sm" type="button" onClick={onClose} style={{ alignSelf: "flex-start" }}>Fechar</button>
         </div>
       )}
@@ -139,6 +146,7 @@ export function SuggestCards({ pageId, onClose, onToast }: { pageId: string; onC
               </div>
               <div className="row" style={{ gap: 8, flexWrap: "wrap", flex: "none" }}>
                 <select className="inp" aria-label="Trilha de destino" value={deck} onChange={(e) => setDeck(e.target.value)} style={{ width: "auto", height: 30 }}>
+                  {deckName !== "" && !decks.some((d) => d.title.trim().toLowerCase() === deckName.toLowerCase()) && <option value="new">Nova trilha “{deckName}”</option>}
                   <option value="none">Sem trilha</option>
                   {decks.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
                 </select>

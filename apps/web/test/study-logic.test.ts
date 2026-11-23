@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyGrade, clozeAnswers, fillDays, clozeSegments, hiddenAnswer, hiddenQuestion, current, estimateMinutes, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize } from "../src/study-logic";
+import { applyGrade, clozeAnswers, fillDays, clozeSegments, deckNameForPage, defaultDeckChoice, hiddenAnswer, hiddenQuestion, current, estimateMinutes, formatClock, formatInterval, isFinished, replaceCurrent, reveal, startSession, summarize } from "../src/study-logic";
 import type { QueueCard } from "../src/study-types";
 
 const NOW = Date.parse("2026-11-18T12:00:00.000Z");
@@ -149,5 +149,26 @@ describe("sugerir cards: resposta escondida", () => {
     const c = { kind: "cloze" as const, front: "O {{Raft}} elege um {{líder}}", back: "" };
     expect(hiddenQuestion(c)).toBe("O […] elege um […]");
     expect(hiddenAnswer(c)).toBe("Raft, líder");
+  });
+});
+
+describe("sugerir cards: trilha padrão", () => {
+  const decks = [{ id: "d1", title: "Kafka" }, { id: "d2", title: "Inglês" }];
+
+  it("usa a trilha que já tem o nome da página, sem diferenciar maiúsculas", () => {
+    expect(defaultDeckChoice("kafka", decks)).toBe("d1");
+    expect(defaultDeckChoice("  Kafka  ", decks)).toBe("d1");
+  });
+
+  it("sem trilha com esse nome, propõe criar uma nova", () => {
+    expect(defaultDeckChoice("C# Reflection", decks)).toBe("new");
+    expect(defaultDeckChoice("C# Reflection", [])).toBe("new");
+  });
+
+  it("página sem título de verdade fica em Sem trilha; o nome é limpo e cortado em 100", () => {
+    expect(defaultDeckChoice("", decks)).toBe("none");
+    expect(defaultDeckChoice("Sem título", decks)).toBe("none");
+    expect(deckNameForPage("a   b\n c")).toBe("a b c");
+    expect(deckNameForPage("x".repeat(150))).toHaveLength(100);
   });
 });

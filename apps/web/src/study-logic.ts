@@ -150,6 +150,22 @@ export function fillDays(stats: Pick<Stats, "days">, today: string, days: number
   });
 }
 
+/** Nome da trilha sugerida para os cards de uma página: o título dela (vazio se não há um título de verdade). */
+export function deckNameForPage(title: string): string {
+  const name = title.replace(/\s+/g, " ").trim().slice(0, 100);
+  return name === "" || name === "Sem título" ? "" : name;
+}
+
+/**
+ * Trilha pré-escolhida ao sugerir cards: a que já tem o nome da página; senão uma nova com esse nome
+ * ("new"); sem título, "none" (Sem trilha).
+ */
+export function defaultDeckChoice(pageTitle: string, decks: { id: string; title: string }[]): string {
+  const name = deckNameForPage(pageTitle);
+  if (name === "") return "none";
+  return decks.find((d) => d.title.trim().toLowerCase() === name.toLowerCase())?.id ?? "new";
+}
+
 /** Como a pergunta aparece antes de aprovar o card: a resposta fica escondida (lacuna vira "[…]"). */
 export function hiddenQuestion(card: { kind: "basic" | "cloze"; front: string }): string {
   return card.kind === "cloze" ? clozeSegments(card.front).map((s) => (s.blank ? "[…]" : s.text)).join("") : card.front;

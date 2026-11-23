@@ -247,7 +247,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload, onToast }: Pa
             <Icon name="study" />
             Sugerir cards
           </button>
-          <Presence show={panel === "cards"}><SuggestCards pageId={initial.id} onClose={() => setPanel(null)} onToast={onToast} /></Presence>
+          <Presence show={panel === "cards"}><SuggestCards pageId={initial.id} title={title} onClose={() => setPanel(null)} onToast={onToast} /></Presence>
         </span>
         <span style={{ position: "relative" }}>
           <button className={`btn btn-fan btn-sm${goalOfPage.goal ? " on" : ""}`} type="button" aria-expanded={panel === "goal"} aria-label={goalOfPage.goal ? "Meta ligada a esta página" : "Ligar a uma meta"} onClick={() => setPanel(panel === "goal" ? null : "goal")}>
