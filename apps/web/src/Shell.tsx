@@ -496,7 +496,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       <Sidebar {...sidebarProps} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((v) => !v)} />
       {!collapsed && <Resizer edge="left" width={sideW} limits={SIDE_LIMITS} ceiling={winW * 0.5} label="Largura da barra lateral" onChange={setSideW} onDragging={setResizing} />}
       <div className="main">
-        <header className="tb">
+        <header className={`tb${crumbs ? " tb-crumbs" : ""}`}>
           <button className="btn btn-fan btn-ico mob" type="button" aria-label="Abrir navegação" onClick={() => setDrawer(true)}>
             <Icon name="menu" />
           </button>

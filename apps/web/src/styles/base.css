@@ -342,6 +342,11 @@ mark{background:var(--warning-soft);color:inherit;border-radius:2px;padding:0 1p
 .mob{display:inline-flex}
 .desk{display:none !important}
 .tb{height:52px;padding:0 8px}
+/* Celular, em página: a trilha desce para uma segunda linha, com a largura toda, em vez de espremer entre os botões. */
+.tb.tb-crumbs{height:auto;min-height:52px;flex-wrap:wrap;row-gap:0;padding:0 8px 6px}
+.tb.tb-crumbs>.mob,.tb.tb-crumbs>.tb-r{height:52px}
+.tb.tb-crumbs .crumbs{order:3;flex:1 0 100%;padding:0 6px}
+.tb.tb-crumbs .crumbs .cur{max-width:none}
 .bnav{display:flex;position:absolute;left:0;right:0;bottom:0;height:calc(64px + env(safe-area-inset-bottom, 0px));border-top:1px solid var(--border);background:var(--bg);z-index:45;padding:0 4px calc(4px + env(safe-area-inset-bottom, 0px))}
 .fab{display:flex;position:absolute;right:16px;bottom:80px;z-index:46;width:56px;height:56px;border-radius:16px;border:0;align-items:center;justify-content:center;background:var(--accent);color:var(--on-accent);box-shadow:var(--e2);cursor:pointer}
 .scroll{padding-bottom:72px}
