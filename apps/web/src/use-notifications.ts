@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { notificationsApi } from "./api";
+import { playChime } from "./chime";
 import { pushOnHere } from "./push-client";
 
 const POLL_MS = 60_000;
@@ -24,6 +25,8 @@ export function useUnread(): { unread: number; refresh: () => void } {
             // alguns navegadores móveis só permitem pelo service worker
           }
         }
+        // Aba à vista e algo novo: toca o aviso (em segundo plano quem avisa é o sistema).
+        if (last.current !== null && count > last.current && !document.hidden) playChime();
         last.current = count;
         setUnread(count);
       })
@@ -34,10 +37,19 @@ export function useUnread(): { unread: number; refresh: () => void } {
     refresh();
     const timer = setInterval(refresh, POLL_MS);
     const onVisible = () => !document.hidden && refresh();
+    // O service worker avisa quando um push chega: toca e atualiza a contagem na hora.
+    const onMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "push-received") {
+        playChime();
+        refresh();
+      }
+    };
     document.addEventListener("visibilitychange", onVisible);
+    navigator.serviceWorker?.addEventListener("message", onMessage);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
+      navigator.serviceWorker?.removeEventListener("message", onMessage);
     };
   }, [refresh]);
 

@@ -12,7 +12,7 @@ export interface Notification {
 }
 
 export interface NewNotification {
-  kind: CheckinKind | "study" | "info";
+  kind: CheckinKind | "study" | "info" | "task";
   title: string;
   body: string;
   link: string | null;

@@ -42,8 +42,36 @@ async function studyToday(sql: SqlClient, nowMs: number, timezone: string): Prom
   return Number(r.due ?? 0) + Math.min(Number(r.fresh ?? 0), Math.max(0, NEW_PER_DAY - Number(r.learned ?? 0)));
 }
 
-/** Cria os check-ins que já deveriam ter acontecido e ainda não estão na caixa. */
-export async function generateCheckins({ store, settings, tasks, sql, now }: CheckinDeps): Promise<void> {
+/** Quanto tempo depois do horário o lembrete de uma tarefa ainda vale: passado isso, o aviso só atrapalharia. */
+const REMINDER_GRACE_MINUTES = 120;
+
+/** Um aviso por tarefa de hoje, não concluída, cujo horário já chegou. */
+async function generateTaskReminders({ store, settings, tasks, now }: CheckinDeps): Promise<void> {
+  const config = await settings.get();
+  const today = localParts(now(), config.timezone);
+  const list = await tasks.list(today.date, today.date, today.date);
+  for (const task of list.days) {
+    if (task.done || task.time === null) continue;
+    const at = Number(task.time.slice(0, 2)) * 60 + Number(task.time.slice(3, 5));
+    if (at > today.minutes || today.minutes - at > REMINDER_GRACE_MINUTES) continue;
+    await store.create({
+      kind: "task",
+      title: task.title,
+      body: `Marcada para as ${task.time}.`,
+      link: "#/hoje",
+      dedupeKey: `task:${task.id}:${today.date}:${task.time}`,
+      createdAt: new Date(now()).toISOString(),
+    });
+  }
+}
+
+/** Cria os check-ins que já deveriam ter acontecido e os lembretes de tarefa que venceram, se ainda não estão na caixa. */
+export async function generateCheckins(deps: CheckinDeps): Promise<void> {
+  await generateDueCheckins(deps);
+  await generateTaskReminders(deps);
+}
+
+async function generateDueCheckins({ store, settings, tasks, sql, now }: CheckinDeps): Promise<void> {
   const config = await settings.get();
   const due = dueCheckins(now(), config);
   const existing = await store.existingKeys(due.map((d) => d.dedupeKey));

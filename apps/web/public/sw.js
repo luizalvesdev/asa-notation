@@ -5,7 +5,7 @@
  * - Nunca guarda: login, senha, tokens, configurações, export, escritas.
  * - O cache de dados é limpo no logout (mensagem "clear-data-cache").
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `asa-shell-${VERSION}`;
 const DATA_CACHE = `asa-data-${VERSION}`;
 const DATA_LIMIT = 200;
@@ -50,7 +50,9 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function" &
     const title = typeof data.title === "string" && data.title ? data.title : "asa-notation";
     // Só rotas do próprio app, nunca uma URL externa.
     const link = typeof data.link === "string" && data.link.startsWith("#/") ? data.link : "#/notificacoes";
-    event.waitUntil(
+    // Com o app aberto em algum lugar, a página toca o aviso sonoro (o som do sistema depende do computador).
+    const tellPages = self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => list.forEach((c) => c.postMessage({ type: "push-received" })));
+    event.waitUntil(Promise.all([tellPages,
       self.registration.showNotification(title, {
         body: typeof data.body === "string" ? data.body : "",
         icon: "/icons/icon-192.png",
@@ -61,7 +63,7 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function" &
         renotify: typeof data.tag === "string",
         requireInteraction: true,
         data: { link },
-      }),
+      })]),
     );
   });
 

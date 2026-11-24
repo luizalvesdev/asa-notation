@@ -119,6 +119,30 @@ describe("rotas e envio", () => {
     expect(sent).toHaveLength(1);
   });
 
+  it("avisa quando chega o horário de uma tarefa, uma vez só e sem avisar as velhas ou concluídas", async () => {
+    // Quarta 09:00 em São Paulo.
+    const b = browser();
+    await app.call("POST", "/push/subscriptions", { cookies, body: b.subscription });
+    await job(); // check-in do plano do dia sai primeiro
+    sent.length = 0;
+    const make = async (title: string, time: string) =>
+      ((await app.call("POST", "/tasks", { cookies, body: { title, date: "2026-11-18", time } })).body as { task: { id: string } }).task.id;
+    await make("Estudar Alura", "08:50");
+    await make("Muito cedo", "05:00");
+    await make("Ainda não", "09:30");
+    const done = await make("Já feita", "08:55");
+    await app.call("POST", `/tasks/${done}/done`, { cookies, body: { done: true, date: "2026-11-18" } });
+
+    expect(await job()).toMatchObject({ sent: 1, pending: 1 });
+    expect(b.decrypt(sent[0]!.body)).toMatchObject({ title: "Estudar Alura", body: "Marcada para as 08:50.", link: "#/hoje" });
+    expect(await job()).toMatchObject({ sent: 0, pending: 0 });
+
+    app.clock.ms += 30 * 60_000; // 09:30
+    cookies = await app.owner();
+    expect(await job()).toMatchObject({ sent: 1, pending: 1 });
+    expect(b.decrypt(sent[1]!.body)).toMatchObject({ title: "Ainda não" });
+  });
+
   it("não manda o que já foi lido no app", async () => {
     await app.call("GET", "/notifications", { cookies });
     await app.call("POST", "/notifications/read-all", { cookies });

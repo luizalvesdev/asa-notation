@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
-import { createApp } from "./app.js";
+import { createApp, createPushJob } from "./app.js";
 import { aiConfigFromEnv } from "./ai/provider.js";
 import { mockProvider } from "./dev-ai-mock.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "./auth/config.js";
@@ -76,6 +76,18 @@ if (!(await auth.getPassword())) {
 
 // ASA_AI_MOCK=1 troca o provedor de IA por uma versão de mentira (sem chave nem internet).
 const handle = createApp({ sql, config, ai: aiConfigFromEnv(process.env), ...(process.env.ASA_AI_MOCK ? { fetchImpl: mockProvider } : {}) });
+
+// No servidor local não há EventBridge: roda o trabalho de push (check-ins e lembretes de tarefa) a cada 15 s.
+const pushJob = createPushJob({ sql, config });
+let pushRunning = false;
+setInterval(() => {
+  if (pushRunning) return;
+  pushRunning = true;
+  pushJob()
+    .then((r) => r.sent + r.removed + r.failed > 0 && console.log(`push job: ${JSON.stringify(r)}`))
+    .catch((err) => console.error("push job failed", err))
+    .finally(() => (pushRunning = false));
+}, 15_000);
 
 const server = createServer(async (incoming, outgoing) => {
   const send = (status: number, body: unknown, cookies?: string[]) => {
