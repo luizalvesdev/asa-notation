@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { notificationsApi } from "./api";
-import { playChime } from "./chime";
+import { armChime, playChime } from "./chime";
 import { pushOnHere } from "./push-client";
 
 const POLL_MS = 60_000;
@@ -25,8 +25,8 @@ export function useUnread(): { unread: number; refresh: () => void } {
             // alguns navegadores móveis só permitem pelo service worker
           }
         }
-        // Aba à vista e algo novo: toca o aviso (em segundo plano quem avisa é o sistema).
-        if (last.current !== null && count > last.current && !document.hidden) playChime();
+        // Algo novo, com a aba à vista ou não: toca o aviso. Com Web Push neste navegador, quem toca é a mensagem do service worker.
+        if (last.current !== null && count > last.current && !pushOnHere()) playChime();
         last.current = count;
         setUnread(count);
       })
@@ -44,10 +44,12 @@ export function useUnread(): { unread: number; refresh: () => void } {
         refresh();
       }
     };
+    const disarm = armChime();
     document.addEventListener("visibilitychange", onVisible);
     navigator.serviceWorker?.addEventListener("message", onMessage);
     return () => {
       clearInterval(timer);
+      disarm();
       document.removeEventListener("visibilitychange", onVisible);
       navigator.serviceWorker?.removeEventListener("message", onMessage);
     };
