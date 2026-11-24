@@ -11,6 +11,7 @@ import type { PropValue, Schema } from "./db-types";
 import type { Toast } from "./toast";
 import { Editor } from "./Editor";
 import { HistoryPanel } from "./HistoryPanel";
+import { useTitleMarquee } from "./use-title-marquee";
 import { IconPicker } from "./IconPicker";
 import { SharePopover } from "./SharePopover";
 import { GoalLink, useGoalOfPage } from "./GoalLink";
@@ -149,6 +150,7 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload, onToast }: Pa
   // Altura do título dentro da página: a lista "páginas dentro" começa ali (muda com a capa e o tamanho da tela).
   const titleRef = useRef<HTMLInputElement>(null);
   const [titleTop, setTitleTop] = useState(0);
+  useTitleMarquee(titleRef, title);
   useLayoutEffect(() => {
     const el = titleRef.current;
     if (!el) return;
@@ -242,21 +244,21 @@ function PageEditor({ initial, nodes, onSaved, onDelete, onReload, onToast }: Pa
         <button className="btn btn-fan btn-sm ai-toggle" type="button" aria-expanded={aiOpen} onClick={() => setAiOpen((v) => !v)}>
           ✦ IA
         </button>
-        <span style={{ position: "relative" }}>
+        <span className="pop-anchor">
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "cards"} onClick={() => setPanel(panel === "cards" ? null : "cards")}>
             <Icon name="study" />
             Sugerir cards
           </button>
           <Presence show={panel === "cards"}><SuggestCards pageId={initial.id} title={title} onClose={() => setPanel(null)} onToast={onToast} /></Presence>
         </span>
-        <span style={{ position: "relative" }}>
+        <span className="pop-anchor">
           <button className={`btn btn-fan btn-sm${goalOfPage.goal ? " on" : ""}`} type="button" aria-expanded={panel === "goal"} aria-label={goalOfPage.goal ? "Meta ligada a esta página" : "Ligar a uma meta"} onClick={() => setPanel(panel === "goal" ? null : "goal")}>
             <Icon name="target" />
             Meta
           </button>
           <Presence show={panel === "goal"}><GoalLink pageId={initial.id} title={title} goals={goalOfPage.goals} goal={goalOfPage.goal} onChanged={goalOfPage.refresh} onClose={() => setPanel(null)} onToast={onToast} /></Presence>
         </span>
-        <span style={{ position: "relative" }}>
+        <span className="pop-anchor">
           <button className="btn btn-fan btn-sm" type="button" aria-expanded={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
             Compartilhar
           </button>

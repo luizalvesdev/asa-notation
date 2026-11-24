@@ -30,6 +30,29 @@ input.p-title::placeholder {
   color: var(--text-3);
 }
 
+/* Popovers da barra (Sugerir cards, Meta, Compartilhar): ancorados no botão em telas largas. */
+.pop-anchor {
+  position: relative;
+}
+
+/* No celular o botão fica longe da borda e o popover (340–440px) estourava a tela: ancora na barra inteira. */
+@media (max-width: 760px) {
+  .page-head {
+    position: relative;
+  }
+  .pop-anchor {
+    position: static;
+  }
+  .pop-anchor .menu {
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    top: calc(100% + 4px) !important;
+    max-height: min(70vh, 520px) !important;
+    overflow-y: auto;
+  }
+}
+
 .page-head .spacer {
   margin-left: auto;
 }
