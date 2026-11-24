@@ -17,6 +17,7 @@ export class PgSettingsStore {
       checkins: { ...DEFAULT_SETTINGS.checkins, ...(saved.checkins ?? {}) },
       checkinsEnabled: { ...DEFAULT_SETTINGS.checkinsEnabled, ...(saved.checkinsEnabled ?? {}) },
       quiet: { ...DEFAULT_SETTINGS.quiet, ...(saved.quiet ?? {}) },
+      customCheckins: saved.customCheckins ?? [],
     };
   }
 

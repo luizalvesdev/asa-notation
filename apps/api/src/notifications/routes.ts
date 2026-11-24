@@ -65,10 +65,30 @@ async function generateTaskReminders({ store, settings, tasks, now }: CheckinDep
   }
 }
 
+/** Check-ins criados pelo usuário: um aviso por dia, no horário, nos dias escolhidos. */
+async function generateCustomCheckins({ store, settings, now }: CheckinDeps): Promise<void> {
+  const config = await settings.get();
+  const today = localParts(now(), config.timezone);
+  for (const item of config.customCheckins) {
+    if (!item.enabled || (item.days.length > 0 && !item.days.includes(today.weekday))) continue;
+    const at = Number(item.time.slice(0, 2)) * 60 + Number(item.time.slice(3, 5));
+    if (at > today.minutes || today.minutes - at > REMINDER_GRACE_MINUTES) continue;
+    await store.create({
+      kind: "info",
+      title: item.title,
+      body: `Check-in das ${item.time}.`,
+      link: "#/hoje",
+      dedupeKey: `custom:${item.id}:${today.date}:${item.time}`,
+      createdAt: new Date(now()).toISOString(),
+    });
+  }
+}
+
 /** Cria os check-ins que já deveriam ter acontecido e os lembretes de tarefa que venceram, se ainda não estão na caixa. */
 export async function generateCheckins(deps: CheckinDeps): Promise<void> {
   await generateDueCheckins(deps);
   await generateTaskReminders(deps);
+  await generateCustomCheckins(deps);
 }
 
 async function generateDueCheckins({ store, settings, tasks, sql, now }: CheckinDeps): Promise<void> {

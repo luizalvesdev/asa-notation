@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Icon } from "./icons";
-import { parseQuickAdd, type QuickAdd } from "./tasks-logic";
+import { maskTime, normalizeTime, parseQuickAdd, type QuickAdd } from "./tasks-logic";
 
 export interface AddTaskHandle {
   open: () => void;
@@ -15,13 +15,14 @@ interface AddTaskProps {
   onAdd: (task: QuickAdd) => Promise<boolean>;
 }
 
-const HINT = "Escolha a hora ao lado, ou digite 14:00 no começo. /diaria, /uteis ou /semanal no fim repetem a tarefa.";
+const HINT = "Digite a hora no campo ao lado (ex.: 1430), ou 14:00 no começo do texto. /diaria, /uteis ou /semanal no fim repetem a tarefa.";
 
 /** Botão que vira campo de texto. Enter adiciona e mantém aberto; Esc fecha. */
 export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask({ label = "Adicionar tarefa", shortcut, compact, onAdd }, ref) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [time, setTime] = useState("");
+  const [badTime, setBadTime] = useState(false);
   const [failed, setFailed] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const form = useRef<HTMLDivElement>(null);
@@ -36,9 +37,14 @@ export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask(
   const submit = async () => {
     const parsed = parseQuickAdd(value);
     if (!parsed) return;
+    const typedTime = normalizeTime(time);
+    if (typedTime === null) {
+      setBadTime(true);
+      return;
+    }
     setFailed(false);
-    // Hora digitada no começo do texto vale mais que o seletor.
-    if (await onAdd({ ...parsed, time: parsed.time ?? (time || null) })) {
+    // Hora digitada no começo do texto vale mais que o campo de hora.
+    if (await onAdd({ ...parsed, time: parsed.time ?? (typedTime || null) })) {
       setValue("");
       setTime("");
     } else setFailed(true);
@@ -85,17 +91,31 @@ export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask(
               setOpen(false);
               setValue("");
               setTime("");
+              setBadTime(false);
               setFailed(false);
             }
           }}
         />
         <input
-          className="add-task-input add-task-time"
-          type="time"
+          className={`add-task-input add-task-time${badTime ? " bad" : ""}`}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="hh:mm"
+          maxLength={5}
           value={time}
           aria-label="Hora da tarefa (opcional)"
-          title="Hora da tarefa (opcional)"
-          onChange={(e) => setTime(e.target.value)}
+          aria-invalid={badTime}
+          title="Hora da tarefa (opcional): digite só os números, ex.: 1430"
+          onChange={(e) => {
+            setTime(maskTime(e.target.value));
+            setBadTime(false);
+          }}
+          onBlur={() => {
+            const n = normalizeTime(time);
+            if (n === null) setBadTime(true);
+            else setTime(n);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.nativeEvent.isComposing) {
               e.preventDefault();
@@ -104,16 +124,17 @@ export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask(
               setOpen(false);
               setValue("");
               setTime("");
+              setBadTime(false);
             }
           }}
         />
       </div>
       {!compact && (
         <span id="add-task-hint" className="add-task-hint">
-          {failed ? "Não foi possível adicionar. Tente de novo." : HINT}
+          {badTime ? "Hora inválida. Use de 00:00 a 23:59." : failed ? "Não foi possível adicionar. Tente de novo." : HINT}
         </span>
       )}
-      {compact && failed && <span className="add-task-hint">Não foi possível adicionar.</span>}
+      {compact && (failed || badTime) && <span className="add-task-hint">{badTime ? "Hora inválida." : "Não foi possível adicionar."}</span>}
     </div>
   );
 });

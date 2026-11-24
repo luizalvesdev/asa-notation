@@ -54,14 +54,24 @@
 
 .add-task-row .add-task-time {
   flex: none;
-  width: 96px;
-  padding: 0 6px;
-  color-scheme: light dark;
+  width: 72px;
+  padding: 0 8px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.add-task-form.compact .add-task-time {
-  width: 78px;
-  padding: 0 4px;
+.add-task-input.bad {
+  border-color: var(--danger);
+}
+
+/* Coluna estreita (semana): a hora desce para uma linha própria, abaixo do título. */
+.add-task-form.compact .add-task-row {
+  flex-direction: column;
+}
+
+.add-task-form.compact .add-task-row .add-task-time {
+  width: 72px;
+  align-self: flex-start;
 }
 
 .add-task-input:focus {

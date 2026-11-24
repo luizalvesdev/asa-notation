@@ -143,6 +143,29 @@ describe("rotas e envio", () => {
     expect(b.decrypt(sent[1]!.body)).toMatchObject({ title: "Ainda não" });
   });
 
+  it("check-in criado pelo usuário: valida, respeita os dias e avisa uma vez por dia", async () => {
+    const b = browser();
+    await app.call("POST", "/push/subscriptions", { cookies, body: b.subscription });
+    await job();
+    sent.length = 0;
+    const bad = (customCheckins: unknown) => app.call("PATCH", "/settings", { cookies, body: { customCheckins } });
+    expect((await bad([{ id: "x", title: " ", time: "08:50", days: [], enabled: true }])).body).toEqual({ error: "invalid_custom_checkins" });
+    expect((await bad([{ id: "x", title: "Água", time: "8:50", days: [], enabled: true }])).body).toEqual({ error: "invalid_custom_checkins" });
+    expect((await bad([{ id: "x", title: "Água", time: "08:50", days: [7], enabled: true }])).body).toEqual({ error: "invalid_custom_checkins" });
+
+    // Quarta (3) 09:00: vale o de quarta e o de todo dia; não vale o de domingo nem o desligado.
+    const items = [
+      { id: "a", title: "Beber água", time: "08:50", days: [], enabled: true },
+      { id: "b", title: "Só quarta", time: "08:55", days: [3], enabled: true },
+      { id: "c", title: "Só domingo", time: "08:55", days: [0], enabled: true },
+      { id: "d", title: "Desligado", time: "08:55", days: [], enabled: false },
+    ];
+    expect((await bad(items)).status).toBe(200);
+    expect(await job()).toMatchObject({ sent: 2, pending: 2 });
+    expect(sent.map((m) => b.decrypt(m.body).title).sort()).toEqual(["Beber água", "Só quarta"]);
+    expect(await job()).toMatchObject({ sent: 0, pending: 0 });
+  });
+
   it("não manda o que já foi lido no app", async () => {
     await app.call("GET", "/notifications", { cookies });
     await app.call("POST", "/notifications/read-all", { cookies });

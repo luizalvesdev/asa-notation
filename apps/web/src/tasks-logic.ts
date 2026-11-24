@@ -46,6 +46,23 @@ export interface QuickAdd {
 
 const RECURRENCE_TOKENS: Record<string, Recurrence> = { diaria: "daily", uteis: "weekdays", semanal: "weekly" };
 
+/** Máscara do campo de hora: só dígitos, com ":" depois do segundo ("1430" vira "14:30"). */
+export function maskTime(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+}
+
+/** Hora digitada → "HH:MM". "" se vazio, null se inválida ("9" vira 09:00, "930" vira 09:30). */
+export function normalizeTime(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  if (digits === "") return "";
+  if (digits.length > 4) return null;
+  const hours = digits.length <= 2 ? digits : digits.slice(0, digits.length - 2);
+  const minutes = digits.length <= 2 ? "00" : digits.slice(-2);
+  if (Number(hours) > 23 || Number(minutes) > 59) return null;
+  return `${hours.padStart(2, "0")}:${minutes}`;
+}
+
 /**
  * Lê a linha de "adicionar tarefa":
  *   "14:00 Revisar cards"  -> hora no início ("14h" e "9h30" também valem)

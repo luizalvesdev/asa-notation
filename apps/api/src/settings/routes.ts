@@ -1,6 +1,6 @@
 import { badRequest, isRecord, json, type Route } from "../routing.js";
 import { isTime } from "../tasks/recurrence.js";
-import type { Settings } from "./model.js";
+import { MAX_CUSTOM_CHECKINS, type CustomCheckin, type Settings } from "./model.js";
 import type { PgSettingsStore } from "./store.js";
 
 export function validTimeZone(tz: unknown): tz is string {
@@ -11,6 +11,21 @@ export function validTimeZone(tz: unknown): tz is string {
   } catch {
     return false;
   }
+}
+
+function parseCustomCheckins(value: unknown): CustomCheckin[] | null {
+  if (!Array.isArray(value) || value.length > MAX_CUSTOM_CHECKINS) return null;
+  const out: CustomCheckin[] = [];
+  for (const item of value) {
+    if (!isRecord(item)) return null;
+    const { id, title, time, days, enabled } = item;
+    if (typeof id !== "string" || id.length === 0 || id.length > 64 || out.some((c) => c.id === id)) return null;
+    if (typeof title !== "string" || title.trim() === "" || title.trim().length > 80) return null;
+    if (!isTime(time) || typeof enabled !== "boolean") return null;
+    if (!Array.isArray(days) || days.length > 7 || days.some((d) => !Number.isInteger(d) || (d as number) < 0 || (d as number) > 6)) return null;
+    out.push({ id, title: title.trim(), time, days: [...new Set(days as number[])].sort(), enabled });
+  }
+  return out;
 }
 
 /** Aplica só os campos enviados sobre o que já existe e valida tudo. Devolve o erro ou as configurações novas. */
@@ -50,6 +65,11 @@ export function mergeSettings(current: Settings, body: Record<string, unknown>):
       if (!isTime(value)) return "invalid_quiet";
       next.quiet[key] = value;
     }
+  }
+  if (body.customCheckins !== undefined) {
+    const parsed = parseCustomCheckins(body.customCheckins);
+    if (!parsed) return "invalid_custom_checkins";
+    next.customCheckins = parsed;
   }
   if (body.aiAutoApply !== undefined) {
     if (typeof body.aiAutoApply !== "boolean") return "invalid_ai_auto_apply";

@@ -7,7 +7,7 @@ import { buildMarkdownZip } from "./export-zip";
 import { routeHash } from "./nav";
 import { removePending, usePending } from "./outbox";
 import { canInstall, isStandalone, onInstallChange, promptInstall } from "./pwa";
-import { DEFAULT_SETTINGS, type ApiToken, type Settings } from "./settings-types";
+import { DEFAULT_SETTINGS, type ApiToken, type CustomCheckin, type Settings } from "./settings-types";
 import { loadReduceMotion, applyReduceMotion, type Preference } from "./theme";
 import { TEXT_SIZES, applyTextSize, loadTextSize, type TextSize } from "./text-size";
 import { formatAgo } from "./time-utils";
@@ -147,6 +147,63 @@ function General({ settings, save, preference, onPreference }: { settings: Setti
   );
 }
 
+const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const WEEKDAY_NAMES = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+/** Check-ins do próprio usuário: título, horário e dias da semana (sem dia marcado = todo dia). */
+function CustomCheckins({ settings, save }: { settings: Settings; save: ReturnType<typeof useSettings>["save"] }) {
+  const items = settings.customCheckins;
+  const update = (id: string, patch: Partial<CustomCheckin>) => void save({ customCheckins: items.map((c) => (c.id === id ? { ...c, ...patch } : c)) });
+  const add = () => void save({ customCheckins: [...items, { id: crypto.randomUUID(), title: "Novo check-in", time: "12:00", days: [], enabled: true }] });
+  return (
+    <div className="col" style={{ marginTop: 18 }}>
+      <span className="label" style={{ marginBottom: 6 }}>Seus check-ins</span>
+      {items.length === 0 && <span className="help" style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>Nenhum ainda. Crie um aviso com o texto e o horário que quiser, por exemplo "Beber água" às 15:00.</span>}
+      {items.map((c) => (
+        <div key={c.id} className="row" style={{ gap: 10, minHeight: 56, borderTop: "1px solid var(--border)", flexWrap: "wrap", padding: "6px 0" }}>
+          <button className="tog" type="button" role="switch" aria-checked={c.enabled} aria-label={`Ligar ${c.title}`} onClick={() => update(c.id, { enabled: !c.enabled })} style={{ padding: "0 4px" }}>
+            <span className={`sw${c.enabled ? " on" : ""}`}><span className="knob" /></span>
+          </button>
+          <TextField label="Título do check-in" value={c.title} onSave={(v) => update(c.id, { title: v })} />
+          <span className="row" style={{ gap: 4 }} role="group" aria-label="Dias da semana">
+            {WEEKDAYS.map((letter, day) => {
+              const on = c.days.includes(day);
+              return (
+                <button key={day} className={`btn btn-sm ${on ? "btn-pri" : "btn-fan"}`} type="button" aria-pressed={on} aria-label={WEEKDAY_NAMES[day]} title={WEEKDAY_NAMES[day]} onClick={() => update(c.id, { days: on ? c.days.filter((d) => d !== day) : [...c.days, day].sort() })} style={{ width: 30, padding: 0 }}>
+                  {letter}
+                </button>
+              );
+            })}
+          </span>
+          <span className="badge out">{c.days.length === 0 ? "todo dia" : c.days.length === 7 ? "todo dia" : c.days.map((d) => WEEKDAY_NAMES[d]!.slice(0, 3)).join(", ")}</span>
+          <TimeField label={`Horário de ${c.title}`} value={c.time} onSave={(v) => update(c.id, { time: v })} />
+          <button className="btn btn-fan btn-sm" type="button" aria-label={`Apagar ${c.title}`} onClick={() => void askConfirm({ title: `Apagar “${c.title}”?`, body: "O aviso deixa de chegar.", confirmLabel: "Apagar" }).then((ok) => ok && void save({ customCheckins: items.filter((x) => x.id !== c.id) }))}>Apagar</button>
+        </div>
+      ))}
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+        <button className="btn btn-sec btn-sm" type="button" disabled={items.length >= 20} onClick={add}>+ Novo check-in</button>
+      </div>
+    </div>
+  );
+}
+
+function TextField({ label, value, onSave }: { label: string; value: string; onSave: (v: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  return (
+    <input
+      className="inp grow1"
+      aria-label={label}
+      value={draft}
+      maxLength={80}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => (draft.trim() && draft.trim() !== value ? onSave(draft.trim()) : setDraft(value))}
+      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+      style={{ minWidth: 160 }}
+    />
+  );
+}
+
 function Routine({ settings, save }: { settings: Settings; save: ReturnType<typeof useSettings>["save"] }) {
   const rows: { label: string; badge: string; aria: string; key: "plan" | "thursday" | "saturday" | "study" }[] = [
     { label: "Plano do dia", badge: "todo dia", aria: "Horário do plano do dia", key: "plan" },
@@ -171,6 +228,7 @@ function Routine({ settings, save }: { settings: Settings; save: ReturnType<type
         <span>até</span>
         <TimeField label="Fim do silêncio" value={settings.quiet.end} onSave={(v) => void save({ quiet: { end: v } })} />
       </div>
+      <CustomCheckins settings={settings} save={save} />
     </div>
   );
 }

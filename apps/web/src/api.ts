@@ -135,7 +135,7 @@ export const studyApi = {
 
 export const settingsApi = {
   get: () => request<{ settings: Settings }>("GET", "/settings").then((r) => r.settings),
-  patch: (patch: { timezone?: string; weekStart?: 0 | 1; checkins?: Partial<Settings["checkins"]>; checkinsEnabled?: Partial<Settings["checkinsEnabled"]>; quiet?: Partial<Settings["quiet"]>; aiAutoApply?: boolean }) =>
+  patch: (patch: { timezone?: string; weekStart?: 0 | 1; checkins?: Partial<Settings["checkins"]>; checkinsEnabled?: Partial<Settings["checkinsEnabled"]>; quiet?: Partial<Settings["quiet"]>; customCheckins?: Settings["customCheckins"]; aiAutoApply?: boolean }) =>
     request<{ settings: Settings }>("PATCH", "/settings", patch).then((r) => r.settings),
 };
 
