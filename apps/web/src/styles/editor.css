@@ -43,6 +43,39 @@ input.p-title::placeholder {
   .pop-anchor {
     position: static;
   }
+  /* Barra em grade de 3 colunas: "Salvo" na primeira linha e os botões alinhados, sem sobras soltas. */
+  .page-head {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .page-head .save-state {
+    grid-column: 1 / -1;
+    margin-right: 0;
+  }
+  .page-head .spacer {
+    display: none;
+  }
+  .page-head > .btn,
+  .page-head .pop-anchor > .btn {
+    width: 100%;
+    min-width: 0 !important;
+    padding: 0 4px;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Telas bem estreitas: sem os ícones dos botões com texto, para o rótulo caber inteiro. */
+@media (max-width: 400px) {
+  .page-head .btn:not(.btn-ico) .ico {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
   .pop-anchor .menu {
     left: 0 !important;
     right: 0 !important;
