@@ -45,7 +45,7 @@ function general(hasSelection: boolean): MenuItem[] {
     ...(hasSelection ? [{ id: "copy-text" as const, label: "Copiar", shortcut: "⌘C" }] : []),
     { id: "new-page", label: "Nova página", ...(hasSelection ? { separator: true } : {}) },
     { id: "new-section", label: "Nova seção" },
-    { id: "capture", label: "Capturar", shortcut: "⌘⇧K" },
+    { id: "capture", label: "Capturar", shortcut: "⌘K" },
     { id: "search", label: "Buscar", shortcut: "⌘K" },
     { id: "chat", label: "Assistentes", shortcut: "⌘J" },
     { id: "theme", label: "Alternar tema", separator: true },

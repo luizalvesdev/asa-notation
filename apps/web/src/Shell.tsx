@@ -149,6 +149,10 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
       } else if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCaptureOpen(true);
+      } else if (event.metaKey && !event.ctrlKey && !event.altKey && event.key.toLowerCase() === "k") {
+        // Win/⌘ + K: captura rápida. Ctrl + K continua sendo a busca.
+        event.preventDefault();
+        setCaptureOpen(true);
       } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearchOpen((v) => !v);
@@ -529,7 +533,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
             <button className="btn btn-fan btn-sm" type="button" onClick={() => setCaptureOpen(true)}>
               <Icon name="plus" />
               Capturar
-              <span className="kbd">⌘⇧K</span>
+              <span className="kbd">⌘K</span>
             </button>
             <button className={`btn btn-fan btn-sm${chatOpen ? " on" : ""}`} type="button" aria-pressed={chatOpen} onClick={() => setChatOpen((v) => !v)}>
               <svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>

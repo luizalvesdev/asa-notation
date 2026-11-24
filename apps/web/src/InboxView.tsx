@@ -263,7 +263,7 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
           ))}
           {inbox.items.length === 0 && (finished || pending.length === 0) && (
             <p className="muted enter" style={{ fontSize: "calc(14px * var(--fs, 1))", padding: "12px 4px" }}>
-              {finished ? "Nenhuma captura finalizada ainda." : filter === "all" ? "Inbox vazia. Capture algo com ⌘⇧K, de qualquer tela." : "Nada neste filtro."}
+              {finished ? "Nenhuma captura finalizada ainda." : filter === "all" ? "Inbox vazia. Capture algo com ⌘K, de qualquer tela." : "Nada neste filtro."}
             </p>
           )}
         </div>

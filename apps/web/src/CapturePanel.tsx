@@ -37,7 +37,7 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
   const tags = [...new Set([...text.matchAll(/(?<![\p{L}\p{N}_&])#([\p{L}\p{N}][\p{L}\p{N}_-]*)/gu)].map((m) => m[1]!.toLowerCase()))];
 
   return (
-    <div className={`ds${dark ? " escuro" : ""} capture-layer`} style={{ position: "fixed", inset: 0, zIndex: 70, background: "transparent" }} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className={`ds${dark ? " escuro" : ""} capture-layer${shown ? " on" : ""}`} style={{ position: "fixed", inset: 0, zIndex: 70 }} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         className={`float${shown ? " on" : ""}`}
         role="dialog"
@@ -87,7 +87,7 @@ export function CapturePanel({ dark, offline, queued, onClose, onSave }: Capture
           </span>
         </div>
         <div className="row">
-          <span className="kbd">⌘⇧K</span>
+          <span className="kbd">⌘K</span>
           <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)" }}>de qualquer tela</span>
           <button className="btn btn-fan btn-sm" type="button" style={{ marginLeft: "auto" }} onClick={onClose}>
             Cancelar <span className="kbd">esc</span>
