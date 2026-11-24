@@ -575,7 +575,7 @@ export function Shell({ dark, route, preference, onPreference, onToggleTheme, on
           ) : route.id === "importar" ? (
             <ImportView onImported={pages.reload} />
           ) : route.id === "configuracoes" ? (
-            <SettingsView preference={preference} onPreference={onPreference} onLogout={onLogout} onToast={setToast} />
+            <SettingsView sub={route.sub} preference={preference} onPreference={onPreference} onLogout={onLogout} onToast={setToast} />
           ) : route.id === "estudo" ? (
             <StudyView nodes={pages.nodes} onToast={setToast} />
           ) : route.id === "revisao" ? (

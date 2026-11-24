@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { routineApi, settingsApi } from "./api";
 import { useDataVersion } from "./data-events";
-import { routeHash } from "./nav";
+import { routeHash, settingsHash } from "./nav";
 import { formatStudy, VERDICT_TEXT } from "./routine-logic";
 import type { RoutineWeek, WeeklyReview } from "./routine-types";
 import { DEFAULT_SETTINGS, type Settings } from "./settings-types";
@@ -224,7 +224,7 @@ export function RotinaView({ sub, onToast }: RotinaViewProps) {
         <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 4 }}>
           <div className="row" style={{ paddingBottom: 8 }}>
             <b style={{ fontWeight: 600, fontSize: "calc(13px * var(--fs, 1))" }}>Check-ins agendados</b>
-            <a href={routeHash("configuracoes")} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Horários</a>
+            <a href={settingsHash("rotina")} style={{ marginLeft: "auto", fontSize: "calc(12px * var(--fs, 1))" }}>Horários</a>
           </div>
           {CHECKINS.map((c) => (
             <div key={c.key} className="row" style={{ gap: 10, minHeight: 44, borderTop: "1px solid var(--border)" }}>

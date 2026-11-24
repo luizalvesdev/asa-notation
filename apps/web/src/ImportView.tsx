@@ -4,7 +4,7 @@ import { readSelection } from "./import-files";
 import { buildImportPlan, type ImportPlan } from "./import-parse";
 import { nodesToImport, runImport, toggleSubtree, type ImportResult } from "./import-run";
 import { markdownToDoc } from "./markdown-to-doc";
-import { pageHash, routeHash } from "./nav";
+import { pageHash, routeHash, settingsHash } from "./nav";
 import { Reveal } from "./Reveal";
 
 type Source = "notion" | "vault";
@@ -81,7 +81,7 @@ export function ImportView({ onImported }: { onImported: () => void }) {
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "36px 32px 120px", display: "flex", flexDirection: "column", gap: 18 }}>
       <div className="row" style={{ alignItems: "flex-end", gap: 12 }}>
         <h1 style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: "calc(36px * var(--fs, 1))", lineHeight: "calc(42px * var(--fs, 1))", letterSpacing: "-.02em" }}>Importar</h1>
-        <a className="btn btn-fan btn-sm" href={routeHash("configuracoes")} style={{ marginLeft: "auto" }}>Voltar às configurações</a>
+        <a className="btn btn-fan btn-sm" href={settingsHash("dados")} style={{ marginLeft: "auto" }}>Voltar às configurações</a>
       </div>
 
       <div className="card" style={{ overflow: "hidden" }}>

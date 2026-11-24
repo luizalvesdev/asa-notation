@@ -79,6 +79,14 @@ export function goStep(armedAt: number | null, key: string, now: number): { arme
   return { armedAt: k === "g" ? now : null, target: null };
 }
 
+/** Abas de Configurações que têm endereço próprio (`#/configuracoes/rotina`). */
+export const SETTINGS_TABS = ["geral", "rotina", "assistentes", "api", "dados", "aplicativo", "conta"] as const;
+export type SettingsTabSlug = (typeof SETTINGS_TABS)[number];
+
+export function settingsHash(tab: SettingsTabSlug): string {
+  return `#/configuracoes/${tab}`;
+}
+
 export type Route = { kind: "tela"; id: RouteId; sub?: string } | { kind: "pagina"; pageId: string } | { kind: "publica"; slug: string };
 
 /** Telas que não aparecem na barra lateral. Pertencem a uma tela principal (a que fica marcada). */
@@ -99,6 +107,7 @@ export function parseRoute(hash: string): Route {
   const hidden = HIDDEN.find((entry) => entry.slug === `${head}/${second}`);
   if (hidden) return { kind: "tela", id: hidden.id };
   if (head === "rotina" && (second === "quinta" || second === "sabado")) return { kind: "tela", id: "rotina", sub: second };
+  if (head === "configuracoes" && second && (SETTINGS_TABS as readonly string[]).includes(second)) return { kind: "tela", id: "configuracoes", sub: second };
   if (head === "p" && second && UUID.test(second)) return { kind: "pagina", pageId: second.toLowerCase() };
   const item = ALL.find((entry) => entry.id === head);
   return { kind: "tela", id: item ? item.id : DEFAULT_ROUTE };

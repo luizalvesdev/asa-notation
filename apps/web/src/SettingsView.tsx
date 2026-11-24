@@ -19,6 +19,8 @@ import { Reveal } from "./Reveal";
 import { askConfirm } from "./confirm";
 
 interface SettingsViewProps {
+  /** Aba pedida pelo endereço (`#/configuracoes/rotina`). */
+  sub?: string | undefined;
   preference: Preference;
   onPreference: (preference: Preference) => void;
   onLogout: () => void;
@@ -616,8 +618,13 @@ function Account({ onLogout, onToast }: { onLogout: () => void; onToast: (t: Toa
   );
 }
 
-export function SettingsView({ preference, onPreference, onLogout, onToast }: SettingsViewProps) {
-  const [tab, setTab] = useState<Tab>("Geral");
+export function SettingsView({ sub, preference, onPreference, onLogout, onToast }: SettingsViewProps) {
+  const fromSub = (value: string | undefined): Tab => ALL_TABS.find((t) => t.toLowerCase() === value) ?? "Geral";
+  const [tab, setTab] = useState<Tab>(() => fromSub(sub));
+  // Um link para outra aba, estando já em Configurações, troca de aba.
+  useEffect(() => {
+    if (sub) setTab(fromSub(sub));
+  }, [sub]);
   const { settings, failed, save } = useSettings(onToast);
   const needsSettings = tab === "Geral" || tab === "Rotina" || tab === "Assistentes";
   const s = settings ?? DEFAULT_SETTINGS;

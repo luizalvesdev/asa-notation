@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_ROUTE, GO_KEYS, GO_WINDOW_MS, goKey, goStep, navParent, pageHash, publicHash, parseRoute, routeHash, routeTitle } from "../src/nav";
+import { DEFAULT_ROUTE, GO_KEYS, GO_WINDOW_MS, goKey, goStep, navParent, pageHash, publicHash, parseRoute, routeHash, routeTitle, settingsHash } from "../src/nav";
 
 const ID = "462b29f6-0058-4e35-835b-ac4493d059e7";
 
@@ -13,6 +13,10 @@ describe("nav", () => {
     expect(parseRoute("#/rotina/sabado")).toEqual({ kind: "tela", id: "rotina", sub: "sabado" });
     expect(parseRoute("#/rotina/quinta")).toEqual({ kind: "tela", id: "rotina", sub: "quinta" });
     expect(parseRoute("#/rotina/x")).toEqual({ kind: "tela", id: "rotina" });
+    expect(parseRoute("#/configuracoes/rotina")).toEqual({ kind: "tela", id: "configuracoes", sub: "rotina" });
+    expect(parseRoute("#/configuracoes/assistentes")).toEqual({ kind: "tela", id: "configuracoes", sub: "assistentes" });
+    expect(parseRoute("#/configuracoes/x")).toEqual({ kind: "tela", id: "configuracoes" });
+    expect(settingsHash("dados")).toBe("#/configuracoes/dados");
     expect(parseRoute("#/estudo/outra")).toEqual({ kind: "tela", id: "estudo" });
     expect(parseRoute("#semana")).toEqual({ kind: "tela", id: "semana" });
   });
