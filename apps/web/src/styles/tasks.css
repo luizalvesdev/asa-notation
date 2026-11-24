@@ -47,6 +47,23 @@
   outline: none;
 }
 
+.add-task-row {
+  display: flex;
+  gap: 4px;
+}
+
+.add-task-row .add-task-time {
+  flex: none;
+  width: 96px;
+  padding: 0 6px;
+  color-scheme: light dark;
+}
+
+.add-task-form.compact .add-task-time {
+  width: 78px;
+  padding: 0 4px;
+}
+
 .add-task-input:focus {
   border-color: var(--accent);
 }
