@@ -7,6 +7,7 @@ import { buildMarkdownZip } from "./export-zip";
 import { routeHash } from "./nav";
 import { removePending, usePending } from "./outbox";
 import { canInstall, isStandalone, onInstallChange, promptInstall } from "./pwa";
+import { TimePicker } from "./TimePicker";
 import { DEFAULT_SETTINGS, type ApiToken, type CustomCheckin, type Settings } from "./settings-types";
 import { loadReduceMotion, applyReduceMotion, type Preference } from "./theme";
 import { TEXT_SIZES, applyTextSize, loadTextSize, type TextSize } from "./text-size";
@@ -74,19 +75,7 @@ function Segment<T extends string | number>({ value, options, onChange, label }:
 }
 
 function TimeField({ label, value, onSave }: { label: string; value: string; onSave: (v: string) => void }) {
-  const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
-  return (
-    <input
-      className="inp mono"
-      type="time"
-      aria-label={label}
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => draft && draft !== value && onSave(draft)}
-      style={{ width: 110 }}
-    />
-  );
+  return <TimePicker label={label} value={value} onChange={(v) => v && v !== value && onSave(v)} />;
 }
 
 function General({ settings, save, preference, onPreference }: { settings: Settings; save: ReturnType<typeof useSettings>["save"]; preference: Preference; onPreference: (p: Preference) => void }) {

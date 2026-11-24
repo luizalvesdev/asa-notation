@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyDone, applySubtaskDone, groupByDate, maskTime, normalizeTime, parseQuickAdd, progress } from "../src/tasks-logic";
+import { applyDone, applySubtaskDone, groupByDate, parseQuickAdd, progress } from "../src/tasks-logic";
 import type { TaskItem, TaskList } from "../src/tasks-types";
 
 const task = (over: Partial<TaskItem>): TaskItem => ({ id: "a", title: "A", date: "2026-11-18", time: null, recurrence: null, done: false, goalId: null, goalTitle: null, subtasks: [], ...over });
@@ -71,24 +71,5 @@ describe("parseQuickAdd", () => {
     expect(parseQuickAdd("   ")).toBeNull();
     expect(parseQuickAdd("14:00 ")).toMatchObject({ title: "14:00", time: null });
     expect(parseQuickAdd("/diaria")).toMatchObject({ title: "/diaria", recurrence: null });
-  });
-});
-
-describe("campo de hora", () => {
-  it("máscara coloca os dois pontos e limita a 4 dígitos", () => {
-    expect(maskTime("1")).toBe("1");
-    expect(maskTime("143")).toBe("14:3");
-    expect(maskTime("1430")).toBe("14:30");
-    expect(maskTime("14:30999")).toBe("14:30");
-    expect(maskTime("ab9")).toBe("9");
-  });
-  it("normaliza o que foi digitado", () => {
-    expect(normalizeTime("")).toBe("");
-    expect(normalizeTime("9")).toBe("09:00");
-    expect(normalizeTime("14")).toBe("14:00");
-    expect(normalizeTime("930")).toBe("09:30");
-    expect(normalizeTime("14:30")).toBe("14:30");
-    expect(normalizeTime("24")).toBeNull();
-    expect(normalizeTime("1260")).toBeNull();
   });
 });

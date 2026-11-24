@@ -1,6 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Icon } from "./icons";
-import { maskTime, normalizeTime, parseQuickAdd, type QuickAdd } from "./tasks-logic";
+import { TimePicker } from "./TimePicker";
+import { parseQuickAdd, type QuickAdd } from "./tasks-logic";
 
 export interface AddTaskHandle {
   open: () => void;
@@ -15,14 +16,14 @@ interface AddTaskProps {
   onAdd: (task: QuickAdd) => Promise<boolean>;
 }
 
-const HINT = "Digite a hora no campo ao lado (ex.: 1430), ou 14:00 no começo do texto. /diaria, /uteis ou /semanal no fim repetem a tarefa.";
+const HINT = "Escolha a hora no botão, ou digite 14:00 no começo do texto. /diaria, /uteis ou /semanal no fim repetem a tarefa.";
 
 /** Botão que vira campo de texto. Enter adiciona e mantém aberto; Esc fecha. */
 export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask({ label = "Adicionar tarefa", shortcut, compact, onAdd }, ref) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [time, setTime] = useState("");
-  const [badTime, setBadTime] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [failed, setFailed] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const form = useRef<HTMLDivElement>(null);
@@ -37,14 +38,9 @@ export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask(
   const submit = async () => {
     const parsed = parseQuickAdd(value);
     if (!parsed) return;
-    const typedTime = normalizeTime(time);
-    if (typedTime === null) {
-      setBadTime(true);
-      return;
-    }
     setFailed(false);
     // Hora digitada no começo do texto vale mais que o campo de hora.
-    if (await onAdd({ ...parsed, time: parsed.time ?? (typedTime || null) })) {
+    if (await onAdd({ ...parsed, time: parsed.time ?? (time || null) })) {
       setValue("");
       setTime("");
     } else setFailed(true);
@@ -70,7 +66,7 @@ export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask(
       className={`add-task-form${compact ? " compact" : ""}`}
       onBlur={(e) => {
         // Só fecha se o foco saiu do formulário (o seletor de hora também é parte dele) e nada foi preenchido.
-        if (!form.current?.contains(e.relatedTarget as Node | null) && value.trim() === "" && time === "") setOpen(false);
+        if (!picking && !form.current?.contains(e.relatedTarget as Node | null) && value.trim() === "" && time === "") setOpen(false);
       }}
     >
       <div className="add-task-row">
@@ -91,50 +87,29 @@ export const AddTask = forwardRef<AddTaskHandle, AddTaskProps>(function AddTask(
               setOpen(false);
               setValue("");
               setTime("");
-              setBadTime(false);
               setFailed(false);
             }
           }}
         />
-        <input
-          className={`add-task-input add-task-time${badTime ? " bad" : ""}`}
-          type="text"
-          inputMode="numeric"
-          autoComplete="off"
-          placeholder="hh:mm"
-          maxLength={5}
+        <TimePicker
           value={time}
-          aria-label="Hora da tarefa (opcional)"
-          aria-invalid={badTime}
-          title="Hora da tarefa (opcional): digite só os números, ex.: 1430"
-          onChange={(e) => {
-            setTime(maskTime(e.target.value));
-            setBadTime(false);
-          }}
-          onBlur={() => {
-            const n = normalizeTime(time);
-            if (n === null) setBadTime(true);
-            else setTime(n);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              void submit();
-            } else if (e.key === "Escape") {
-              setOpen(false);
-              setValue("");
-              setTime("");
-              setBadTime(false);
-            }
+          onChange={setTime}
+          label="Hora da tarefa (opcional)"
+          clearable
+          compact={compact}
+          onOpenChange={(o) => {
+            setPicking(o);
+            // Ao fechar o seletor, volta para o título.
+            if (!o) requestAnimationFrame(() => input.current?.focus());
           }}
         />
       </div>
       {!compact && (
         <span id="add-task-hint" className="add-task-hint">
-          {badTime ? "Hora inválida. Use de 00:00 a 23:59." : failed ? "Não foi possível adicionar. Tente de novo." : HINT}
+          {failed ? "Não foi possível adicionar. Tente de novo." : HINT}
         </span>
       )}
-      {compact && (failed || badTime) && <span className="add-task-hint">{badTime ? "Hora inválida." : "Não foi possível adicionar."}</span>}
+      {compact && failed && <span className="add-task-hint">Não foi possível adicionar.</span>}
     </div>
   );
 });
