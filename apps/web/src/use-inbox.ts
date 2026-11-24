@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { capturesApi } from "./api";
 import { useDataVersion } from "./data-events";
-import { EMPTY_COUNTS, type Capture, type Counts, type Kind, type KindFilter } from "./captures-types";
+import { EMPTY_COUNTS, type Capture, type Counts, type Kind, type InboxView, type KindFilter } from "./captures-types";
 import type { Page } from "./pages-types";
 
 export type InboxStatus = "carregando" | "pronto" | "erro";
@@ -14,10 +14,12 @@ export interface InboxState {
   classify: (ids: string[], kind: Kind | null) => Promise<boolean>;
   archive: (ids: string[]) => Promise<boolean>;
   restore: (ids: string[]) => Promise<boolean>;
+  finish: (ids: string[]) => Promise<boolean>;
+  reopen: (ids: string[]) => Promise<boolean>;
   move: (id: string, parentId: string | null) => Promise<Page | null>;
 }
 
-export function useInbox(filter: KindFilter): InboxState {
+export function useInbox(filter: KindFilter, view: InboxView = "pending"): InboxState {
   const [items, setItems] = useState<Capture[]>([]);
   const [counts, setCounts] = useState<Counts>(EMPTY_COUNTS);
   const [status, setStatus] = useState<InboxStatus>("carregando");
@@ -27,7 +29,7 @@ export function useInbox(filter: KindFilter): InboxState {
   useEffect(() => {
     let live = true;
     capturesApi
-      .list(filter)
+      .list(filter, view)
       .then((data) => {
         if (!live) return;
         setItems(data.items);
@@ -38,7 +40,7 @@ export function useInbox(filter: KindFilter): InboxState {
     return () => {
       live = false;
     };
-  }, [filter, version, dataVersion]);
+  }, [filter, view, version, dataVersion]);
 
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
   const reload = useCallback(() => {
@@ -74,6 +76,20 @@ export function useInbox(filter: KindFilter): InboxState {
     [run],
   );
   const restore = useCallback((ids: string[]) => run(() => capturesApi.bulk(ids, { action: "restore" })), [run]);
+  const finish = useCallback(
+    (ids: string[]) => {
+      setItems((list) => list.filter((c) => !ids.includes(c.id)));
+      return run(() => capturesApi.bulk(ids, { action: "done" }));
+    },
+    [run],
+  );
+  const reopen = useCallback(
+    (ids: string[]) => {
+      setItems((list) => list.filter((c) => !ids.includes(c.id)));
+      return run(() => capturesApi.bulk(ids, { action: "reopen" }));
+    },
+    [run],
+  );
   const move = useCallback(
     async (id: string, parentId: string | null) => {
       try {
@@ -88,5 +104,5 @@ export function useInbox(filter: KindFilter): InboxState {
     [refresh],
   );
 
-  return { status, items, counts, reload, classify, archive, restore, move };
+  return { status, items, counts, reload, classify, archive, restore, finish, reopen, move };
 }

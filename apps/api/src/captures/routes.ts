@@ -21,7 +21,8 @@ export function captureRoutes(captures: PgCaptureStore, pages: PgPageStore): Rou
       handle: async ({ req }) => {
         const kind = req.query.kind;
         if (kind !== undefined && kind !== "none" && !validKind(kind)) return badRequest("invalid_kind");
-        const [items, counts] = await Promise.all([captures.list(kind as Kind | "none" | undefined), captures.counts()]);
+        const done = req.query.status === "done";
+        const [items, counts] = await Promise.all([captures.list(kind as Kind | "none" | undefined, done), captures.counts()]);
         return json(200, { items, counts });
       },
     },
@@ -51,7 +52,7 @@ export function captureRoutes(captures: PgCaptureStore, pages: PgPageStore): Rou
         const body = isRecord(req.body) ? req.body : {};
         const { ids, action } = body;
         if (!Array.isArray(ids) || ids.length === 0 || ids.length > MAX_BULK || !ids.every(isUuid)) return badRequest("invalid_ids");
-        if (action === "archive" || action === "restore") return json(200, { updated: await captures.bulk(ids, { action }) });
+        if (action === "archive" || action === "restore" || action === "done" || action === "reopen") return json(200, { updated: await captures.bulk(ids, { action }) });
         if (action === "kind") {
           if (!validKind(body.kind) || body.kind === undefined) return badRequest("invalid_kind");
           return json(200, { updated: await captures.bulk(ids, { action, kind: body.kind }) });

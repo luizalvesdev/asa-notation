@@ -22,4 +22,4 @@ export interface CapturePatch {
   kind?: Kind | null;
 }
 
-export type Counts = Record<Kind | "none" | "total", number>;
+export type Counts = Record<Kind | "none" | "total" | "done", number>;

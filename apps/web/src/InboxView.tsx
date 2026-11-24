@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./icons";
 import { useContextItems } from "./use-context-items";
-import { KIND_COLOR, KIND_LABEL, KINDS, type Capture, type Kind, type KindFilter } from "./captures-types";
+import { KIND_COLOR, KIND_LABEL, KINDS, type Capture, type InboxView as View, type Kind, type KindFilter } from "./captures-types";
 import { removePending, usePending } from "./outbox";
 import { displayTitle } from "./pages-tree";
 import type { Page, TreeNode } from "./pages-types";
@@ -81,7 +81,9 @@ function MoveMenu({ nodes, onPick, onClose }: { nodes: TreeNode[]; onPick: (pare
 
 export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
   const [filter, setFilter] = useState<KindFilter>("all");
-  const inbox = useInbox(filter);
+  const [view, setView] = useState<View>("pending");
+  const inbox = useInbox(filter, view);
+  const finished = view === "done";
   const pending = usePending();
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
@@ -134,6 +136,18 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
       setSelected(new Set());
       onToast({ text: list.length > 1 ? `${list.length} capturas arquivadas` : "Captura arquivada", action: { label: "Desfazer", run: () => void inbox.restore(list) } });
     });
+  const finish = (list: string[]) =>
+    void inbox.finish(list).then((ok) => {
+      if (!ok) return fail("Não foi possível finalizar.");
+      setSelected(new Set());
+      onToast({ text: list.length > 1 ? `${list.length} capturas finalizadas` : "Captura finalizada", action: { label: "Desfazer", run: () => void inbox.reopen(list) } });
+    });
+  const reopen = (list: string[]) =>
+    void inbox.reopen(list).then((ok) => {
+      if (!ok) return fail("Não foi possível reabrir.");
+      setSelected(new Set());
+      onToast({ text: list.length > 1 ? `${list.length} capturas reabertas` : "Captura reaberta" });
+    });
   const classify = (list: string[], kind: Kind | null) => {
     setKindMenu(null);
     setBulkMenu(null);
@@ -172,6 +186,15 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
         </span>
       </div>
 
+      <div className="row" style={{ gap: 6 }} role="group" aria-label="Pendentes ou finalizadas">
+        {([["pending", "Pendentes", inbox.counts.total], ["done", "Finalizadas", inbox.counts.done]] as const).map(([id, label, n]) => (
+          <button key={id} className={`btn btn-sm ${view === id ? "btn-sec" : "btn-fan"}`} type="button" aria-pressed={view === id} onClick={() => { setView(id); setSelected(new Set()); }}>
+            {label}
+            <span style={{ color: "var(--text-3)", marginLeft: 4 }}>{n}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="row" style={{ gap: 6, flexWrap: "wrap" }} role="group" aria-label="Filtrar por tipo">
         {filters.map((f) => (
           <button key={f.id} className={`btn btn-sm ${filter === f.id ? "btn-sec" : "btn-fan"}`} type="button" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
@@ -182,7 +205,7 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
         ))}
       </div>
 
-      {filter === "all" && pending.length > 0 && (
+      {!finished && filter === "all" && pending.length > 0 && (
         <div className="col" style={{ gap: 6 }}>
           {pending.map((p) => (
       <div key={p.id} className="card" style={{ display: "flex", gap: 12, padding: "12px 14px" }}>
@@ -234,11 +257,13 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
               onCloseMenu={() => setKindMenu(null)}
               onKind={(kind) => classify([item.id], kind)}
               onArchive={() => archive([item.id])}
+              finished={finished}
+              onFinish={() => (finished ? reopen([item.id]) : finish([item.id]))}
             />
           ))}
-          {inbox.items.length === 0 && pending.length === 0 && (
+          {inbox.items.length === 0 && (finished || pending.length === 0) && (
             <p className="muted enter" style={{ fontSize: "calc(14px * var(--fs, 1))", padding: "12px 4px" }}>
-              {filter === "all" ? "Inbox vazia. Capture algo com ⌘⇧K, de qualquer tela." : "Nada neste filtro."}
+              {finished ? "Nenhuma captura finalizada ainda." : filter === "all" ? "Inbox vazia. Capture algo com ⌘⇧K, de qualquer tela." : "Nada neste filtro."}
             </p>
           )}
         </div>
@@ -261,6 +286,9 @@ export function InboxView({ nodes, onToast, onMoved }: InboxViewProps) {
             </button>
             <Presence show={bulkMenu === "move"}><MoveMenu nodes={nodes} onPick={move} onClose={() => setBulkMenu(null)} /></Presence>
           </span>
+          <button className="btn btn-sm" type="button" style={{ color: "inherit" }} onClick={() => (finished ? reopen(chosen) : finish(chosen))}>
+            {finished ? "Reabrir" : "Finalizar"}
+          </button>
           <button className="btn btn-sm" type="button" style={{ color: "inherit" }} onClick={() => archive(chosen)}>
             Arquivar
           </button>
@@ -282,13 +310,16 @@ interface CardProps {
   onCloseMenu: () => void;
   onKind: (kind: Kind | null) => void;
   onArchive: () => void;
+  finished: boolean;
+  onFinish: () => void;
 }
 
-function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMenu, onKind, onArchive }: CardProps) {
+function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMenu, onKind, onArchive, finished, onFinish }: CardProps) {
   const menuRef = useContextItems(() => [
     { label: selected ? "Desmarcar" : "Selecionar", run: () => onToggle(false) },
     { label: item.kind ? "Mudar classificação" : "Classificar", run: onOpenMenu },
     { label: "Copiar texto", run: () => void navigator.clipboard.writeText(item.text).catch(() => undefined) },
+    { label: finished ? "Reabrir" : "Finalizar", run: onFinish },
     { label: "Arquivar", run: onArchive },
   ]);
   return (
@@ -302,6 +333,9 @@ function CaptureCard({ item, selected, menuOpen, onToggle, onOpenMenu, onCloseMe
             {item.text}
           </span>
           <span style={{ fontSize: "calc(12px * var(--fs, 1))", color: "var(--text-3)", whiteSpace: "nowrap" }}>{formatAgo(item.createdAt)}</span>
+          <button className="btn btn-fan btn-ico btn-sm row-action" type="button" aria-label={finished ? "Reabrir" : "Finalizar"} title={finished ? "Reabrir" : "Finalizar"} onClick={onFinish}>
+            <Icon name="check" />
+          </button>
           <button className="btn btn-fan btn-ico btn-sm row-action" type="button" aria-label="Arquivar" onClick={onArchive}>
             <Icon name="close" />
           </button>

@@ -96,11 +96,13 @@ export const goalsApi = {
 };
 
 export const capturesApi = {
-  list: (filter: KindFilter = "all") =>
-    request<{ items: Capture[]; counts: Counts }>("GET", filter === "all" ? "/captures" : `/captures?kind=${filter}`),
+  list: (filter: KindFilter = "all", status: "pending" | "done" = "pending") => {
+    const query = [filter === "all" ? "" : `kind=${filter}`, status === "done" ? "status=done" : ""].filter(Boolean).join("&");
+    return request<{ items: Capture[]; counts: Counts }>("GET", query ? `/captures?${query}` : "/captures");
+  },
   create: (input: { id?: string; text: string; kind?: Kind | null; createdAt?: string }) =>
     request<{ capture: Capture }>("POST", "/captures", input).then((r) => r.capture),
-  bulk: (ids: string[], op: { action: "archive" } | { action: "restore" } | { action: "kind"; kind: Kind | null }) =>
+  bulk: (ids: string[], op: { action: "archive" } | { action: "restore" } | { action: "done" } | { action: "reopen" } | { action: "kind"; kind: Kind | null }) =>
     request<{ updated: number }>("POST", "/captures/bulk", { ids, ...op }),
   move: (id: string, parentId: string | null) => request<{ page: Page }>("POST", `/captures/${id}/move`, { parentId }).then((r) => r.page),
 };

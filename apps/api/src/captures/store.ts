@@ -4,7 +4,9 @@ import { KINDS } from "./model.js";
 import { extractTags } from "./text.js";
 
 const COLUMNS = "id, text, kind, tags, created_at";
-const INBOX = "archived_at is null and moved_page_id is null";
+const LIVE = "archived_at is null and moved_page_id is null";
+const INBOX = `${LIVE} and done_at is null`;
+const DONE = `${LIVE} and done_at is not null`;
 const LIMIT = 500;
 
 function toCapture(row: Row): Capture {
@@ -17,7 +19,7 @@ function toCapture(row: Row): Capture {
   };
 }
 
-export type BulkAction = { action: "archive" } | { action: "restore" } | { action: "kind"; kind: Kind | null };
+export type BulkAction = { action: "archive" } | { action: "restore" } | { action: "done" } | { action: "reopen" } | { action: "kind"; kind: Kind | null };
 
 export class PgCaptureStore {
   constructor(
@@ -29,11 +31,11 @@ export class PgCaptureStore {
     return new Date(this.clock()).toISOString();
   }
 
-  /** `kind`: um tipo, "none" (sem tipo) ou omitido (todas). */
-  async list(kind?: Kind | "none"): Promise<Capture[]> {
+  /** `kind`: um tipo, "none" (sem tipo) ou omitido (todas). `done`: lista as finalizadas em vez das pendentes. */
+  async list(kind?: Kind | "none", done = false): Promise<Capture[]> {
     const filter = kind === "none" ? "and kind is null" : kind ? "and kind = $1" : "";
     const rows = await this.sql.query(
-      `select ${COLUMNS} from captures where ${INBOX} ${filter} order by created_at desc, id desc limit ${LIMIT}`,
+      `select ${COLUMNS} from captures where ${done ? DONE : INBOX} ${filter} order by ${done ? "done_at" : "created_at"} desc, id desc limit ${LIMIT}`,
       kind && kind !== "none" ? [kind] : [],
     );
     return rows.map(toCapture);
@@ -41,7 +43,9 @@ export class PgCaptureStore {
 
   async counts(): Promise<Counts> {
     const rows = await this.sql.query(`select kind, count(*)::int as n from captures where ${INBOX} group by kind`);
-    const counts = Object.fromEntries([...KINDS, "none", "total"].map((k) => [k, 0])) as Counts;
+    const counts = Object.fromEntries([...KINDS, "none", "total", "done"].map((k) => [k, 0])) as Counts;
+    const [finished] = await this.sql.query(`select count(*)::int as n from captures where ${DONE}`);
+    counts.done = Number(finished?.n ?? 0);
     for (const row of rows) {
       const n = Number(row.n);
       counts[(row.kind as Kind | null) ?? "none"] += n;
@@ -87,7 +91,11 @@ export class PgCaptureStore {
     const rows =
       op.action === "archive"
         ? await this.sql.query(`update captures set archived_at = $2, updated_at = $2 where ${where} and archived_at is null returning id`, [ids, now])
-        : op.action === "restore"
+        : op.action === "done"
+          ? await this.sql.query(`update captures set done_at = $2, updated_at = $2 where ${where} and archived_at is null and done_at is null returning id`, [ids, now])
+          : op.action === "reopen"
+            ? await this.sql.query(`update captures set done_at = null, updated_at = $2 where ${where} and archived_at is null and done_at is not null returning id`, [ids, now])
+            : op.action === "restore"
           ? await this.sql.query(`update captures set archived_at = null, updated_at = $2 where ${where} and archived_at is not null returning id`, [ids, now])
           : await this.sql.query(`update captures set kind = $3, updated_at = $2 where ${where} and archived_at is null returning id`, [ids, now, op.kind]);
     return rows.length;

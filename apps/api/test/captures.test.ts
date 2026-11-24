@@ -122,6 +122,23 @@ describe("capturas", () => {
     expect((await list()).items.map((c) => c.text)).toEqual(["a"]);
   });
 
+  it("finaliza, lista em Finalizadas e reabre", async () => {
+    const a = await capture({ text: "a" });
+    const b = await capture({ text: "b" });
+    const res = await app.call("POST", "/captures/bulk", { cookies, body: { ids: [a.id], action: "done" } });
+    expect(res.body).toEqual({ updated: 1 });
+    expect((await list()).items.map((c) => c.text)).toEqual(["b"]);
+    const done = await list({ status: "done" });
+    expect(done.items.map((c) => c.text)).toEqual(["a"]);
+    expect(done.counts).toMatchObject({ total: 1, done: 1 });
+    // já finalizada: não conta de novo
+    expect((await app.call("POST", "/captures/bulk", { cookies, body: { ids: [a.id], action: "done" } })).body).toEqual({ updated: 0 });
+    await app.call("POST", "/captures/bulk", { cookies, body: { ids: [a.id], action: "reopen" } });
+    expect((await list()).items.map((c) => c.text).sort()).toEqual(["a", "b"]);
+    expect((await list({ status: "done" })).items).toEqual([]);
+    void b;
+  });
+
   it("classifica em lote", async () => {
     const a = await capture({ text: "a" });
     await app.call("POST", "/captures/bulk", { cookies, body: { ids: [a.id], action: "kind", kind: "project" } });
