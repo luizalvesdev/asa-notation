@@ -1,9 +1,11 @@
 import { GetParametersCommand, SSMClient } from "@aws-sdk/client-ssm";
+import { SchedulerClient } from "@aws-sdk/client-scheduler";
 import { neon } from "@neondatabase/serverless";
 import { createApp, createPushJob, type Api } from "./app.js";
 import { DEFAULT_SESSION_TTL_SECONDS, type AuthConfig } from "./auth/config.js";
 import { aiConfigFromEnv } from "./ai/provider.js";
 import { createLambdaHandler } from "./lambda.js";
+import { AwsFireScheduler } from "./push/scheduler.js";
 
 let cached: Promise<Runtime> | undefined;
 
@@ -45,9 +47,13 @@ async function build(): Promise<Runtime> {
 
   const neonSql = neon(secrets.databaseUrl);
   const sql = { query: async (text: string, params?: unknown[]) => (await neonSql.query(text, params)) as Record<string, unknown>[] };
+  // Disparos exatos do push: só se o template criou o grupo e o papel do agendador.
+  const group = process.env.FIRE_GROUP;
+  const roleArn = process.env.FIRE_ROLE_ARN;
+  const fireScheduler = group && roleArn ? new AwsFireScheduler(new SchedulerClient({}), { group, roleArn, targetArn: () => env("FIRE_TARGET_ARN") }) : undefined;
   return {
-    api: createApp({ sql, config, ai: aiConfigFromEnv(process.env) }),
-    pushJob: createPushJob({ sql, config }),
+    api: createApp({ sql, config, ai: aiConfigFromEnv(process.env), fireScheduler }),
+    pushJob: createPushJob({ sql, config, fireScheduler }),
   };
 }
 
@@ -62,7 +68,9 @@ function getRuntime(): Promise<Runtime> {
 const httpHandler = createLambdaHandler(async () => (await getRuntime()).api);
 
 /** A mesma função atende a API (eventos do API Gateway) e o agendador ({"job": "push"}). */
-export async function handler(event: Parameters<typeof httpHandler>[0] | { job: "push" }) {
+export async function handler(event: Parameters<typeof httpHandler>[0] | { job: "push" }, context?: { invokedFunctionArn?: string }) {
+  // O agendador precisa do ARN desta função e ela não pode ler o próprio ARN do template (referência circular).
+  if (context?.invokedFunctionArn) process.env.FIRE_TARGET_ARN = context.invokedFunctionArn;
   if ("job" in event) {
     const result = await (await getRuntime()).pushJob();
     console.log(JSON.stringify({ job: "push", ...result }));

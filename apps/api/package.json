@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1172.0",
+    "@aws-sdk/client-scheduler": "^3.1177.0",
     "@aws-sdk/client-ssm": "^3.1161.0",
     "@neondatabase/serverless": "^1.2.0",
     "fractional-indexing": "^4.0.0",

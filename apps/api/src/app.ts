@@ -31,7 +31,9 @@ import { exportRoutes } from "./export/routes.js";
 import { settingsRoutes } from "./settings/routes.js";
 import { PgSettingsStore } from "./settings/store.js";
 import { tokenRoutes } from "./tokens/routes.js";
+import { upcomingFireTimes } from "./push/fire-times.js";
 import { runPushJob, type PushDeps } from "./push/job.js";
+import type { FireScheduler } from "./push/scheduler.js";
 import { pushRoutes } from "./push/routes.js";
 import { mcpRoutes } from "./mcp/routes.js";
 import { PgPushStore } from "./push/store.js";
@@ -57,6 +59,8 @@ export interface AppDeps {
   bedrockStream?: BedrockStream;
   /** Envia para os serviços de push. Os testes trocam por uma versão falsa. */
   pushFetch?: PushFetch;
+  /** Agenda disparos exatos do push (só na AWS; no servidor local há um relógio próprio). */
+  fireScheduler?: FireScheduler | undefined;
 }
 
 const defaultPushFetch: PushFetch = async (url, init) => {
@@ -73,15 +77,38 @@ function pushDeps(sql: SqlClient, config: AuthConfig, now: () => number, pushFet
   return { push: new PgPushStore(sql, new PgSecretStore(sql, secretsKey(config.sessionSecret), now), now), fetchImpl: pushFetch, subject: pushSubject(config), now };
 }
 
-/** O trabalho agendado: gera os check-ins vencidos e manda por push. */
-export function createPushJob({ sql, config, now = Date.now, pushFetch = defaultPushFetch }: Pick<AppDeps, "sql" | "config" | "now" | "pushFetch">) {
-  const checkins = { store: new PgNotificationStore(sql, now), settings: new PgSettingsStore(sql, now), tasks: new PgTaskStore(sql, now), sql, now };
-  return () => runPushJob({ ...pushDeps(sql, config, now, pushFetch), checkins });
+/** Recalcula os disparos exatos (tarefas com hora, check-ins) e deixa o agendador igual a eles. Nunca derruba quem chamou. */
+export function createRescheduler({ sql, now = Date.now, fireScheduler }: Pick<AppDeps, "sql" | "now" | "fireScheduler">) {
+  return async (): Promise<void> => {
+    if (!fireScheduler) return;
+    try {
+      const times = await upcomingFireTimes({ settings: new PgSettingsStore(sql, now), tasks: new PgTaskStore(sql, now), now });
+      const result = await fireScheduler.reconcile(times);
+      if (result.created + result.deleted > 0) console.log(JSON.stringify({ job: "reschedule", wanted: times.length, ...result }));
+    } catch (err) {
+      console.error("reschedule failed", err);
+    }
+  };
 }
+
+/** O trabalho agendado: gera os check-ins vencidos e manda por push, e deixa agendados os próximos disparos. */
+export function createPushJob({ sql, config, now = Date.now, pushFetch = defaultPushFetch, fireScheduler }: Pick<AppDeps, "sql" | "config" | "now" | "pushFetch" | "fireScheduler">) {
+  const checkins = { store: new PgNotificationStore(sql, now), settings: new PgSettingsStore(sql, now), tasks: new PgTaskStore(sql, now), sql, now };
+  const reschedule = createRescheduler({ sql, now, fireScheduler });
+  return async () => {
+    const result = await runPushJob({ ...pushDeps(sql, config, now, pushFetch), checkins });
+    await reschedule();
+    return result;
+  };
+}
+
+/** Escritas que mudam o que avisa e quando (tarefas, configurações e quem cria tarefas por outro caminho). */
+const RESCHEDULE_PATHS = /^\/(tasks|settings|goals|mcp|chat|clips|routine)(\/|$)/;
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke, bedrockStream, pushFetch = defaultPushFetch }: AppDeps): Api {
+export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.fetch as unknown as FetchLike, ai = { provider: "anthropic" }, bedrockInvoke, bedrockStream, pushFetch = defaultPushFetch, fireScheduler }: AppDeps): Api {
+  const reschedule = createRescheduler({ sql, now, fireScheduler });
   const taskStore = new PgTaskStore(sql, now);
   const pageStore = new PgPageStore(sql, now);
   const tokenStore = new PgTokenStore(sql, now);
@@ -123,7 +150,7 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
     ...writingRoutes(aiProvider),
   ];
 
-  return async function handle(incoming: ApiRequest): Promise<ApiResponse> {
+  async function dispatch(incoming: ApiRequest): Promise<ApiResponse> {
     const path = incoming.path.replace(/^\/api(?=\/|$)/, "") || "/";
     const req: ApiRequest = { ...incoming, path };
 
@@ -162,5 +189,11 @@ export function createApp({ sql, config, now = Date.now, fetchImpl = globalThis.
       return route.handle({ req, match, now: nowMs, authenticated, canWrite: authenticated });
     }
     return pathMatched ? json(405, { error: "method_not_allowed" }) : notFound();
+  }
+
+  return async function handle(incoming: ApiRequest): Promise<ApiResponse> {
+    const res = await dispatch(incoming);
+    if (fireScheduler && !SAFE_METHODS.has(incoming.method) && res.status < 400 && RESCHEDULE_PATHS.test(incoming.path.replace(/^\/api(?=\/|$)/, ""))) await reschedule();
+    return res;
   };
 }
