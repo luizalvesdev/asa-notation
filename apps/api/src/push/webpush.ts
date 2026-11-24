@@ -102,7 +102,7 @@ export async function sendPush(fetchImpl: PushFetch, sub: PushSubscriptionKeys, 
       "content-encoding": "aes128gcm",
       "content-type": "application/octet-stream",
       ttl: String(24 * 3600),
-      urgency: "normal",
+      urgency: "high",
     },
     body,
   });

@@ -9,6 +9,7 @@ const VERSION = "v2";
 const SHELL_CACHE = `asa-shell-${VERSION}`;
 const DATA_CACHE = `asa-data-${VERSION}`;
 const DATA_LIMIT = 200;
+const VIBRATE = [250, 120, 250, 120, 500];
 
 // Só estas rotas de leitura ficam guardadas para uso offline.
 const CACHEABLE_API = /^\/api\/(pages|tasks|goals|captures)(\/|$|\?)/;
@@ -55,6 +56,10 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function" &
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
         tag: typeof data.tag === "string" ? data.tag : undefined,
+        // Alarme: vibra (Android), toca de novo mesmo substituindo um aviso com a mesma tag e fica na tela até o toque.
+        vibrate: VIBRATE,
+        renotify: typeof data.tag === "string",
+        requireInteraction: true,
         data: { link },
       }),
     );
